@@ -172,25 +172,7 @@ export const LoginPage = () => {
                 Site photos, delivery challans and material issues, checked against the plan before a milestone is cleared.
               </p>
 
-              {/* Technical Telemetry Badge Strip */}
-              <div className="grid grid-cols-2 gap-3 pt-4 border-t border-[#A39B8F]/20 text-[#A39B8F]">
-                <div className="flex flex-col">
-                  <span className="font-label-meta text-label-meta tracking-widest uppercase">
-                    LATENCY GATE
-                  </span>
-                  <span className="font-label-code text-label-code text-[#F2ECE6] font-bold">
-                    14MS GEO-LOCK
-                  </span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="font-label-meta text-label-meta tracking-widest uppercase">
-                    INTEGRITY SHA
-                  </span>
-                  <span className="font-label-code text-label-code text-[#FCBC18] font-bold">
-                    0x4F92B...C01
-                  </span>
-                </div>
-              </div>
+
             </div>
 
             {/* Bottom Spec Info Footer */}
@@ -261,16 +243,14 @@ export const LoginPage = () => {
                       <label
                         key={r.id}
                         onClick={() => setSelectedRole(r.id)}
-                        className={`cursor-pointer relative bg-[#F2ECE6] border p-3 flex items-start gap-3 transition-all select-none ${
-                          isSelected
+                        className={`cursor-pointer relative bg-[#F2ECE6] border p-3 flex items-start gap-3 transition-all select-none ${isSelected
                             ? "border-[#101010] shadow-[2px_2px_0px_#101010]"
                             : "border-[#101010]/30 hover:border-[#101010]"
-                        }`}
+                          }`}
                       >
                         <div
-                          className={`absolute top-0 left-0 right-0 h-[3px] transition-colors ${
-                            isSelected ? "bg-[#FCBC18]" : "bg-transparent"
-                          }`}
+                          className={`absolute top-0 left-0 right-0 h-[3px] transition-colors ${isSelected ? "bg-[#FCBC18]" : "bg-transparent"
+                            }`}
                         />
                         <input
                           type="radio"
@@ -417,8 +397,8 @@ export const LoginPage = () => {
                       {loading
                         ? "AUTHENTICATING..."
                         : authMode === "login"
-                        ? "SIGN IN WITH EMAIL"
-                        : "CREATE ACCOUNT"}
+                          ? "SIGN IN WITH EMAIL"
+                          : "CREATE ACCOUNT"}
                     </span>
                   </button>
                 </form>
