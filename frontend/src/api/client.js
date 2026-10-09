@@ -157,6 +157,74 @@ export async function createUser(data) {
   });
 }
 
+export async function analyzeImage(file) {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const demoToken = localStorage.getItem("siteverify_token");
+  let token = demoToken;
+  if (!token && auth?.currentUser) {
+    try {
+      token = await auth.currentUser.getIdToken();
+    } catch {
+      // ignore
+    }
+  }
+
+  const headers = {};
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  const url = `${API_BASE_URL}/api/analyze-image`;
+  let res;
+  try {
+    res = await fetch(url, {
+      method: "POST",
+      headers,
+      body: formData,
+    });
+  } catch (networkError) {
+    throw new Error(
+      `Cannot connect to backend server at ${API_BASE_URL}. Please ensure the FastAPI backend is running.`
+    );
+  }
+
+  if (!res.ok) {
+    let errorDetail = `Image analysis failed (${res.status})`;
+    try {
+      const data = await res.json();
+      if (data && data.detail) {
+        errorDetail = typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail);
+      }
+    } catch {
+      // response was not JSON
+    }
+    const err = new Error(errorDetail);
+    err.status = res.status;
+    throw err;
+  }
+
+  return res.json();
+}
+
+export async function fetchAnalyses() {
+  return apiFetch("/api/analyses");
+}
+
+export async function checkBackendHealth() {
+  const url = `${API_BASE_URL}/api/health`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) {
+      throw new Error(`Health check returned status ${res.status}`);
+    }
+    return await res.json();
+  } catch (networkError) {
+    throw new Error(`Cannot connect to backend server at ${API_BASE_URL}.`);
+  }
+}
+
 export async function fetchExifGpsReport(projectId = "project-001", fileName = "column_casting.jpg") {
   return apiFetch(`/api/v1/projects/${projectId}/evidence/${fileName}/exif-gps`);
 }
@@ -193,4 +261,3 @@ export async function submitAuditReport(claimId, verdict, verdictNote, decisions
     body: JSON.stringify({ verdict, verdictNote, decisions }),
   });
 }
-
