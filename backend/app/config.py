@@ -9,6 +9,8 @@ class Settings(BaseSettings):
     FIREBASE_PROJECT_ID: str = "constra-b561b"
     FRONTEND_ORIGIN: str = "http://localhost:5173"
     BOOTSTRAP_ADMIN_EMAIL: Optional[str] = None
+    GEMINI_API_KEY: Optional[str] = None
+    GEMINI_MODEL: str = "gemini-2.5-flash"
 
     model_config = SettingsConfigDict(
         env_file=(".env", "backend/.env"),
@@ -18,3 +20,33 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+
+def get_gemini_api_key() -> Optional[str]:
+    """
+    Returns the latest GEMINI_API_KEY from environment or directly from .env,
+    allowing hot-reloading when .env is edited without requiring a server restart.
+    """
+    if os.environ.get("GEMINI_API_KEY"):
+        val = os.environ.get("GEMINI_API_KEY", "").strip()
+        if val and val != "your_actual_api_key":
+            return val
+
+    # Dynamic check of .env files
+    for env_path in [".env", "backend/.env", "../backend/.env"]:
+        if os.path.exists(env_path):
+            try:
+                from dotenv import dotenv_values
+                env_vals = dotenv_values(env_path)
+                val = env_vals.get("GEMINI_API_KEY")
+                if val and val.strip() and val.strip() != "your_actual_api_key":
+                    return val.strip()
+            except Exception:
+                pass
+
+    if settings.GEMINI_API_KEY:
+        val = settings.GEMINI_API_KEY.strip()
+        if val and val != "your_actual_api_key":
+            return val
+
+    return None

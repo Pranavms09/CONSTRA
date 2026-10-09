@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { getRoleHomeRoute } from "../auth/ProtectedRoute";
 
@@ -68,7 +68,7 @@ export const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-slate-950 text-slate-100 flex flex-col justify-between selection:bg-amber-500 selection:text-slate-950">
+    <div className="min-h-dvh bg-slate-950 text-slate-100 flex flex-col justify-between selection:bg-amber-500 selection:text-slate-950">
       {/* Top Banner / System Tag */}
       <header className="border-b border-slate-800/80 bg-slate-900/50 backdrop-blur px-4 py-3">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
@@ -78,9 +78,17 @@ export const LoginPage = () => {
               SiteVerify Node • Demo Access Mode
             </span>
           </div>
-          <span className="text-xs text-amber-400/90 font-mono font-semibold px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20">
-            TEST MODE ACTIVE
-          </span>
+          <div className="flex items-center gap-2.5">
+            <Link
+              to="/analyze"
+              className="text-xs text-amber-400 hover:text-amber-300 font-mono font-semibold px-2.5 py-1 rounded bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20 transition-colors"
+            >
+              ✨ AI Image Analysis →
+            </Link>
+            <span className="text-xs text-amber-400/90 font-mono font-semibold px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 hidden sm:inline-block">
+              TEST MODE ACTIVE
+            </span>
+          </div>
         </div>
       </header>
 

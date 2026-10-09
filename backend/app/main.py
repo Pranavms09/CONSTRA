@@ -10,7 +10,7 @@ from app.config import settings
 from app.database import SessionLocal, engine, Base
 from app.models.user import User, UserRole
 from app.limiter import limiter
-from app.routers import auth, users, pings
+from app.routers import auth, users, pings, analysis
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("siteverify")
@@ -103,8 +103,4 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(pings.router)
-
-
-@app.get("/health")
-def health_check():
-    return {"status": "ok", "app": "SiteVerify API"}
+app.include_router(analysis.router)

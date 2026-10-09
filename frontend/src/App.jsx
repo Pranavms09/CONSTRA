@@ -6,6 +6,7 @@ import { LoginPage } from "./pages/LoginPage";
 import { SupervisorHome } from "./pages/supervisor/SupervisorHome";
 import { StoreHome } from "./pages/store/StoreHome";
 import { AuditorHome } from "./pages/auditor/AuditorHome";
+import { ImageAnalysisPage } from "./pages/ImageAnalysisPage";
 import { NotFound } from "./pages/NotFound";
 
 const RootRedirect = () => {
@@ -60,6 +61,9 @@ export const App = () => {
               </ProtectedRoute>
             }
           />
+
+          <Route path="/analyze" element={<ImageAnalysisPage />} />
+          <Route path="/image-analysis" element={<ImageAnalysisPage />} />
 
           <Route path="*" element={<NotFound />} />
         </Routes>

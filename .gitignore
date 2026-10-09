@@ -1,10 +1,24 @@
 # Environment variables & secrets
 .env
+.env.*
+!.env.example
 *.env
+*.env.*
+!*.env.example
+*.local
 backend/.env
+backend/.env.*
+!backend/.env.example
 frontend/.env
+frontend/.env.*
+!frontend/.env.example
 backend/secrets/
 secrets/
+*.pem
+*.key
+uploads/
+backend/uploads/
+test_assets/
 
 # Python
 __pycache__/
