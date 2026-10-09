@@ -33,16 +33,17 @@ def to_base(db: Session, material_id: int, unit: str, qty) -> Decimal:
         )
 
     clean_unit = unit.strip().lower()
+    singular = clean_unit[:-1] if clean_unit.endswith("s") and clean_unit != "nos" else clean_unit
     base_unit = material.base_unit.strip().lower()
 
-    if clean_unit == base_unit:
+    if clean_unit == base_unit or singular == base_unit:
         return dec_qty
 
     conversion = (
         db.query(UnitConversion)
         .filter(
             UnitConversion.material_id == material_id,
-            func.lower(UnitConversion.unit) == clean_unit
+            func.lower(UnitConversion.unit).in_([clean_unit, singular])
         )
         .first()
     )

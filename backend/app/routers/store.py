@@ -1,4 +1,5 @@
 import os
+import re
 import uuid
 import hashlib
 import json
@@ -88,10 +89,21 @@ def run_ocr_background(challan_id: int):
             challan.challan_no = fields["challan_no"]
         if fields.get("vendor"):
             challan.vendor_name_raw = fields["vendor"]
-            # Check fuzzy or direct vendor match
+            # Check direct or fuzzy vendor match
             vendor = db.query(Vendor).filter(func.lower(Vendor.name) == fields["vendor"].lower().strip()).first()
             if vendor:
                 challan.vendor_id = vendor.id
+            else:
+                from rapidfuzz import process, fuzz
+                all_vendors = db.query(Vendor).all()
+                if all_vendors:
+                    v_match = process.extractOne(
+                        fields["vendor"],
+                        [v.name for v in all_vendors],
+                        scorer=fuzz.token_set_ratio
+                    )
+                    if v_match and v_match[1] >= 75:
+                        challan.vendor_id = next(v.id for v in all_vendors if v.name == v_match[0])
 
         if fields.get("date"):
             try:
@@ -100,6 +112,7 @@ def run_ocr_background(challan_id: int):
                 pass
 
         # Populate draft items
+        from app.services.store.ocr import normalize_unit
         db.query(ChallanItem).filter(ChallanItem.challan_id == challan.id).delete()
         raw_items = fields.get("items", [])
         for item in raw_items:
@@ -109,9 +122,27 @@ def run_ocr_background(challan_id: int):
                 mat_obj = db.query(Material).filter(func.lower(Material.name) == mat_name.lower()).first()
                 if mat_obj:
                     mat_id = mat_obj.id
+                else:
+                    from rapidfuzz import process, fuzz
+                    all_materials = db.query(Material).all()
+                    if all_materials:
+                        norm = re.sub(r"[-_/]", " ", mat_name)
+                        norm = re.sub(r"\bcmt\b", "cement", norm, flags=re.IGNORECASE)
+                        norm = re.sub(r"\brbr\b", "rebar", norm, flags=re.IGNORECASE)
+                        norm = re.sub(r"\bbars?\b", "rebar", norm, flags=re.IGNORECASE)
+                        best = process.extractOne(
+                            norm,
+                            [m.name for m in all_materials],
+                            scorer=fuzz.token_set_ratio
+                        )
+                        if best and best[1] >= 65:
+                            matched_mat = next(m for m in all_materials if m.name == best[0])
+                            mat_id = matched_mat.id
+                            if not item.get("field_confidence"):
+                                item["field_confidence"] = float(best[1])
 
             qty = Decimal(str(item.get("qty", 0)))
-            unit = item.get("unit", "bag").strip()
+            unit = normalize_unit(item.get("unit", "bag").strip())
             qty_base = Decimal("0")
             if mat_id:
                 try:
@@ -131,6 +162,7 @@ def run_ocr_background(challan_id: int):
             db.add(c_item)
 
         challan.status = "draft"
+        challan.failure_reason = None
         challan.version += 1
         db.commit()
     except Exception as e:

@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     MAX_UPLOAD_MB: int = 10
     OCR_MODE: str = "real"  # real | fake
     TESSERACT_CMD: Optional[str] = None
+    GEMINI_API_KEY: Optional[str] = None
+    GEMINI_MODEL: str = "gemini-2.5-flash"
     ANTHROPIC_API_KEY: Optional[str] = None
 
     model_config = SettingsConfigDict(
