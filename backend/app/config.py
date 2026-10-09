@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     FIREBASE_PROJECT_ID: str = "constra-b561b"
     FRONTEND_ORIGIN: str = "http://localhost:5173"
     BOOTSTRAP_ADMIN_EMAIL: Optional[str] = None
+    SECRET_KEY: str = "siteverify-secret-key-2025-constra-apex"
     GEMINI_API_KEY: Optional[str] = None
     GEMINI_MODEL: str = "gemini-2.5-flash"
 

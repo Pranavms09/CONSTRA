@@ -9,6 +9,7 @@ from app.auth.deps import require_role
 from app.models.user import User
 from app.models.audit_log import AuditLog
 from app.schemas.auth import UserCreateRequest, UserUpdateRequest, UserResponse
+from app.auth.security import hash_password
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -57,8 +58,9 @@ def create_user(
         full_name=body.full_name.strip(),
         role=body.role,
         is_active=True,
+        password_hash=hash_password(body.password.strip()) if body.password else None,
         firebase_uid=None,
-        auth_provider="firebase"
+        auth_provider="password" if body.password else "firebase"
     )
     db.add(new_user)
     db.commit()
@@ -112,6 +114,8 @@ def update_user_role(
         target_user.full_name = body.full_name.strip()
     if body.is_active is not None:
         target_user.is_active = body.is_active
+    if body.password:
+        target_user.password_hash = hash_password(body.password.strip())
 
     db.commit()
     db.refresh(target_user)

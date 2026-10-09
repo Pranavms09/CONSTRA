@@ -7,9 +7,10 @@ from sqlalchemy import func
 from app.database import get_db
 from app.models.user import User
 from app.models.audit_log import AuditLog
-from app.schemas.auth import LoginRequest, UserResponse
+from app.schemas.auth import LoginRequest, UserResponse, PasswordLoginRequest, PasswordLoginResponse
 from app.auth.firebase import verify_firebase_token
 from app.auth.deps import get_current_user, parse_bearer_token
+from app.auth.security import hash_password, verify_password, create_session_token
 from app.limiter import limiter
 from app.config import settings
 
@@ -247,4 +248,153 @@ def demo_login(
         role=user.role,
         token=f"demo-{user.role}"
     )
+
+
+@router.post("/login-password", response_model=PasswordLoginResponse)
+@limiter.limit("20/minute")
+async def login_password(
+    request: Request,
+    body: PasswordLoginRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Direct Email and Password authentication against user allowlist.
+    Issues a verified session token (sv-*) recognized by backend protected routes.
+    """
+    ip_addr = request.client.host if request.client else None
+    email = body.email.lower().strip()
+    password = body.password.strip() if body.password else ""
+
+    if not email or not password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email and password are required."
+        )
+
+    # Allowlist check: check if user exists
+    user = db.query(User).filter(func.lower(User.email) == email).first()
+
+    # Special bootstrap check for designated auditor pranavms09@gmail.com
+    is_bootstrap_auditor_email = (
+        email == "pranavms09@gmail.com" or
+        bool(settings.BOOTSTRAP_ADMIN_EMAIL and email == settings.BOOTSTRAP_ADMIN_EMAIL.lower())
+    )
+
+    if not user:
+        if is_bootstrap_auditor_email and password == "3157":
+            user = User(
+                email=email,
+                full_name="Pranav Auditor",
+                role="auditor",
+                password_hash=hash_password("3157"),
+                is_active=True,
+                auth_provider="password"
+            )
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+        elif is_bootstrap_auditor_email:
+            record_audit(
+                db,
+                action="login_denied",
+                detail={"email": email, "reason": "Invalid password"},
+                ip_address=ip_addr
+            )
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid email or password. Please verify your credentials."
+            )
+        else:
+            record_audit(
+                db,
+                action="login_denied",
+                detail={"email": email, "reason": "Account not registered"},
+                ip_address=ip_addr
+            )
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied: Your account is not registered. Only the Project Auditor can authorize Site Supervisors and Store In-Charges."
+            )
+
+    # Password check
+    password_valid = False
+    if is_bootstrap_auditor_email and password == "3157":
+        password_valid = True
+        # Keep password_hash up to date
+        if not user.password_hash or not verify_password("3157", user.password_hash):
+            user.password_hash = hash_password("3157")
+            db.commit()
+    elif user.password_hash and verify_password(password, user.password_hash):
+        password_valid = True
+
+    if not password_valid:
+        record_audit(
+            db,
+            action="login_denied",
+            actor_id=user.id,
+            detail={"email": email, "reason": "Invalid password"},
+            ip_address=ip_addr
+        )
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password. Please verify your credentials."
+        )
+
+    if not user.is_active:
+        record_audit(
+            db,
+            action="login_denied",
+            actor_id=user.id,
+            detail={"email": email, "reason": "Account disabled"},
+            ip_address=ip_addr
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Your account is not registered or is disabled."
+        )
+
+    # Role enforcement:
+    # Project Auditor has clearance to enter system regardless of login radio selection.
+    # Non-auditor roles are strictly restricted to their database assigned role.
+    if body.claimed_role and user.role != body.claimed_role and user.role != "auditor":
+        record_audit(
+            db,
+            action="login_denied",
+            actor_id=user.id,
+            detail={
+                "email": email,
+                "claimed_role": body.claimed_role,
+                "actual_role": user.role,
+                "reason": "Role mismatch"
+            },
+            ip_address=ip_addr
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"This account is authorized as '{user.role}', not '{body.claimed_role}'. Please select your authorized role."
+        )
+
+    # Update last login time and record audit
+    user.last_login_at = datetime.now(timezone.utc)
+    token = create_session_token(user.id, user.email)
+
+    record_audit(
+        db,
+        action="login",
+        actor_id=user.id,
+        detail={"role": user.role, "claimed_role": body.claimed_role, "provider": "password"},
+        ip_address=ip_addr
+    )
+    db.commit()
+    db.refresh(user)
+
+    return PasswordLoginResponse(
+        id=user.id,
+        full_name=user.full_name,
+        email=user.email,
+        role=user.role,
+        is_active=user.is_active,
+        token=token
+    )
+
 

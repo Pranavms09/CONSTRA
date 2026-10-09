@@ -289,3 +289,45 @@ def test_get_me_restores_session(mock_verify):
     assert res.status_code == 200
     assert res.json()["email"] == "store@siteverify.com"
     assert res.json()["role"] == "store_incharge"
+
+
+def test_login_password_bootstrap_auditor():
+    res = client.post(
+        "/auth/login-password",
+        json={"email": "pranavms09@gmail.com", "password": "3157", "claimed_role": "auditor"}
+    )
+    assert res.status_code == 200
+    data = res.json()
+    assert data["email"] == "pranavms09@gmail.com"
+    assert data["role"] == "auditor"
+    assert data["token"].startswith("sv-")
+
+    # Use the session token to authenticate to /auth/me
+    token = data["token"]
+    me_res = client.get("/auth/me", headers={"Authorization": f"Bearer {token}"})
+    assert me_res.status_code == 200
+    assert me_res.json()["email"] == "pranavms09@gmail.com"
+    assert me_res.json()["role"] == "auditor"
+
+    # Use the session token to ping auditor endpoint
+    ping_res = client.get("/auditor/ping", headers={"Authorization": f"Bearer {token}"})
+    assert ping_res.status_code == 200
+
+
+def test_login_password_wrong_password():
+    res = client.post(
+        "/auth/login-password",
+        json={"email": "pranavms09@gmail.com", "password": "wrongpassword"}
+    )
+    assert res.status_code == 401
+    assert "Invalid email or password" in res.json()["detail"]
+
+
+def test_login_password_unregistered_email():
+    res = client.post(
+        "/auth/login-password",
+        json={"email": "stranger@unknown.com", "password": "anypassword"}
+    )
+    assert res.status_code == 403
+    assert "Your account is not registered" in res.json()["detail"]
+

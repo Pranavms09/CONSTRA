@@ -10,6 +10,7 @@ import {
   saveClaimToFirestore,
   fetchAllClaims,
 } from "../../services/firebaseDataService";
+import ConstraLogo from "../../components/common/ConstraLogo";
 
 // Helper to compute SHA-256 hash of file in browser
 async function computeFileSha256(file) {
@@ -320,9 +321,9 @@ export const SupervisorHome = () => {
           {/* Top Row: Brand & Clearance & User Profile */}
           <div className="h-14 flex items-center justify-between border-b border-[#d4c5ac]/20">
             <div className="flex items-center gap-3 sm:gap-4">
-              <Link to="/" className="flex items-center gap-1 group">
-                <div className="w-3.5 h-3.5 bg-[#fcbc18] shrink-0 group-hover:scale-110 transition-transform"></div>
-                <span className="font-headline-md text-headline-md tracking-wider font-bold text-[#f2f0f6]">
+              <Link to="/" className="flex items-center gap-2.5 group" title="Return to Home">
+                <ConstraLogo className="w-7 h-7 object-contain group-hover:scale-105 transition-transform" />
+                <span className="font-headline-md text-headline-md tracking-wider font-bold text-[#f2f0f6] group-hover:text-[#fcbc18] transition-colors">
                   CONSTRA
                 </span>
               </Link>

@@ -67,10 +67,11 @@ def verify_firebase_token(id_token: str) -> dict:
         )
 
     project_id = getattr(settings, "FIREBASE_PROJECT_ID", None) or "constra-b561b"
+    has_cert = os.path.exists(settings.FIREBASE_SERVICE_ACCOUNT_PATH)
 
-    # 1. Attempt standard verification with firebase_admin (if service account configured)
+    # 1. Attempt standard verification with firebase_admin
     try:
-        decoded_token = auth.verify_id_token(id_token, check_revoked=False)
+        decoded_token = auth.verify_id_token(id_token, check_revoked=has_cert)
         return decoded_token
     except Exception as exc:
         logger.info(f"Standard firebase_admin verification skipped/failed: {exc}")

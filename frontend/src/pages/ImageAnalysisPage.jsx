@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { ImageAnalysisSection } from "../components/ImageAnalysisSection";
+import ConstraLogo from "../components/common/ConstraLogo";
 
 export const ImageAnalysisPage = () => {
   const { user } = useAuth();
@@ -11,9 +12,9 @@ export const ImageAnalysisPage = () => {
       {/* Top Bar */}
       <header className="border-b border-[#d4c5ac]/30 bg-[#101010] text-[#f2f0f6] px-6 py-3 flex items-center justify-between sticky top-0 z-40">
         <div className="flex items-center gap-3">
-          <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-3.5 h-3.5 bg-[#fcbc18] shrink-0 group-hover:scale-110 transition-transform"></div>
-            <span className="font-headline-md text-headline-md tracking-wider font-bold text-[#f2f0f6]">
+          <Link to="/" className="flex items-center gap-2.5 group" title="Return to Home">
+            <ConstraLogo className="w-7 h-7 object-contain group-hover:scale-105 transition-transform" />
+            <span className="font-headline-md text-headline-md tracking-wider font-bold text-[#f2f0f6] group-hover:text-[#fcbc18] transition-colors">
               CONSTRA
             </span>
           </Link>
