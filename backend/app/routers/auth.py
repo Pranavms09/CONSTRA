@@ -76,7 +76,28 @@ async def login(
 
     # 3. Allowlist check: If user does not exist
     if not user:
-        if settings.BOOTSTRAP_ADMIN_EMAIL and email == settings.BOOTSTRAP_ADMIN_EMAIL.lower():
+        if getattr(body, "is_signup", False):
+            assigned_role = body.claimed_role if body.claimed_role in ["supervisor", "store_incharge", "auditor"] else "supervisor"
+            full_name = getattr(body, "full_name", None) or decoded_token.get("name") or email.split("@")[0].replace(".", " ").title()
+            user = User(
+                email=email,
+                full_name=full_name,
+                role=assigned_role,
+                is_active=True,
+                firebase_uid=uid,
+                auth_provider=sign_in_provider or "firebase"
+            )
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+            record_audit(
+                db,
+                action="user_registered",
+                actor_id=user.id,
+                detail={"email": email, "role": user.role, "provider": sign_in_provider},
+                ip_address=ip_addr
+            )
+        elif settings.BOOTSTRAP_ADMIN_EMAIL and email == settings.BOOTSTRAP_ADMIN_EMAIL.lower():
             user = User(
                 email=email,
                 full_name=decoded_token.get("name") or "Bootstrap Project Auditor",

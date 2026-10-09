@@ -7,6 +7,8 @@ ClaimedRole = Literal["supervisor", "store_incharge", "auditor"]
 
 class LoginRequest(BaseModel):
     claimed_role: Optional[ClaimedRole] = None
+    is_signup: Optional[bool] = False
+    full_name: Optional[str] = None
 
 
 class DemoLoginRequest(BaseModel):
