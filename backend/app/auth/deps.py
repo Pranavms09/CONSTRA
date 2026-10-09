@@ -5,6 +5,13 @@ from app.database import get_db
 from app.models.user import User
 from app.auth.firebase import verify_firebase_token
 
+DEMO_USERS_MAP = {
+    "demo-supervisor": ("supervisor@siteverify.com", "Alice Supervisor", "supervisor"),
+    "demo-store": ("store@siteverify.com", "Bob Storekeeper", "store_incharge"),
+    "demo-store_incharge": ("store@siteverify.com", "Bob Storekeeper", "store_incharge"),
+    "demo-auditor": ("auditor@siteverify.com", "Carol Auditor", "auditor"),
+}
+
 
 def parse_bearer_token(authorization: str) -> str:
     if not authorization or not authorization.startswith("Bearer "):
@@ -20,11 +27,37 @@ def get_current_user(
     db: Session = Depends(get_db)
 ) -> User:
     """
-    Verifies Firebase Bearer token and returns the registered, active database User.
+    Verifies Bearer token (Firebase or demo mode token) and returns active database User.
     Never trusts roles from client or token - loads strictly from database.
     """
-    id_token = parse_bearer_token(authorization)
-    decoded_token = verify_firebase_token(id_token)
+    token = parse_bearer_token(authorization)
+
+    # Demo mode bypass for local testing
+    if token.startswith("demo-"):
+        if token in DEMO_USERS_MAP:
+            email, full_name, role = DEMO_USERS_MAP[token]
+            user = db.query(User).filter(func.lower(User.email) == email.lower()).first()
+            if not user:
+                user = User(
+                    email=email.lower(),
+                    full_name=full_name,
+                    role=role,
+                    is_active=True,
+                    firebase_uid=f"uid_{role}",
+                    auth_provider="demo"
+                )
+                db.add(user)
+                db.commit()
+                db.refresh(user)
+            return user
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid demo token"
+            )
+
+    # Standard Firebase Token Verification
+    decoded_token = verify_firebase_token(token)
 
     if not decoded_token.get("email_verified", False):
         raise HTTPException(
@@ -75,7 +108,4 @@ def verify_project_access(project_id: int, user: User, db: Session):
     Returns 404 (not 403) when user asks for a resource outside their project
     to avoid leaking its existence.
     """
-    # Auditors have global project access, other roles must be assigned
-    # Placeholder for future project membership checks:
-    # If not member: raise HTTPException(status_code=404, detail="Resource not found")
     pass

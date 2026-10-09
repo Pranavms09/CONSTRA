@@ -17,23 +17,31 @@ logger = logging.getLogger("siteverify")
 
 
 def bootstrap_admin():
-    if not settings.BOOTSTRAP_ADMIN_EMAIL:
-        return
-
-    admin_email = settings.BOOTSTRAP_ADMIN_EMAIL.lower().strip()
     db = SessionLocal()
     try:
-        # Check if an auditor already exists
-        auditor_exists = db.query(User).filter(User.role == "auditor").first()
-        if not auditor_exists:
-            # Check if this user email exists
+        # Pre-seed demo users for instant zero-friction testing of all three roles
+        demo_seeds = [
+            ("supervisor@siteverify.com", "Alice Supervisor", "supervisor"),
+            ("store@siteverify.com", "Bob Storekeeper", "store_incharge"),
+            ("auditor@siteverify.com", "Carol Auditor", "auditor"),
+        ]
+        for email, name, role in demo_seeds:
+            existing = db.query(User).filter(func.lower(User.email) == email.lower()).first()
+            if not existing:
+                db.add(User(
+                    email=email.lower(),
+                    full_name=name,
+                    role=role,
+                    is_active=True,
+                    firebase_uid=f"uid_{role}",
+                    auth_provider="demo"
+                ))
+        db.commit()
+
+        if settings.BOOTSTRAP_ADMIN_EMAIL:
+            admin_email = settings.BOOTSTRAP_ADMIN_EMAIL.lower().strip()
             existing_user = db.query(User).filter(func.lower(User.email) == admin_email).first()
-            if existing_user:
-                existing_user.role = "auditor"
-                existing_user.is_active = True
-                db.commit()
-                logger.info(f"Promoted existing user {admin_email} to bootstrap auditor.")
-            else:
+            if not existing_user:
                 new_auditor = User(
                     email=admin_email,
                     full_name="Bootstrap Auditor",
@@ -45,8 +53,6 @@ def bootstrap_admin():
                 db.add(new_auditor)
                 db.commit()
                 logger.info(f"Created bootstrap auditor with email: {admin_email}")
-        else:
-            logger.info("Auditor already present in database; skipping bootstrap.")
     except Exception as exc:
         logger.error(f"Error during admin bootstrap: {exc}")
         db.rollback()

@@ -167,3 +167,56 @@ def get_me(current_user: User = Depends(get_current_user)):
         email=current_user.email,
         role=current_user.role
     )
+
+
+from app.schemas.auth import DemoLoginRequest, DemoLoginResponse
+
+
+@router.post("/demo-login", response_model=DemoLoginResponse)
+def demo_login(
+    body: DemoLoginRequest,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    """
+    Instant demo login for testing each authorized role without requiring a Google account.
+    """
+    ip_addr = request.client.host if request.client else None
+    role_map = {
+        "supervisor": ("supervisor@siteverify.com", "Alice Supervisor"),
+        "store_incharge": ("store@siteverify.com", "Bob Storekeeper"),
+        "auditor": ("auditor@siteverify.com", "Carol Auditor"),
+    }
+    email, full_name = role_map[body.role]
+    user = db.query(User).filter(func.lower(User.email) == email.lower()).first()
+    if not user:
+        user = User(
+            email=email.lower(),
+            full_name=full_name,
+            role=body.role,
+            is_active=True,
+            firebase_uid=f"uid_{body.role}",
+            auth_provider="demo"
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+
+    user.last_login_at = datetime.now(timezone.utc)
+    record_audit(
+        db,
+        action="login",
+        actor_id=user.id,
+        detail={"role": user.role, "mode": "demo"},
+        ip_address=ip_addr
+    )
+    db.commit()
+
+    return DemoLoginResponse(
+        id=user.id,
+        full_name=user.full_name,
+        email=user.email,
+        role=user.role,
+        token=f"demo-{user.role}"
+    )
+

@@ -3,7 +3,16 @@ import { auth } from "../auth/firebase";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
 export async function apiFetch(endpoint, options = {}) {
-  const token = await auth.currentUser?.getIdToken();
+  const demoToken = localStorage.getItem("siteverify_token");
+  let token = demoToken;
+
+  if (!token) {
+    try {
+      token = await auth.currentUser?.getIdToken();
+    } catch {
+      // ignore if firebase not logged in
+    }
+  }
 
   const headers = {
     "Content-Type": "application/json",
@@ -44,6 +53,45 @@ export async function apiFetch(endpoint, options = {}) {
   }
 
   return res.json();
+}
+
+export async function demoLoginApi(role) {
+  const url = `${API_BASE_URL}/auth/demo-login`;
+  let res;
+  try {
+    res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ role }),
+    });
+  } catch (networkError) {
+    throw new Error(
+      `Cannot connect to backend server at ${API_BASE_URL}. Please ensure the FastAPI backend is running.`
+    );
+  }
+
+  if (!res.ok) {
+    let detail = `Demo login failed (${res.status})`;
+    try {
+      const data = await res.json();
+      if (data && data.detail) {
+        detail = typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail);
+      }
+    } catch {
+      // ignore
+    }
+    const err = new Error(detail);
+    err.status = res.status;
+    throw err;
+  }
+
+  const data = await res.json();
+  if (data.token) {
+    localStorage.setItem("siteverify_token", data.token);
+  }
+  return data;
 }
 
 export async function loginWithBackend(claimedRole, idToken) {

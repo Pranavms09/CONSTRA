@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
-import { auth, googleProvider } from "./firebase";
-import { loginWithBackend, fetchMe } from "../api/client";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import { auth } from "./firebase";
+import { demoLoginApi, fetchMe } from "../api/client";
 
 const AuthContext = createContext(undefined);
 
@@ -9,52 +9,69 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Initialize and restore session
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
+    const initAuth = async () => {
+      const demoToken = localStorage.getItem("siteverify_token");
+      if (demoToken) {
         try {
-          // Restore backend session
           const profile = await fetchMe();
           setUser(profile);
+          setLoading(false);
+          return;
         } catch (err) {
-          console.warn("Session restore failed, signing out:", err);
-          await signOut(auth);
+          console.warn("Demo session restore failed, clearing token:", err);
+          localStorage.removeItem("siteverify_token");
+        }
+      }
+
+      // Check Firebase state if no active demo token
+      const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+        if (firebaseUser) {
+          try {
+            const profile = await fetchMe();
+            setUser(profile);
+          } catch (err) {
+            console.warn("Firebase session restore failed, signing out:", err);
+            await signOut(auth);
+            setUser(null);
+          }
+        } else {
           setUser(null);
         }
-      } else {
-        setUser(null);
-      }
-      setLoading(false);
-    });
+        setLoading(false);
+      });
 
-    return () => unsubscribe();
+      return () => unsubscribe();
+    };
+
+    initAuth();
   }, []);
 
-  const login = async (claimedRole) => {
-    // 1. Popup Google Sign-In
-    const result = await signInWithPopup(auth, googleProvider);
-    // 2. Get ID token
-    const idToken = await result.user.getIdToken();
+  const loginDemo = async (role) => {
     try {
-      // 3. Backend verifies claimed_role and allowlist
-      const backendUser = await loginWithBackend(claimedRole, idToken);
-      setUser(backendUser);
-      return backendUser;
+      const loggedUser = await demoLoginApi(role);
+      setUser(loggedUser);
+      return loggedUser;
     } catch (err) {
-      // 4. On failure, immediately sign out of Firebase
-      await signOut(auth);
+      localStorage.removeItem("siteverify_token");
       setUser(null);
       throw err;
     }
   };
 
   const logout = async () => {
-    await signOut(auth);
+    localStorage.removeItem("siteverify_token");
+    try {
+      await signOut(auth);
+    } catch {
+      // ignore
+    }
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, loginDemo, logout }}>
       {children}
     </AuthContext.Provider>
   );
