@@ -10,7 +10,7 @@ from app.config import settings
 from app.database import SessionLocal, engine, Base
 from app.models.user import User, UserRole
 from app.limiter import limiter
-from app.routers import auth, users, pings
+from app.routers import auth, users, pings, store
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("siteverify")
@@ -103,6 +103,7 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(pings.router)
+app.include_router(store.router)
 
 
 @app.get("/health")

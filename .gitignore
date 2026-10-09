@@ -24,3 +24,5 @@ node_modules/
 frontend/dist/
 dist/
 .DS_Store
+backend/uploads/
+uploads/

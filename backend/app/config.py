@@ -10,6 +10,13 @@ class Settings(BaseSettings):
     FRONTEND_ORIGIN: str = "http://localhost:5173"
     BOOTSTRAP_ADMIN_EMAIL: Optional[str] = None
 
+    # Store Module Settings
+    UPLOAD_DIR: str = "./uploads"
+    MAX_UPLOAD_MB: int = 10
+    OCR_MODE: str = "real"  # real | fake
+    TESSERACT_CMD: Optional[str] = None
+    ANTHROPIC_API_KEY: Optional[str] = None
+
     model_config = SettingsConfigDict(
         env_file=(".env", "backend/.env"),
         env_file_encoding="utf-8",
