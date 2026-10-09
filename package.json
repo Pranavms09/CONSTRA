@@ -1,0 +1,11 @@
+{
+  "name": "constra",
+  "private": true,
+  "workspaces": [
+    "frontend"
+  ],
+  "scripts": {
+    "build": "npm --prefix frontend run build",
+    "dev": "npm --prefix frontend run dev"
+  }
+}
