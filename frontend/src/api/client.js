@@ -55,16 +55,23 @@ export async function apiFetch(endpoint, options = {}) {
 
   if (!res.ok) {
     let errorDetail = `Request failed with status ${res.status}`;
+    let blockers = null;
     try {
       const data = await res.json();
       if (data && data.detail) {
-        errorDetail = typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail);
+        if (typeof data.detail === "object" && data.detail.blockers) {
+          blockers = data.detail.blockers;
+          errorDetail = `${data.detail.message || "Approval blocked"}: ${data.detail.blockers.join(" | ")}`;
+        } else {
+          errorDetail = typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail);
+        }
       }
     } catch {
       // response was not JSON
     }
     const err = new Error(errorDetail);
     err.status = res.status;
+    err.blockers = blockers;
     throw err;
   }
 
@@ -310,3 +317,12 @@ export async function createClaimApi(claimPayload) {
     body: JSON.stringify(claimPayload),
   });
 }
+
+export async function fetchClaimCertificate(claimId) {
+  return apiFetch(`/api/v1/claims/${claimId}/certificate`);
+}
+
+export async function fetchStageCertificate(stageId) {
+  return apiFetch(`/api/v1/stages/${stageId}/certificate`);
+}
+

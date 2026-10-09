@@ -60,11 +60,19 @@ def bootstrap_admin():
         db.close()
 
 
+import os
+from fastapi.staticfiles import StaticFiles
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Ensure database schema is initialized
     Base.metadata.create_all(bind=engine)
     bootstrap_admin()
+    try:
+        from scripts.seed_store_demo import seed_store_demo
+        seed_store_demo()
+    except Exception as exc:
+        logger.warning(f"Demo store seeding note: {exc}")
     yield
 
 
@@ -74,6 +82,10 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan
 )
+
+# Ensure upload directory exists and mount for cross-laptop static access
+os.makedirs("uploads", exist_ok=True)
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 # SlowAPI rate limiting configuration
 app.state.limiter = limiter

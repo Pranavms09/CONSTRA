@@ -221,7 +221,7 @@ def challan_to_detail_response(c: Challan) -> ChallanDetailResponse:
 
 @router.get("/projects", response_model=List[ProjectResponse])
 def get_my_projects(
-    user: User = Depends(require_role("store_incharge")),
+    user: User = Depends(require_role("store_incharge", "auditor", "supervisor")),
     db: Session = Depends(get_db)
 ):
     projects = get_user_projects(db, user.id, user.role)
@@ -231,7 +231,7 @@ def get_my_projects(
 @router.get("/projects/{pid}/stages", response_model=List[StageResponse])
 def get_stages(
     pid: int,
-    user: User = Depends(require_role("store_incharge")),
+    user: User = Depends(require_role("store_incharge", "auditor", "supervisor")),
     db: Session = Depends(get_db)
 ):
     ensure_project_access(db, user.id, pid, user.role)
@@ -251,7 +251,7 @@ def get_stages(
 
 @router.get("/materials", response_model=List[MaterialResponse])
 def list_materials(
-    user: User = Depends(require_role("store_incharge")),
+    user: User = Depends(require_role("store_incharge", "auditor", "supervisor")),
     db: Session = Depends(get_db)
 ):
     data = get_materials_with_units(db)
@@ -260,7 +260,7 @@ def list_materials(
 
 @router.get("/vendors", response_model=List[VendorResponse])
 def list_vendors(
-    user: User = Depends(require_role("store_incharge")),
+    user: User = Depends(require_role("store_incharge", "auditor", "supervisor")),
     db: Session = Depends(get_db)
 ):
     vendors = get_vendors(db)
@@ -270,7 +270,7 @@ def list_vendors(
 @router.get("/projects/{pid}/materials", response_model=List[MaterialResponse])
 def list_project_materials(
     pid: int,
-    user: User = Depends(require_role("store_incharge")),
+    user: User = Depends(require_role("store_incharge", "auditor", "supervisor")),
     db: Session = Depends(get_db)
 ):
     ensure_project_access(db, user.id, pid, user.role)
@@ -281,7 +281,7 @@ def list_project_materials(
 @router.get("/projects/{pid}/vendors", response_model=List[VendorResponse])
 def list_project_vendors(
     pid: int,
-    user: User = Depends(require_role("store_incharge")),
+    user: User = Depends(require_role("store_incharge", "auditor", "supervisor")),
     db: Session = Depends(get_db)
 ):
     ensure_project_access(db, user.id, pid, user.role)
@@ -401,7 +401,7 @@ def create_manual_challan_draft(
 @router.get("/deliveries/{id}", response_model=ChallanDetailResponse)
 def get_challan(
     id: int,
-    user: User = Depends(require_role("store_incharge")),
+    user: User = Depends(require_role("store_incharge", "auditor")),
     db: Session = Depends(get_db)
 ):
     challan = db.query(Challan).filter(Challan.id == id).first()
@@ -596,7 +596,7 @@ def get_project_challans(
     search: Optional[str] = None,
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
-    user: User = Depends(require_role("store_incharge")),
+    user: User = Depends(require_role("store_incharge", "auditor")),
     db: Session = Depends(get_db)
 ):
     ensure_project_access(db, user.id, pid, user.role)
@@ -629,7 +629,7 @@ def download_challan_file(
         )
 
     user = get_current_user(authorization=auth_header, db=db)
-    if user.role != "store_incharge":
+    if user.role not in ("store_incharge", "auditor"):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not allowed")
 
     challan = db.query(Challan).filter(Challan.id == challan_id).first()
@@ -773,7 +773,7 @@ def get_project_material_issues(
     end_date: Optional[date] = None,
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
-    user: User = Depends(require_role("store_incharge")),
+    user: User = Depends(require_role("store_incharge", "auditor")),
     db: Session = Depends(get_db)
 ):
     ensure_project_access(db, user.id, pid, user.role)
@@ -808,7 +808,7 @@ def get_project_material_issues(
 @router.get("/projects/{pid}/stock-summary", response_model=List[StockSummaryItem])
 def get_stock_summary(
     pid: int,
-    user: User = Depends(require_role("store_incharge")),
+    user: User = Depends(require_role("store_incharge", "auditor")),
     db: Session = Depends(get_db)
 ):
     ensure_project_access(db, user.id, pid, user.role)
@@ -819,7 +819,7 @@ def get_stock_summary(
 @router.get("/projects/{pid}/boq-status", response_model=List[BoqStatusItem])
 def get_project_boq_status(
     pid: int,
-    user: User = Depends(require_role("store_incharge")),
+    user: User = Depends(require_role("store_incharge", "auditor")),
     db: Session = Depends(get_db)
 ):
     ensure_project_access(db, user.id, pid, user.role)
@@ -830,11 +830,14 @@ def get_project_boq_status(
 @router.get("/projects/{pid}/alerts", response_model=List[AlertResponse])
 def get_my_alerts(
     pid: int,
-    user: User = Depends(require_role("store_incharge")),
+    user: User = Depends(require_role("store_incharge", "auditor")),
     db: Session = Depends(get_db)
 ):
     ensure_project_access(db, user.id, pid, user.role)
-    alerts = list_store_user_alerts(db, pid, user.id)
+    if user.role == "auditor":
+        alerts = db.query(Alert).filter(Alert.project_id == pid).order_by(Alert.created_at.desc()).all()
+    else:
+        alerts = list_store_user_alerts(db, pid, user.id)
     return [
         AlertResponse(
             id=a.id,
@@ -852,3 +855,72 @@ def get_my_alerts(
         )
         for a in alerts
     ]
+
+
+from pydantic import BaseModel
+
+class AlertActionRequest(BaseModel):
+    status: str  # resolved, escalated, acknowledged
+    justification: str  # mandatory reason
+
+
+@router.patch("/alerts/{alert_id}", response_model=AlertResponse)
+@router.post("/alerts/{alert_id}/action", response_model=AlertResponse)
+def update_alert_action(
+    alert_id: int,
+    payload: AlertActionRequest,
+    user: User = Depends(require_role("auditor", "store_incharge")),
+    db: Session = Depends(get_db)
+):
+    if not payload.justification or len(payload.justification.strip()) < 5:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="A mandatory written justification of at least 5 characters is required to resolve or escalate an alert."
+        )
+    if payload.status not in ["resolved", "escalated", "acknowledged", "open"]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid alert status. Must be resolved, escalated, or acknowledged."
+        )
+
+    alert = db.query(Alert).filter(Alert.id == alert_id).first()
+    if not alert:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Alert not found")
+
+    ensure_project_access(db, user.id, alert.project_id, user.role)
+
+    prev_status = alert.status
+    alert.status = payload.status
+    alert.auditor_comment = f"[{user.full_name or user.email} ({user.role})] {payload.justification.strip()}"
+    db.commit()
+    db.refresh(alert)
+
+    log_audit(
+        db,
+        user.id,
+        "alert_action",
+        "alert",
+        str(alert.id),
+        {
+            "previous_status": prev_status,
+            "new_status": payload.status,
+            "justification": payload.justification.strip(),
+            "project_id": alert.project_id,
+        }
+    )
+
+    return AlertResponse(
+        id=alert.id,
+        project_id=alert.project_id,
+        stage_id=alert.stage_id,
+        challan_id=alert.challan_id,
+        issue_id=alert.issue_id,
+        type=alert.type,
+        severity=alert.severity,
+        status=alert.status,
+        explanation=alert.explanation,
+        evidence=json.loads(alert.evidence) if alert.evidence else None,
+        auditor_comment=alert.auditor_comment,
+        created_at=alert.created_at
+    )
+

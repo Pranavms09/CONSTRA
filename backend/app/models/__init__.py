@@ -5,6 +5,7 @@ from app.models.project import Project, ProjectMember, ProjectSettings, Stage
 from app.models.material import Material, UnitConversion, Vendor, BoqItem
 from app.models.challan import Challan, ChallanItem, MaterialIssue
 from app.models.alert import Alert
+from app.models.certificate import ClearanceCertificate
 
 __all__ = [
     "User",
@@ -23,4 +24,5 @@ __all__ = [
     "ChallanItem",
     "MaterialIssue",
     "Alert",
+    "ClearanceCertificate",
 ]

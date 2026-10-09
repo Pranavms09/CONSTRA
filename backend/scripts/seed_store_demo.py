@@ -68,6 +68,7 @@ def seed_store_demo():
             print(f"Existing project found: {project.name} (id={project.id})")
 
         # 3. Project Membership
+        # Add Storekeeper
         member = (
             db.query(ProjectMember)
             .filter(ProjectMember.project_id == project.id, ProjectMember.user_id == user.id)
@@ -82,6 +83,40 @@ def seed_store_demo():
             db.add(member)
             db.flush()
             print(f"Assigned {user.email} to project {project.name}")
+
+        # Add Supervisor
+        sup_user = db.query(User).filter(func.lower(User.email) == "supervisor@siteverify.com").first()
+        if sup_user:
+            sup_member = (
+                db.query(ProjectMember)
+                .filter(ProjectMember.project_id == project.id, ProjectMember.user_id == sup_user.id)
+                .first()
+            )
+            if not sup_member:
+                db.add(ProjectMember(
+                    project_id=project.id,
+                    user_id=sup_user.id,
+                    role="supervisor",
+                ))
+                db.flush()
+                print(f"Assigned supervisor@siteverify.com to project {project.name}")
+
+        # Add Auditor
+        aud_user = db.query(User).filter(func.lower(User.email) == "auditor@siteverify.com").first()
+        if aud_user:
+            aud_member = (
+                db.query(ProjectMember)
+                .filter(ProjectMember.project_id == project.id, ProjectMember.user_id == aud_user.id)
+                .first()
+            )
+            if not aud_member:
+                db.add(ProjectMember(
+                    project_id=project.id,
+                    user_id=aud_user.id,
+                    role="auditor",
+                ))
+                db.flush()
+                print(f"Assigned auditor@siteverify.com to project {project.name}")
 
         # 4. Project Settings
         settings = db.query(ProjectSettings).filter(ProjectSettings.project_id == project.id).first()
@@ -244,6 +279,29 @@ def seed_store_demo():
             else:
                 vend.is_approved = approved
                 db.flush()
+
+        # 9. Demo Alert on Stage 3 for approval blocker demonstration
+        import json
+        from app.models.alert import Alert
+        existing_alert = db.query(Alert).filter(Alert.project_id == project.id).first()
+        if not existing_alert:
+            alert = Alert(
+                project_id=project.id,
+                stage_id=stage_objs[3].id,
+                type="BOQ_QUANTITY_OVERRUN",
+                severity="high",
+                status="open",
+                explanation="Delivery challan #CH-8821 contains OPC 53 Cement exceeding Stage 3 planned baseline by 12%. Requires auditor reconciliation.",
+                evidence=json.dumps({
+                    "material": "OPC 53 Cement",
+                    "excess_qty": 1000,
+                    "unit": "kg",
+                    "variance_pct": 12.5
+                })
+            )
+            db.add(alert)
+            db.flush()
+            print("Added demo alert on Stage 3")
 
         db.commit()
         print("✅ Demo store seeding complete!")
