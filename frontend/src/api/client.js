@@ -6,9 +6,9 @@ export async function apiFetch(endpoint, options = {}) {
   const demoToken = localStorage.getItem("siteverify_token");
   let token = demoToken;
 
-  if (!token) {
+  if (!token && auth?.currentUser) {
     try {
-      token = await auth.currentUser?.getIdToken();
+      token = await auth.currentUser.getIdToken();
     } catch {
       // ignore if firebase not logged in
     }
