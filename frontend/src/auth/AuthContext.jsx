@@ -25,24 +25,29 @@ export const AuthProvider = ({ children }) => {
         }
       }
 
-      // Check Firebase state if no active demo token
-      const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-        if (firebaseUser) {
-          try {
-            const profile = await fetchMe();
-            setUser(profile);
-          } catch (err) {
-            console.warn("Firebase session restore failed, signing out:", err);
-            await signOut(auth);
+      // Check Firebase state if no active demo token and Firebase auth is initialized
+      if (auth) {
+        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+          if (firebaseUser) {
+            try {
+              const profile = await fetchMe();
+              setUser(profile);
+            } catch (err) {
+              console.warn("Firebase session restore failed, signing out:", err);
+              await signOut(auth);
+              setUser(null);
+            }
+          } else {
             setUser(null);
           }
-        } else {
-          setUser(null);
-        }
-        setLoading(false);
-      });
+          setLoading(false);
+        });
 
-      return () => unsubscribe();
+        return () => unsubscribe();
+      } else {
+        setUser(null);
+        setLoading(false);
+      }
     };
 
     initAuth();
@@ -62,10 +67,12 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     localStorage.removeItem("siteverify_token");
-    try {
-      await signOut(auth);
-    } catch {
-      // ignore
+    if (auth) {
+      try {
+        await signOut(auth);
+      } catch {
+        // ignore
+      }
     }
     setUser(null);
   };
