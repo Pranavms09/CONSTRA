@@ -15,6 +15,7 @@ import { IssueHistory } from "./pages/store/IssueHistory";
 import { StockSummary } from "./pages/store/StockSummary";
 import { StoreAlerts } from "./pages/store/StoreAlerts";
 import { AuditorHome } from "./pages/auditor/AuditorHome";
+import { ImageAnalysisPage } from "./pages/ImageAnalysisPage";
 import { NotFound } from "./pages/NotFound";
 
 const RootRedirect = () => {
@@ -78,6 +79,9 @@ export const App = () => {
               </ProtectedRoute>
             }
           />
+
+          <Route path="/analyze" element={<ImageAnalysisPage />} />
+          <Route path="/image-analysis" element={<ImageAnalysisPage />} />
 
           <Route path="*" element={<NotFound />} />
         </Routes>
