@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { getRoleHomeRoute } from "../auth/ProtectedRoute";
+import TechText from "../components/TechText";
 
 const CHAPTERS = [
   {
@@ -129,7 +130,7 @@ export const LandingPage = () => {
   };
 
   return (
-    <div className="bg-[#E6E2DD] text-[#1b1b20] min-h-screen relative font-body-md text-body-md selection:bg-[#FCBC18] selection:text-[#101010]">
+    <div className="bg-[#E6E2DD] text-on-surface min-h-screen relative font-body-md text-body-md selection:bg-[#FCBC18] selection:text-[#101010]">
       {/* Blueprint Hairline Coordinate Grid Lines */}
       <div className="pointer-events-none fixed inset-0 z-0 grid grid-cols-12 gap-4 px-6 opacity-[0.06]">
         {[...Array(12)].map((_, i) => (
@@ -141,11 +142,11 @@ export const LandingPage = () => {
       {/* 1. PERSISTENT ARCHITECTURAL HEADER                                        */}
       {/* ========================================================================= */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-[#101010] text-[#F2ECE6] border-b border-[#101010] shadow-[0_3px_0px_#101010]">
-        <div className="h-[72px] w-full px-6 md:px-10 flex items-center justify-between">
+        <div className="h-18 w-full px-6 md:px-10 flex items-center justify-between">
           {/* Brand Mark */}
           <div className="flex items-center space-x-4">
-            <div className="w-[10px] h-[10px] bg-[#FCBC18] flex-shrink-0" />
-            <span className="font-label-code text-label-code tracking-[0.2em] text-[#A39B8F] border border-[#A39B8F]/30 px-2 py-[2px]">
+            <div className="w-2.5 h-2.5 bg-[#FCBC18] shrink-0" />
+            <span className="font-label-code text-label-code tracking-[0.2em] text-[#A39B8F] border border-[#A39B8F]/30 px-2 py-0.5">
               SYS // 01
             </span>
             <button
@@ -154,7 +155,7 @@ export const LandingPage = () => {
             >
               CONSTRA
             </button>
-            <div className="hidden lg:block h-4 w-[1px] bg-[#A39B8F]/30" />
+            <div className="hidden lg:block h-4 w-px bg-[#A39B8F]/30" />
             <span className="hidden lg:inline-block font-label-meta text-label-meta text-[#A39B8F] uppercase tracking-[0.14em]">
               CIVIL AUDIT PLATFORM
             </span>
@@ -203,7 +204,7 @@ export const LandingPage = () => {
           {/* Operational State & Authentication Action */}
           <div className="flex items-center space-x-4">
             <div className="hidden xl:flex items-center space-x-2 border border-[#A39B8F]/30 px-2.5 py-1">
-              <div className="w-2 h-2 bg-[#93d5ad] animate-pulse" />
+              <div className="w-2 h-2 bg-tertiary-fixed-dim animate-pulse" />
               <span className="font-label-code text-label-code text-[#F2ECE6] uppercase">
                 GATE: OPERATIONAL
               </span>
@@ -239,7 +240,7 @@ export const LandingPage = () => {
       </header>
 
       {/* Main Container */}
-      <main className="relative z-10 w-full pt-[72px]" id="overview">
+      <main className="relative z-10 w-full pt-18" id="overview">
         {/* ========================================================================= */}
         {/* 2. PINNED CHAPTER SEQUENCE / TECHNICAL VISUAL NARRATIVE                   */}
         {/* ========================================================================= */}
@@ -259,7 +260,7 @@ export const LandingPage = () => {
               <source src="/gemini_generated_video_cc806917.mp4" type="video/mp4" />
             </video>
             {/* Scrim gradient layers for text legibility & technical grading */}
-            <div className="absolute inset-0 bg-gradient-to-r from-[#101010] via-[#101010]/85 to-transparent w-full md:w-3/5" />
+            <div className="absolute inset-0 bg-linear-to-r from-[#101010] via-[#101010]/85 to-transparent w-full md:w-3/5" />
             <div className="absolute inset-0 bg-[#101010]/25 mix-blend-multiply" />
           </div>
 
@@ -290,18 +291,16 @@ export const LandingPage = () => {
                     title={`Go to ${chap.tag}`}
                   >
                     <span
-                      className={`text-[11px] font-bold transition-colors ${
-                        isActive ? "text-[#FCBC18]" : "text-[#A39B8F] group-hover:text-[#FCBC18]"
-                      }`}
+                      className={`text-[11px] font-bold transition-colors ${isActive ? "text-[#FCBC18]" : "text-[#A39B8F] group-hover:text-[#FCBC18]"
+                        }`}
                     >
                       0{idx}
                     </span>
                     <span
-                      className={`w-2.5 h-2.5 transition-all ${
-                        isActive
+                      className={`w-2.5 h-2.5 transition-all ${isActive
                           ? "bg-[#FCBC18]"
                           : "bg-[#A39B8F]/30 group-hover:bg-[#FCBC18]"
-                      }`}
+                        }`}
                     />
                   </button>
                 );
@@ -313,15 +312,14 @@ export const LandingPage = () => {
           </aside>
 
           {/* Slide Viewport Container */}
-          <div className="relative w-full h-[640px] md:h-[720px] pr-12 md:pr-16" id="slides-wrapper">
+          <div className="relative w-full h-160 md:h-180 pr-12 md:pr-16" id="slides-wrapper">
             {CHAPTERS.map((chapter, idx) => {
               const isActive = idx === currentSlide;
               return (
                 <article
                   key={chapter.id}
-                  className={`slide-panel absolute inset-0 w-full h-full transition-opacity duration-500 ease-in-out ${
-                    isActive ? "opacity-100 z-20" : "opacity-0 pointer-events-none z-10"
-                  }`}
+                  className={`slide-panel absolute inset-0 w-full h-full transition-opacity duration-500 ease-in-out ${isActive ? "opacity-100 z-20" : "opacity-0 pointer-events-none z-10"
+                    }`}
                 >
                   <div className="relative w-full h-full flex items-stretch">
                     {/* Technical Drafting Overlays & Corner Registration Ticks */}
@@ -347,9 +345,39 @@ export const LandingPage = () => {
                         </span>
                       </div>
 
-                      <h1 className="font-display-lg text-display-lg-mobile md:text-display-lg text-[#F2ECE6] tracking-tight uppercase leading-none font-bold mb-4">
-                        {chapter.title}
-                      </h1>
+                      {chapter.title === "CONSTRA" ? (
+                        <div className="w-full max-w-2xl h-24 sm:h-28 md:h-36 mb-4 relative -ml-3">
+                          <h1 className="sr-only">{chapter.title}</h1>
+                          <TechText
+                            text="CONSTRA"
+                            fontFamily="'Space Grotesk', sans-serif"
+                            fontWeight={700}
+                            fontSize={130}
+                            color="#F2ECE6"
+                            accentColor="#FCBC18"
+                            letterSpacing={0.02}
+                            reach={180}
+                            softness={0.7}
+                            dashLength={4}
+                            dashGap={2}
+                            strokeWidth={1.5}
+                            speed={0.8}
+                            lineStyle="dashed"
+                            reveal="letter"
+                            specks={15}
+                            selection={true}
+                            labels={true}
+                            draggable={true}
+                            sweep={isActive}
+                            sweepMode="restart"
+                            align="left"
+                          />
+                        </div>
+                      ) : (
+                        <h1 className="font-display-lg text-display-lg-mobile md:text-display-lg text-[#F2ECE6] tracking-tight uppercase leading-none font-bold mb-4">
+                          {chapter.title}
+                        </h1>
+                      )}
 
                       {chapter.quote && (
                         <div className="border-l-4 border-[#FCBC18] pl-4 mb-6">
@@ -507,7 +535,7 @@ export const LandingPage = () => {
                 {/* Row 1 */}
                 <div className="grid grid-cols-12 px-4 py-6 border-b border-[#A39B8F]/30 hover:bg-[#E6E2DD]/50 transition-colors">
                   <div className="col-span-12 md:col-span-3 mb-2 md:mb-0">
-                    <span className="font-label-code text-label-code text-[#B3261E] bg-[#FFDAD6] px-1.5 py-0.5 inline-block font-bold mb-1 border border-[#B3261E]/30">
+                    <span className="font-label-code text-label-code text-[#B3261E] bg-error-container px-1.5 py-0.5 inline-block font-bold mb-1 border border-[#B3261E]/30">
                       VEC-01
                     </span>
                     <h3 className="font-headline-md text-headline-md font-bold text-[#101010] uppercase">
@@ -525,7 +553,7 @@ export const LandingPage = () => {
                 {/* Row 2 */}
                 <div className="grid grid-cols-12 px-4 py-6 border-b border-[#A39B8F]/30 hover:bg-[#E6E2DD]/50 transition-colors">
                   <div className="col-span-12 md:col-span-3 mb-2 md:mb-0">
-                    <span className="font-label-code text-label-code text-[#B3261E] bg-[#FFDAD6] px-1.5 py-0.5 inline-block font-bold mb-1 border border-[#B3261E]/30">
+                    <span className="font-label-code text-label-code text-[#B3261E] bg-error-container px-1.5 py-0.5 inline-block font-bold mb-1 border border-[#B3261E]/30">
                       VEC-02
                     </span>
                     <h3 className="font-headline-md text-headline-md font-bold text-[#101010] uppercase">
@@ -543,7 +571,7 @@ export const LandingPage = () => {
                 {/* Row 3 */}
                 <div className="grid grid-cols-12 px-4 py-6 hover:bg-[#E6E2DD]/50 transition-colors">
                   <div className="col-span-12 md:col-span-3 mb-2 md:mb-0">
-                    <span className="font-label-code text-label-code text-[#B3261E] bg-[#FFDAD6] px-1.5 py-0.5 inline-block font-bold mb-1 border border-[#B3261E]/30">
+                    <span className="font-label-code text-label-code text-[#B3261E] bg-error-container px-1.5 py-0.5 inline-block font-bold mb-1 border border-[#B3261E]/30">
                       VEC-03
                     </span>
                     <h3 className="font-headline-md text-headline-md font-bold text-[#101010] uppercase">
@@ -766,11 +794,10 @@ export const LandingPage = () => {
                     SPECIMEN: SEC-04
                   </span>
                   <span
-                    className={`font-label-code text-label-code px-2.5 py-1 uppercase font-bold border border-[#101010] transition-colors ${
-                      demoFlagResolved
+                    className={`font-label-code text-label-code px-2.5 py-1 uppercase font-bold border border-[#101010] transition-colors ${demoFlagResolved
                         ? "bg-[#2F6F4E] text-[#F2ECE6]"
                         : "bg-[#FCBC18] text-[#101010]"
-                    }`}
+                      }`}
                   >
                     STATUS: {demoFlagResolved ? "VERIFIED & CLEARED" : "FLAGGED"}
                   </span>
@@ -833,19 +860,17 @@ export const LandingPage = () => {
 
                 {/* Row 3: Stage match (Interactive Flagged state) */}
                 <div
-                  className={`py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-3 -mx-3 border-l-4 transition-all ${
-                    demoFlagResolved
+                  className={`py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-3 -mx-3 border-l-4 transition-all ${demoFlagResolved
                       ? "border-[#2F6F4E] bg-[#2F6F4E]/10"
                       : "border-[#FCBC18] bg-[#FCBC18]/10"
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center space-x-4">
                     <div
-                      className={`w-8 h-8 flex items-center justify-center ${
-                        demoFlagResolved
+                      className={`w-8 h-8 flex items-center justify-center ${demoFlagResolved
                           ? "bg-[#2F6F4E] text-[#F2ECE6]"
                           : "bg-[#101010] text-[#FCBC18]"
-                      }`}
+                        }`}
                     >
                       <span className="material-symbols-outlined text-lg">
                         {demoFlagResolved ? "verified" : "layers"}
@@ -879,11 +904,10 @@ export const LandingPage = () => {
                       )}
                     </div>
                     <div
-                      className={`flex items-center space-x-1.5 px-3 py-1 font-label-code text-label-code uppercase font-bold border border-[#101010] ${
-                        demoFlagResolved
+                      className={`flex items-center space-x-1.5 px-3 py-1 font-label-code text-label-code uppercase font-bold border border-[#101010] ${demoFlagResolved
                           ? "bg-[#2F6F4E] text-[#F2ECE6]"
                           : "bg-[#FCBC18] text-[#101010]"
-                      }`}
+                        }`}
                     >
                       <span className="material-symbols-outlined text-sm">
                         {demoFlagResolved ? "check_circle" : "warning"}
@@ -921,11 +945,10 @@ export const LandingPage = () => {
                   <button
                     disabled={!demoFlagResolved}
                     onClick={() => navigate("/login")}
-                    className={`w-full sm:w-auto px-6 py-3 font-label-code text-label-code uppercase tracking-wider font-bold border border-[#101010] flex items-center justify-center space-x-2 transition-all ${
-                      demoFlagResolved
+                    className={`w-full sm:w-auto px-6 py-3 font-label-code text-label-code uppercase tracking-wider font-bold border border-[#101010] flex items-center justify-center space-x-2 transition-all ${demoFlagResolved
                         ? "bg-[#FCBC18] text-[#101010] cursor-pointer shadow-[2px_2px_0px_#101010] hover:bg-[#101010] hover:text-[#FCBC18]"
                         : "bg-[#101010] text-[#FCBC18] cursor-not-allowed shadow-[2px_2px_0px_#B3261E]"
-                    }`}
+                      }`}
                     type="button"
                   >
                     <span className="material-symbols-outlined text-base">
@@ -1094,7 +1117,7 @@ export const LandingPage = () => {
                   <span className="text-[#101010]">CLEARANCE: FIELD DATA ONLY</span>
                   <Link
                     to="/login"
-                    className="text-[#7a5900] font-bold hover:underline"
+                    className="text-primary font-bold hover:underline"
                   >
                     LOGIN →
                   </Link>
@@ -1118,7 +1141,7 @@ export const LandingPage = () => {
                   <span className="text-[#101010]">CLEARANCE: LOGISTICS LEDGER</span>
                   <Link
                     to="/login"
-                    className="text-[#7a5900] font-bold hover:underline"
+                    className="text-primary font-bold hover:underline"
                   >
                     LOGIN →
                   </Link>
@@ -1142,7 +1165,7 @@ export const LandingPage = () => {
                   <span className="text-[#2F6F4E] font-bold">CLEARANCE: APEX CRYPTO SEAL</span>
                   <Link
                     to="/login"
-                    className="text-[#7a5900] font-bold hover:underline"
+                    className="text-primary font-bold hover:underline"
                   >
                     LOGIN →
                   </Link>
@@ -1161,9 +1184,9 @@ export const LandingPage = () => {
         >
           {/* Architectural Construction Crosshair Datum Pattern in Background */}
           <div className="pointer-events-none absolute inset-0 opacity-10 flex items-center justify-center">
-            <div className="w-[800px] h-[800px] border border-[#A39B8F] flex items-center justify-center">
-              <div className="w-[500px] h-[500px] border border-[#FCBC18] flex items-center justify-center">
-                <div className="w-[200px] h-[200px] border border-[#A39B8F]" />
+            <div className="w-200 h-200 border border-[#A39B8F] flex items-center justify-center">
+              <div className="w-125 h-125 border border-[#FCBC18] flex items-center justify-center">
+                <div className="w-50 h-50 border border-[#A39B8F]" />
               </div>
             </div>
           </div>
