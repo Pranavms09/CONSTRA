@@ -14,7 +14,7 @@ export const NewDelivery = () => {
 
   const handleUpload = async (file) => {
     if (!selectedProjectId) {
-      setUploadError("Please select a project first.");
+      setUploadError("SELECT PROJECT IDENTIFIER BEFORE INITIATING INGESTION.");
       return;
     }
 
@@ -23,8 +23,6 @@ export const NewDelivery = () => {
 
     try {
       const result = await uploadChallan(selectedProjectId, file);
-      // Challan is accepted and processing in background.
-      // Redirect to review page which polls or displays the drafted fields
       navigate(`/store/deliveries/${result.id}`);
     } catch (err) {
       setUploadError(err.message || "Upload failed. Please try again.");
@@ -47,17 +45,34 @@ export const NewDelivery = () => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      <div>
-        <h2 className="text-xl font-bold text-white">Upload Delivery Challan</h2>
-        <p className="text-xs text-slate-400 mt-1">
-          Upload a paper slip photo or scanned delivery document for project{" "}
-          <strong className="text-slate-200">{selectedProject?.name}</strong>.
-          Our OCR engine will extract line items, vendor details, and dates for your review.
+    <div className="max-w-3xl mx-auto space-y-6">
+      {/* Page Header */}
+      <div className="border-b-2 border-[#101010] pb-4">
+        <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-wider text-[#6E675F]">
+          <span>INGESTION PROTOCOL</span>
+          <span>//</span>
+          <span className="text-[#101010] font-bold">SPEC-CHALLAN-IN</span>
+        </div>
+        <h2 className="font-['Space_Grotesk'] text-2xl font-bold uppercase tracking-wider text-[#101010] mt-1">
+          Upload Delivery Challan
+        </h2>
+        <p className="font-['Archivo_Narrow'] text-xs text-[#6E675F] mt-1">
+          Upload a physical vendor receipt or scanned dispatch invoice for project{" "}
+          <strong className="text-[#101010] font-mono font-bold">
+            [{selectedProject?.code || "PRJ"} // {selectedProject?.name}]
+          </strong>
+          . The OCR neural parser extracts line items, quantities, and vendor signatures for audit reconciliation.
         </p>
       </div>
 
-      <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-6">
+      {/* Main Drafting Box */}
+      <div className="border-2 border-[#101010] bg-[#F2ECE6] shadow-[4px_4px_0px_#101010] p-6 space-y-6 relative rounded-none">
+        {/* Top telemetry bar */}
+        <div className="flex items-center justify-between border-b border-[#A39B8F] pb-3 text-[11px] font-mono text-[#6E675F]">
+          <span>STAGE: 01 // RAW DOCUMENT INTAKE</span>
+          <span className="text-[#2F6F4E] font-bold">SYS ACTIVE: READY</span>
+        </div>
+
         <FileUploader
           onFileSelected={handleUpload}
           isUploading={isUploading}
@@ -65,36 +80,41 @@ export const NewDelivery = () => {
         />
 
         <div className="relative flex items-center justify-center">
-          <div className="border-t border-slate-800 w-full" />
-          <span className="bg-slate-900 px-3 text-[11px] font-mono text-slate-500 uppercase tracking-wider absolute">
-            Or
+          <div className="border-t border-[#A39B8F] w-full" />
+          <span className="bg-[#F2ECE6] px-3 font-mono text-[10px] text-[#6E675F] uppercase tracking-widest absolute">
+            OR // DIRECT OVERRIDE
           </span>
         </div>
 
-        <div className="text-center">
+        <div className="text-center pt-2">
           <button
             type="button"
             onClick={handleManualEntry}
             disabled={manualLoading || isUploading}
-            className="px-4 py-2.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition disabled:opacity-50 cursor-pointer"
+            className="px-5 py-2.5 bg-[#E6E2DD] hover:bg-[#d8d4cf] text-[#101010] border-2 border-[#101010] font-mono uppercase tracking-wider text-xs font-bold shadow-[2px_2px_0px_#101010] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-none cursor-pointer disabled:opacity-50 inline-flex items-center gap-2"
           >
-            {manualLoading ? "Creating Draft..." : "✍️ Create Manual Challan (No Image Upload)"}
+            <span className="material-symbols-outlined text-sm">edit_note</span>
+            <span>{manualLoading ? "INITIALIZING DRAFT..." : "CREATE MANUAL ENTRY DRAFT (NO SCAN)"}</span>
           </button>
-          <p className="text-[11px] text-slate-500 mt-1">
-            Use when physical paper is unreadable or handwritten beyond OCR capability.
+          <p className="font-['Archivo_Narrow'] text-[11px] text-[#6E675F] mt-2 font-mono">
+            AUTHORIZATION: Use only when physical paper slip is severely degraded or unreadable by OCR engine.
           </p>
         </div>
       </div>
 
       {/* Guidelines Box */}
-      <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800 text-xs text-slate-400 space-y-2">
-        <h4 className="font-semibold text-slate-300">Tips for Best OCR Accuracy:</h4>
-        <ul className="list-disc list-inside space-y-1 text-[11px]">
-          <li>Ensure document is well-lit and oriented right-side up.</li>
-          <li>Avoid severe folds obscuring line item quantities and units.</li>
-          <li>You will have an opportunity to review and edit every field before confirming.</li>
+      <div className="border-l-4 border-[#FCBC18] border-2 border-[#101010] bg-[#E6E2DD] p-4 text-xs shadow-[2px_2px_0px_#101010]">
+        <div className="flex items-center gap-2 font-['Space_Grotesk'] font-bold uppercase tracking-wider text-[#101010] mb-2 text-xs">
+          <span className="material-symbols-outlined text-sm text-[#FCBC18]">info</span>
+          <span>OCR ACCURACY SPECIFICATION GUIDELINES</span>
+        </div>
+        <ul className="list-disc list-inside space-y-1 font-['Archivo_Narrow'] text-xs text-[#101010]">
+          <li>Ensure document is well-lit, orthogonal, and captured at minimum 300 DPI resolution.</li>
+          <li>Avoid physical folds or creases obscuring line item quantities, vendor stamps, and units.</li>
+          <li>Every extracted line item must be validated in the subsequent Review stage before stock commit.</li>
         </ul>
       </div>
     </div>
   );
 };
+

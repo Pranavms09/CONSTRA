@@ -54,198 +54,295 @@ export const StoreDashboard = () => {
 
   return (
     <div className="space-y-6">
-      {/* Top Banner */}
-      <div className="p-6 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900/90 to-amber-950/20 border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <span className="text-xs font-mono text-amber-400 font-semibold tracking-wider uppercase">
-            Store & Inventory Workspace
-          </span>
-          <h2 className="text-xl font-bold text-white mt-1">
-            {selectedProject?.name || "Apex Tower — Commercial Block A"}
-          </h2>
-          <p className="text-xs text-slate-400 mt-1">
-            {selectedProject?.site_address || "Sector 62, Noida, Uttar Pradesh"}
-          </p>
-        </div>
+      {/* Top Architectural Banner */}
+      <div className="p-6 bg-[#F2ECE6] border border-[#101010] shadow-[3px_3px_0px_#101010] relative">
+        {/* Corner Crop Marks */}
+        <div className="absolute -top-1 -left-1 w-2.5 h-2.5 border-t-2 border-l-2 border-[#101010]" />
+        <div className="absolute -top-1 -right-1 w-2.5 h-2.5 border-t-2 border-r-2 border-[#101010]" />
+        <div className="absolute -bottom-1 -left-1 w-2.5 h-2.5 border-b-2 border-l-2 border-[#101010]" />
+        <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 border-b-2 border-r-2 border-[#101010]" />
 
-        <div className="flex items-center gap-3">
-          <Link
-            to="/store/deliveries/new"
-            className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold rounded-xl transition shadow-sm flex items-center gap-1.5"
-          >
-            <span>📄</span>
-            <span>Upload Challan</span>
-          </Link>
-          <Link
-            to="/store/issue"
-            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold rounded-xl transition flex items-center gap-1.5"
-          >
-            <span>📤</span>
-            <span>Issue Material</span>
-          </Link>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="w-2 h-2 bg-[#FCBC18]" />
+              <span className="font-label-code text-label-code uppercase tracking-widest text-[#504533]">
+                STORE-OPS // SECTOR-02-INV
+              </span>
+            </div>
+            <h2 className="font-headline-lg text-headline-lg font-bold text-[#101010] uppercase tracking-tight">
+              {selectedProject?.name || "Apex Tower — Commercial Block A"}
+            </h2>
+            <p className="font-label-meta text-label-meta text-[#5F5E5E] uppercase mt-1">
+              SITE LOCATION: {selectedProject?.site_address || "Sector 62, Industrial Area // WGS 84"}
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <Link
+              to="/store/deliveries/new"
+              className="px-5 py-2.5 bg-[#FCBC18] hover:bg-[#101010] text-[#101010] hover:text-[#FCBC18] font-label-code text-label-code font-bold uppercase tracking-wider border border-[#101010] transition-colors shadow-[2px_2px_0px_#101010] flex items-center gap-2"
+            >
+              <span className="material-symbols-outlined text-base">upload_file</span>
+              <span>UPLOAD CHALLAN</span>
+            </Link>
+            <Link
+              to="/store/issue"
+              className="px-5 py-2.5 bg-[#E6E2DD] hover:bg-[#101010] text-[#101010] hover:text-[#F2ECE6] font-label-code text-label-code font-bold uppercase tracking-wider border border-[#101010] transition-colors flex items-center gap-2"
+            >
+              <span className="material-symbols-outlined text-base">output</span>
+              <span>ISSUE MATERIAL</span>
+            </Link>
+          </div>
         </div>
       </div>
 
-      {/* Metrics Cards */}
+      {/* 4 Technical Metric Spec Tiles */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-1">
-          <span className="text-xs text-slate-400">Total Challans</span>
-          <p className="text-2xl font-bold font-mono text-white">{challans.length}</p>
-          <span className="text-[11px] text-slate-500 font-mono">Recorded in project</span>
+        {/* Tile 1 */}
+        <div className="p-4 bg-[#F2ECE6] border border-[#101010] flex flex-col justify-between">
+          <span className="font-label-meta text-label-meta text-[#5F5E5E] uppercase tracking-wider block mb-1">
+            RECORDED CHALLANS
+          </span>
+          <p className="font-headline-lg text-display-lg-mobile font-bold text-[#101010] tabular-nums">
+            {challans.length}
+          </p>
+          <span className="font-label-code text-label-code text-[#8C8B91] uppercase mt-2 pt-2 border-t border-[#A39B8F]/30">
+            TOTAL IN REGISTER
+          </span>
         </div>
 
-        <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-1">
-          <span className="text-xs text-slate-400">Pending Review</span>
-          <p className="text-2xl font-bold font-mono text-amber-400">{draftsCount}</p>
-          <span className="text-[11px] text-amber-500/80 font-mono">Needs field confirmation</span>
+        {/* Tile 2 */}
+        <div className="p-4 bg-[#F2ECE6] border border-[#101010] border-t-4 border-t-[#FCBC18] flex flex-col justify-between">
+          <span className="font-label-meta text-label-meta text-[#5F5E5E] uppercase tracking-wider block mb-1">
+            PENDING VERIFICATION
+          </span>
+          <p className="font-headline-lg text-display-lg-mobile font-bold text-[#7a5900] tabular-nums">
+            {draftsCount}
+          </p>
+          <span className="font-label-code text-label-code text-[#7a5900] uppercase mt-2 pt-2 border-t border-[#A39B8F]/30 font-bold">
+            NEEDS FIELD AUDIT
+          </span>
         </div>
 
-        <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-1">
-          <span className="text-xs text-slate-400">Materials In Stock</span>
-          <p className="text-2xl font-bold font-mono text-emerald-400">{stock.length}</p>
-          <span className="text-[11px] text-slate-500 font-mono">Active catalog items</span>
+        {/* Tile 3 */}
+        <div className="p-4 bg-[#F2ECE6] border border-[#101010] border-t-4 border-t-[#2F6F4E] flex flex-col justify-between">
+          <span className="font-label-meta text-label-meta text-[#5F5E5E] uppercase tracking-wider block mb-1">
+            CONFIRMED DELIVERIES
+          </span>
+          <p className="font-headline-lg text-display-lg-mobile font-bold text-[#2F6F4E] tabular-nums">
+            {confirmedCount}
+          </p>
+          <span className="font-label-code text-label-code text-[#2F6F4E] uppercase mt-2 pt-2 border-t border-[#A39B8F]/30 font-bold">
+            MATCHED TO BOQ
+          </span>
         </div>
 
-        <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-1">
-          <span className="text-xs text-slate-400">Open Store Alerts</span>
-          <p className="text-2xl font-bold font-mono text-rose-400">{openAlertsCount}</p>
-          <span className="text-[11px] text-rose-500/80 font-mono">Flagged items</span>
+        {/* Tile 4 */}
+        <div className="p-4 bg-[#F2ECE6] border border-[#101010] border-t-4 border-t-[#B3261E] flex flex-col justify-between">
+          <span className="font-label-meta text-label-meta text-[#5F5E5E] uppercase tracking-wider block mb-1">
+            ACTIVE TOLERANCE ALERTS
+          </span>
+          <p className="font-headline-lg text-display-lg-mobile font-bold text-[#B3261E] tabular-nums">
+            {openAlertsCount}
+          </p>
+          <span className="font-label-code text-label-code text-[#B3261E] uppercase mt-2 pt-2 border-t border-[#A39B8F]/30 font-bold">
+            REQUIRES RESOLUTION
+          </span>
         </div>
       </div>
 
-      {/* 2-Column Section: Recent Challans & Current Stock */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Challans Card */}
-        <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              <span>🚚</span>
-              <span>Recent Delivery Challans</span>
-            </h3>
+      {/* Main Split Grid (7 Cols Left, 5 Cols Right) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* LEFT COLUMN: Recent Delivery Challans */}
+        <div className="lg:col-span-7 bg-[#F2ECE6] border border-[#101010] shadow-[2px_2px_0px_#101010] flex flex-col">
+          {/* Header */}
+          <div className="p-4 bg-[#101010] text-[#F2ECE6] flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 bg-[#FCBC18]" />
+              <span className="font-headline-md text-headline-md uppercase font-bold tracking-wider">
+                RECENT DELIVERY CHALLANS
+              </span>
+            </div>
             <Link
               to="/store/deliveries"
-              className="text-xs text-amber-400 hover:text-amber-300 font-medium"
+              className="font-label-code text-label-code uppercase text-[#FCBC18] hover:underline"
             >
-              View all ↗
+              VIEW ALL ({challans.length}) →
             </Link>
           </div>
 
+          {/* List Rows */}
           {challans.length === 0 ? (
-            <div className="p-8 text-center text-xs text-slate-500 border border-dashed border-slate-800 rounded-xl">
-              No delivery challans uploaded yet.
+            <div className="p-8 text-center font-label-code text-label-code text-[#5F5E5E] uppercase">
+              NO CHALLANS LOGGED YET. CLICK "UPLOAD CHALLAN" TO BEGIN.
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="divide-y divide-[#A39B8F]/30">
               {challans.map((ch) => (
                 <Link
                   key={ch.id}
                   to={`/store/deliveries/${ch.id}`}
-                  className="p-3 rounded-xl bg-slate-950/60 hover:bg-slate-950 border border-slate-800/80 hover:border-slate-700 transition flex items-center justify-between gap-3 block"
+                  className="p-4 hover:bg-[#E6E2DD] transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 group"
                 >
-                  <div className="space-y-0.5 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-mono font-bold text-white truncate">
-                        {ch.challan_no || "Challan #" + ch.id}
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-2.5 flex-wrap">
+                      <span className="font-headline-md text-headline-md font-bold text-[#101010] uppercase tracking-wide group-hover:text-[#7a5900]">
+                        {ch.challan_no || `CH-TEMP-${ch.id}`}
                       </span>
                       <StatusBadge status={ch.status} />
                     </div>
-                    <p className="text-xs text-slate-400 truncate">
-                      {ch.vendor_name || ch.vendor_name_raw || "Unknown Vendor"} • {ch.challan_date || "No date"}
-                    </p>
+                    <div className="flex items-center gap-2 font-label-meta text-label-meta text-[#5F5E5E] uppercase">
+                      <span>{ch.vendor_name_raw || "UNKNOWN VENDOR"}</span>
+                      <span>•</span>
+                      <span>{ch.challan_date || "NO DATE REGISTERED"}</span>
+                    </div>
                   </div>
-                  <span className="text-xs text-slate-400 font-mono">
-                    {ch.items?.length || 0} items →
-                  </span>
+
+                  <div className="flex items-center gap-3 self-end sm:self-center shrink-0">
+                    <span className="font-label-code text-label-code bg-[#E6E2DD] border border-[#101010] px-2 py-1 text-[#101010] font-bold">
+                      {ch.items?.length || 0} ITEMS
+                    </span>
+                    <div className="w-8 h-8 bg-[#101010] text-[#F2ECE6] group-hover:bg-[#FCBC18] group-hover:text-[#101010] transition-colors flex items-center justify-center">
+                      <span className="material-symbols-outlined text-sm">
+                        arrow_forward
+                      </span>
+                    </div>
+                  </div>
                 </Link>
               ))}
             </div>
           )}
+
+          {/* Footer Bar */}
+          <div className="p-3 bg-[#E6E2DD] border-t border-[#A39B8F]/30 flex items-center justify-between font-label-meta text-label-meta text-[#5F5E5E] uppercase">
+            <span>SHOWING {Math.min(5, challans.length)} OF {challans.length} RECORDS</span>
+            <span>INTEGRITY VERIFIED // CONSTRA-CORE</span>
+          </div>
         </div>
 
-        {/* Current Stock Preview */}
-        <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              <span>📦</span>
-              <span>Stock Snapshot</span>
-            </h3>
-            <Link
-              to="/store/stock"
-              className="text-xs text-amber-400 hover:text-amber-300 font-medium"
-            >
-              Detailed table ↗
-            </Link>
-          </div>
-
-          {stock.length === 0 ? (
-            <div className="p-8 text-center text-xs text-slate-500 border border-dashed border-slate-800 rounded-xl">
-              No material stock recorded yet.
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {stock.map((item) => (
-                <div
-                  key={item.material_id}
-                  className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 flex items-center justify-between"
-                >
-                  <div>
-                    <p className="text-xs font-semibold text-white">{item.material_name}</p>
-                    <p className="text-[11px] text-slate-400 font-mono">
-                      Received: {item.received_base} {item.base_unit} • Issued: {item.issued_base} {item.base_unit}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <span
-                      className={`text-sm font-bold font-mono ${
-                        item.negative ? "text-rose-400" : "text-emerald-400"
-                      }`}
-                    >
-                      {item.in_stock_base} {item.base_unit}
-                    </span>
-                    <span className="block text-[10px] text-slate-500 font-mono">In Store</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Recent Alerts Section */}
-      {alerts.length > 0 && (
-        <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              <span>🚨</span>
-              <span>Recent Delivery & Drawdown Alerts</span>
-            </h3>
-            <Link to="/store/alerts" className="text-xs text-amber-400 hover:text-amber-300 font-medium">
-              View all {alerts.length} alerts ↗
-            </Link>
-          </div>
-          <div className="space-y-2">
-            {alerts.slice(0, 3).map((a) => (
-              <div
-                key={a.id}
-                className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 flex items-start justify-between gap-3"
-              >
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <SeverityTag severity={a.severity} />
-                    <span className="text-xs font-mono font-medium text-slate-300">
-                      {a.type.replace(/_/g, " ").toUpperCase()}
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-300">{a.explanation}</p>
-                </div>
-                <span className="text-[10px] text-slate-500 font-mono whitespace-nowrap">
-                  {new Date(a.created_at).toLocaleDateString()}
+        {/* RIGHT COLUMN: Stock Snapshot & Alerts */}
+        <div className="lg:col-span-5 flex flex-col gap-6">
+          {/* Stock Snapshot Card */}
+          <div className="bg-[#F2ECE6] border border-[#101010] shadow-[2px_2px_0px_#101010]">
+            <div className="p-4 bg-[#101010] text-[#F2ECE6] flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 bg-[#FCBC18]" />
+                <span className="font-headline-md text-headline-md uppercase font-bold tracking-wider">
+                  STOCK SNAPSHOT
                 </span>
               </div>
-            ))}
+              <Link
+                to="/store/stock"
+                className="font-label-code text-label-code uppercase text-[#FCBC18] hover:underline"
+              >
+                DETAILED TABLE →
+              </Link>
+            </div>
+
+            <div className="p-4 flex flex-col gap-4">
+              {stock.length === 0 ? (
+                <div className="py-6 text-center font-label-code text-label-code text-[#5F5E5E] uppercase">
+                  NO MATERIAL INVENTORY RECORDED
+                </div>
+              ) : (
+                stock.slice(0, 4).map((item) => {
+                  const percent =
+                    item.min_threshold && item.min_threshold > 0
+                      ? Math.min(100, Math.round((item.current_qty / item.min_threshold) * 100))
+                      : 80;
+                  const isLow = item.min_threshold && item.current_qty < item.min_threshold;
+
+                  return (
+                    <div
+                      key={item.id || item.material_name}
+                      className="p-3 bg-[#E6E2DD] border border-[#A39B8F]/40 flex flex-col gap-2"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-headline-md text-body-lg font-bold text-[#101010] uppercase">
+                          {item.material_name}
+                        </span>
+                        <span
+                          className={`font-label-code text-label-code px-1.5 py-0.5 border font-bold uppercase ${
+                            isLow
+                              ? "bg-[#ffdad6] text-[#ba1a1a] border-[#ba1a1a]"
+                              : "bg-[#93d5ad]/30 text-[#296a49] border-[#296a49]/30"
+                          }`}
+                        >
+                          {isLow ? "DEFICIT" : "NOMINAL"}
+                        </span>
+                      </div>
+
+                      <div className="flex items-baseline justify-between font-label-code text-label-code">
+                        <span className="text-[#5F5E5E]">
+                          CURRENT: <span className="font-bold text-[#101010] text-body-lg">{item.current_qty}</span> {item.unit}
+                        </span>
+                        {item.min_threshold && (
+                          <span className="text-[#8C8B91]">
+                            MIN: {item.min_threshold} {item.unit}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Hard Offset Meter Bar */}
+                      <div className="w-full h-2 bg-[#F2ECE6] border border-[#101010] overflow-hidden">
+                        <div
+                          className={`h-full ${isLow ? "bg-[#B3261E]" : "bg-[#FCBC18]"}`}
+                          style={{ width: `${percent}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+
+          {/* Store Alerts Card */}
+          <div className="bg-[#F2ECE6] border border-[#101010] shadow-[2px_2px_0px_#101010]">
+            <div className="p-4 bg-[#101010] text-[#F2ECE6] flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 bg-[#B3261E]" />
+                <span className="font-headline-md text-headline-md uppercase font-bold tracking-wider">
+                  DISCREPANCY ALERTS
+                </span>
+              </div>
+              <Link
+                to="/store/alerts"
+                className="font-label-code text-label-code uppercase text-[#FCBC18] hover:underline"
+              >
+                ALL ALERTS ({alerts.length}) →
+              </Link>
+            </div>
+
+            <div className="p-4 divide-y divide-[#A39B8F]/30">
+              {alerts.length === 0 ? (
+                <div className="py-4 text-center font-label-code text-label-code text-[#2F6F4E] uppercase">
+                  ✓ ZERO ACTIVE DISCREPANCIES DETECTED
+                </div>
+              ) : (
+                alerts.slice(0, 3).map((al) => (
+                  <div key={al.id} className="py-3 flex items-start justify-between gap-3">
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-2">
+                        <SeverityTag severity={al.severity} />
+                        <span className="font-label-code text-label-code font-bold text-[#101010] uppercase">
+                          {al.alert_type}
+                        </span>
+                      </div>
+                      <p className="font-body-sm text-body-sm text-[#5F5E5E]">
+                        {al.message}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };
+
+export default StoreDashboard;

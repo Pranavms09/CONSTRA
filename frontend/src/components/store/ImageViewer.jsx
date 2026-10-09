@@ -36,7 +36,6 @@ export const ImageViewer = ({ fileUrl, fileName, isPdf = false }) => {
       } catch (err) {
         if (active) {
           console.warn("Could not load preview via blob, falling back to direct URL:", err);
-          // Fallback to direct fileUrl
           setBlobUrl(fileUrl);
         }
       } finally {
@@ -68,22 +67,24 @@ export const ImageViewer = ({ fileUrl, fileName, isPdf = false }) => {
 
   if (isPdf) {
     return (
-      <div className="flex flex-col h-full bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
-        <div className="flex items-center justify-between px-3 py-2 bg-slate-950/80 border-b border-slate-800 text-xs text-slate-400">
-          <span className="font-mono truncate">{fileName || "Challan PDF Document"}</span>
+      <div className="flex flex-col h-full bg-[#101010] border-2 border-[#101010] shadow-[3px_3px_0px_#101010] rounded-none overflow-hidden">
+        <div className="flex items-center justify-between px-3 py-2 bg-[#101010] border-b border-[#333] text-xs font-mono text-[#F2ECE6]">
+          <span className="truncate uppercase tracking-wider font-bold">
+            [DOC] {fileName || "CHALLAN_DOCUMENT.PDF"}
+          </span>
           <a
             href={displayUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-amber-400 hover:text-amber-300 font-medium"
+            className="text-[#FCBC18] hover:underline font-mono uppercase text-[11px] font-bold"
           >
-            Open in new tab ↗
+            [EXTRACT] ↗
           </a>
         </div>
-        <div className="flex-1 w-full min-h-[400px]">
+        <div className="flex-1 w-full min-h-[400px] bg-white">
           {loading ? (
-            <div className="h-full flex items-center justify-center text-xs text-slate-400">
-              Loading PDF preview...
+            <div className="h-full flex items-center justify-center text-xs font-mono text-[#6E675F]">
+              STREAMING VECTOR PAYLOAD...
             </div>
           ) : (
             <iframe
@@ -98,22 +99,22 @@ export const ImageViewer = ({ fileUrl, fileName, isPdf = false }) => {
   }
 
   return (
-    <div className="flex flex-col h-full bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
-      {/* Top Toolbar */}
-      <div className="flex items-center justify-between px-3 py-2 bg-slate-950/80 border-b border-slate-800">
+    <div className="flex flex-col h-full bg-[#101010] border-2 border-[#101010] shadow-[3px_3px_0px_#101010] rounded-none overflow-hidden">
+      {/* Top Drafting Toolbar */}
+      <div className="flex items-center justify-between px-3 py-2 bg-[#101010] border-b border-[#333]">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-mono text-slate-400 truncate max-w-[180px]">
-            {fileName || "Challan Image"}
+          <span className="text-[11px] font-mono uppercase tracking-wider text-[#F2ECE6] font-bold truncate max-w-[180px]">
+            {fileName || "CHALLAN_SCAN.RAW"}
           </span>
-          <span className="text-[11px] font-mono text-slate-500">
+          <span className="text-[10px] font-mono text-[#FCBC18] bg-[#FCBC18]/20 px-1 py-0.5 border border-[#FCBC18]/40">
             {Math.round(zoom * 100)}%
           </span>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 font-mono">
           <button
             type="button"
             onClick={handleZoomOut}
-            className="px-2 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 rounded border border-slate-700 transition"
+            className="px-2 py-0.5 text-xs bg-[#222] hover:bg-[#333] text-[#F2ECE6] border border-[#444] rounded-none cursor-pointer"
             title="Zoom Out"
           >
             -
@@ -121,7 +122,7 @@ export const ImageViewer = ({ fileUrl, fileName, isPdf = false }) => {
           <button
             type="button"
             onClick={handleZoomIn}
-            className="px-2 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 rounded border border-slate-700 transition"
+            className="px-2 py-0.5 text-xs bg-[#222] hover:bg-[#333] text-[#F2ECE6] border border-[#444] rounded-none cursor-pointer"
             title="Zoom In"
           >
             +
@@ -129,24 +130,24 @@ export const ImageViewer = ({ fileUrl, fileName, isPdf = false }) => {
           <button
             type="button"
             onClick={handleRotate}
-            className="px-2 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 rounded border border-slate-700 transition"
+            className="px-2 py-0.5 text-xs bg-[#222] hover:bg-[#333] text-[#F2ECE6] border border-[#444] rounded-none cursor-pointer"
             title="Rotate 90°"
           >
-            ↻
+            ↻ 90°
           </button>
           <button
             type="button"
             onClick={handleReset}
-            className="px-2 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 rounded border border-slate-700 transition"
+            className="px-2 py-0.5 text-xs bg-[#222] hover:bg-[#333] text-[#F2ECE6] border border-[#444] rounded-none cursor-pointer"
             title="Reset View"
           >
-            Reset
+            RST
           </button>
           <a
             href={displayUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="ml-1 px-2 py-1 text-xs text-amber-400 hover:text-amber-300"
+            className="ml-1 px-2 py-0.5 text-xs text-[#FCBC18] hover:bg-[#FCBC18] hover:text-[#101010] border border-[#FCBC18] rounded-none"
             title="Open Full Image"
           >
             ↗
@@ -154,12 +155,22 @@ export const ImageViewer = ({ fileUrl, fileName, isPdf = false }) => {
         </div>
       </div>
 
-      {/* Image Pan & Zoom Canvas */}
-      <div className="flex-1 overflow-auto p-4 flex items-center justify-center bg-slate-950/40 min-h-[350px]">
+      {/* Blueprint Grid Canvas */}
+      <div className="flex-1 overflow-auto p-4 flex items-center justify-center bg-[#0d0d0d] min-h-[350px] relative">
+        {/* Subtle grid pattern background */}
+        <div
+          className="absolute inset-0 opacity-10 pointer-events-none"
+          style={{
+            backgroundImage:
+              "linear-gradient(to right, #FCBC18 1px, transparent 1px), linear-gradient(to bottom, #FCBC18 1px, transparent 1px)",
+            backgroundSize: "24px 24px",
+          }}
+        />
+
         {loading ? (
-          <div className="text-center text-slate-400 text-xs py-12 flex flex-col items-center gap-2">
-            <span className="text-xl animate-spin">⚙️</span>
-            <span>Loading image preview...</span>
+          <div className="text-center text-[#FCBC18] text-xs font-mono py-12 flex flex-col items-center gap-2">
+            <span className="material-symbols-outlined text-2xl animate-spin">refresh</span>
+            <span>ACQUIRING HIGH-RES RENDER...</span>
           </div>
         ) : displayUrl ? (
           <img
@@ -170,14 +181,15 @@ export const ImageViewer = ({ fileUrl, fileName, isPdf = false }) => {
               transformOrigin: "center center",
               transition: "transform 0.15s ease-out",
             }}
-            className="max-w-full max-h-[600px] object-contain rounded shadow-lg border border-slate-800"
+            className="max-w-full max-h-[600px] object-contain border border-[#333] shadow-lg rounded-none z-10"
           />
         ) : (
-          <div className="text-center text-slate-500 text-xs py-12">
-            No image preview available
+          <div className="text-center text-[#6E675F] text-xs font-mono py-12">
+            NO IMAGE PAYLOAD LINKED
           </div>
         )}
       </div>
     </div>
   );
 };
+

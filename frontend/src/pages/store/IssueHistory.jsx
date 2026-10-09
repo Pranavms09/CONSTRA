@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useStoreProject } from "./StoreLayout";
 import { fetchMaterialIssues, fetchStages, fetchMaterials } from "../../api/store";
-import { EmptyState } from "../../components/store/EmptyState";
 import { SkeletonLoader } from "../../components/store/SkeletonLoader";
 
 export const IssueHistory = () => {
@@ -54,49 +53,62 @@ export const IssueHistory = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-lg font-bold text-white">Material Issue Log</h2>
-          <p className="text-xs text-slate-400">
-            Append-only historical ledger of materials issued from store to project stages
-          </p>
-        </div>
+      {/* Top Architectural Header */}
+      <div className="p-6 bg-[#F2ECE6] border border-[#101010] shadow-[3px_3px_0px_#101010] relative">
+        <div className="absolute -top-1 -left-1 w-2.5 h-2.5 border-t-2 border-l-2 border-[#101010]" />
+        <div className="absolute -top-1 -right-1 w-2.5 h-2.5 border-t-2 border-r-2 border-[#101010]" />
+        <div className="absolute -bottom-1 -left-1 w-2.5 h-2.5 border-b-2 border-l-2 border-[#101010]" />
+        <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 border-b-2 border-r-2 border-[#101010]" />
 
-        <Link
-          to="/store/issue"
-          className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5 self-start sm:self-auto shadow-sm"
-        >
-          <span>📤</span>
-          <span>New Material Issue</span>
-        </Link>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="w-2 h-2 bg-[#FCBC18]" />
+              <span className="font-label-code text-label-code uppercase tracking-widest text-[#504533]">
+                SPEC // DISPATCH-DRAWDOWN-LEDGER
+              </span>
+            </div>
+            <h2 className="font-headline-lg text-headline-lg font-bold text-[#101010] uppercase tracking-tight">
+              Material Issue Log
+            </h2>
+            <p className="font-label-meta text-label-meta text-[#5F5E5E] uppercase mt-1">
+              IMMUTABLE CHRONOLOGICAL RECORD OF PHYSICAL MATERIALS DISPENSED TO MILESTONE STAGES
+            </p>
+          </div>
+
+          <Link
+            to="/store/issue"
+            className="px-5 py-2.5 bg-[#FCBC18] hover:bg-[#101010] text-[#101010] hover:text-[#FCBC18] font-label-code text-label-code font-bold uppercase tracking-wider border border-[#101010] transition-colors shadow-[2px_2px_0px_#101010] flex items-center justify-center gap-2"
+          >
+            <span className="material-symbols-outlined text-base">output</span>
+            <span>ISSUE MATERIAL</span>
+          </Link>
+        </div>
       </div>
 
-      {/* Filter Bar */}
-      <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-wrap items-center gap-3">
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-400">Stage:</span>
+      {/* Filter Strip */}
+      <div className="p-4 bg-[#F2ECE6] border border-[#101010] flex flex-wrap gap-4 items-center justify-between font-label-code text-label-code">
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="text-[#5F5E5E] uppercase">FILTER BY:</span>
           <select
             value={stageFilter}
             onChange={(e) => setStageFilter(e.target.value)}
-            className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-hidden focus:border-amber-500 cursor-pointer"
+            className="bg-[#E6E2DD] border border-[#101010] px-3 py-1.5 uppercase font-bold text-[#101010] outline-none"
           >
-            <option value="">All Stages</option>
+            <option value="">ALL STAGES</option>
             {stages.map((s) => (
               <option key={s.id} value={s.id}>
-                {s.name}
+                STAGE #{s.order}: {s.name}
               </option>
             ))}
           </select>
-        </div>
 
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-400">Material:</span>
           <select
             value={materialFilter}
             onChange={(e) => setMaterialFilter(e.target.value)}
-            className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-hidden focus:border-amber-500 cursor-pointer"
+            className="bg-[#E6E2DD] border border-[#101010] px-3 py-1.5 uppercase font-bold text-[#101010] outline-none"
           >
-            <option value="">All Materials</option>
+            <option value="">ALL MATERIALS</option>
             {materials.map((m) => (
               <option key={m.id} value={m.id}>
                 {m.name}
@@ -104,70 +116,71 @@ export const IssueHistory = () => {
             ))}
           </select>
         </div>
+
+        <span className="text-[#5F5E5E] uppercase">
+          {issues.length} DRAWDOWN ENTRIES
+        </span>
       </div>
 
-      {/* Table */}
+      {/* Issues Table */}
       {loading ? (
-        <SkeletonLoader rows={6} type="table" />
+        <SkeletonLoader rows={5} type="table" />
       ) : issues.length === 0 ? (
-        <EmptyState
-          icon="📋"
-          title="No material issues recorded"
-          description="Log material drawdowns to track stage consumption against verified milestones."
-          actionLabel="Issue Material"
-          onAction={() => window.location.assign("/store/issue")}
-        />
+        <div className="p-12 text-center bg-[#F2ECE6] border border-[#101010]">
+          <span className="material-symbols-outlined text-4xl text-[#A39B8F] mb-2">
+            history_toggle_off
+          </span>
+          <h3 className="font-headline-md text-headline-md uppercase font-bold text-[#101010]">
+            NO MATERIAL DRAWDOWN RECORDS
+          </h3>
+          <p className="font-body-md text-body-md text-[#5F5E5E] mt-1">
+            Logged issues to structural stages will appear here with automated anomaly check records.
+          </p>
+        </div>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/40">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-900/80 text-slate-400 font-mono text-[11px] uppercase border-b border-slate-800">
-              <tr>
-                <th className="py-3 px-4">Date / Time</th>
-                <th className="py-3 px-4">Target Stage</th>
-                <th className="py-3 px-4">Material</th>
-                <th className="py-3 px-4 text-right">Quantity</th>
-                <th className="py-3 px-4 text-right">Base Eq. (kg)</th>
-                <th className="py-3 px-4">Issued To</th>
-                <th className="py-3 px-4 text-center">Anomaly Flag</th>
+        <div className="bg-[#F2ECE6] border border-[#101010] shadow-[2px_2px_0px_#101010] overflow-x-auto">
+          <table className="w-full text-left border-collapse font-body-md">
+            <thead>
+              <tr className="bg-[#101010] text-[#F2ECE6] font-label-meta text-label-meta uppercase tracking-widest">
+                <th className="py-3.5 px-4 border-r border-[#A39B8F]/30">TIMESTAMP</th>
+                <th className="py-3.5 px-4 border-r border-[#A39B8F]/30">MILESTONE STAGE</th>
+                <th className="py-3.5 px-4 border-r border-[#A39B8F]/30">DISPENSED MATERIAL</th>
+                <th className="py-3.5 px-4 text-right border-r border-[#A39B8F]/30">QUANTITY</th>
+                <th className="py-3.5 px-4 border-r border-[#A39B8F]/30">RECIPIENT / FOREMAN</th>
+                <th className="py-3.5 px-4 text-right">ANOMALY AUDIT</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60 font-mono">
-              {issues.map((row) => (
-                <tr key={row.id} className="hover:bg-slate-900/40 transition-colors">
-                  <td className="py-3 px-4 text-slate-400">
-                    {new Date(row.issued_at).toLocaleString()}
+            <tbody className="divide-y divide-[#A39B8F]/30 font-label-code text-label-code text-[#101010]">
+              {issues.map((it, idx) => (
+                <tr
+                  key={it.id}
+                  className={`hover:bg-[#E6E2DD] transition-colors ${
+                    idx % 2 === 0 ? "bg-[#F2ECE6]" : "bg-[#F2ECE6]/60"
+                  }`}
+                >
+                  <td className="py-4 px-4 border-r border-[#A39B8F]/30 font-bold">
+                    {new Date(it.issued_at).toLocaleString()}
                   </td>
-                  <td className="py-3 px-4 font-sans font-medium text-slate-200">
-                    {row.stage_name}
+                  <td className="py-4 px-4 border-r border-[#A39B8F]/30 uppercase">
+                    {it.stage_name || `Stage #${it.stage_id}`}
                   </td>
-                  <td className="py-3 px-4 font-sans font-medium text-white">
-                    {row.material_name}
+                  <td className="py-4 px-4 border-r border-[#A39B8F]/30 uppercase font-bold">
+                    {it.material_name || `Material #${it.material_id}`}
                   </td>
-                  <td className="py-3 px-4 text-right text-slate-200 font-semibold">
-                    {Number(row.qty).toLocaleString()} {row.unit}
+                  <td className="py-4 px-4 text-right border-r border-[#A39B8F]/30 tabular-nums font-bold">
+                    {Number(it.qty).toLocaleString()} {it.unit}
                   </td>
-                  <td className="py-3 px-4 text-right text-slate-400">
-                    {Number(row.qty_base).toLocaleString()}
+                  <td className="py-4 px-4 border-r border-[#A39B8F]/30 uppercase text-[#5F5E5E]">
+                    {it.issued_to}
                   </td>
-                  <td className="py-3 px-4 font-sans text-slate-300">
-                    {row.issued_to}
-                    {row.note && (
-                      <span className="block text-[11px] text-slate-500 font-sans italic">
-                        "{row.note}"
-                      </span>
-                    )}
-                  </td>
-                  <td className="py-3 px-4 text-center">
-                    {row.anomaly_flag ? (
-                      <span
-                        className="inline-block px-2 py-0.5 rounded text-[10px] font-semibold bg-rose-500/20 text-rose-300 border border-rose-500/40"
-                        title={row.anomaly_reasons?.join("; ") || "Statistically abnormal drawdown"}
-                      >
-                        ⚠️ ANOMALY
+                  <td className="py-4 px-4 text-right">
+                    {it.is_anomalous ? (
+                      <span className="px-2 py-0.5 bg-[#ffdad6] text-[#ba1a1a] border border-[#ba1a1a] font-bold uppercase text-xs">
+                        ⚠️ ANOMALY ({it.anomaly_level || "ALERT"})
                       </span>
                     ) : (
-                      <span className="inline-block px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
-                        NORMAL
+                      <span className="px-2 py-0.5 bg-[#93d5ad]/30 text-[#296a49] border border-[#296a49] font-bold uppercase text-xs">
+                        ✓ NOMINAL
                       </span>
                     )}
                   </td>
@@ -175,8 +188,15 @@ export const IssueHistory = () => {
               ))}
             </tbody>
           </table>
+
+          <div className="p-3 bg-[#E6E2DD] border-t border-[#A39B8F]/30 flex items-center justify-between font-label-meta text-label-meta text-[#5F5E5E] uppercase">
+            <span>SHOWING {issues.length} ISSUE LOG ENTRIES</span>
+            <span>AUDIT TRAIL // RECORD HASH LOCKED</span>
+          </div>
         </div>
       )}
     </div>
   );
 };
+
+export default IssueHistory;

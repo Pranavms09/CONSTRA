@@ -16,7 +16,7 @@ export const IssueMaterial = () => {
 
   const [stages, setStages] = useState([]);
   const [materials, setMaterials] = useState([]);
-  const [loadingMeta, setLoadingMeta] = useState(true);
+  const [, setLoadingMeta] = useState(true);
 
   // Form Fields
   const [stageId, setStageId] = useState("");
@@ -92,32 +92,25 @@ export const IssueMaterial = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!stageId || !materialId || !qty || !issuedTo) {
-      setErrorMessage("Please complete all required fields (*).");
+    setErrorMessage(null);
+
+    if (!stageId || !materialId || !qty || Number(qty) <= 0 || !issuedTo.trim()) {
+      setErrorMessage("Please fill all required fields with valid values.");
       return;
     }
 
     setSubmitting(true);
-    setErrorMessage(null);
-
     try {
-      const payload = {
+      const res = await logMaterialIssue(selectedProjectId, {
         stage_id: Number(stageId),
         material_id: Number(materialId),
         qty: Number(qty),
         unit: unit,
-        issued_to: issuedTo,
-        note: note || null,
-      };
+        issued_to: issuedTo.trim(),
+        note: note.trim() || undefined,
+      });
 
-      const result = await logMaterialIssue(stageId, payload);
-      setToastMsg(
-        result.anomaly_flag
-          ? "Material issued successfully (Flagged for audit tracking)."
-          : "Material issued to stage successfully."
-      );
-
-      // Reset qty and note, redirect after brief moment
+      setToastMsg(`Material issue recorded successfully. Ref: ISS-${res.id}`);
       setTimeout(() => {
         navigate("/store/issues");
       }, 1000);
@@ -131,56 +124,78 @@ export const IssueMaterial = () => {
   const selectedStageObj = stages.find((s) => s.id === Number(stageId));
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-3xl mx-auto space-y-6">
       <Toast message={toastMsg} onClose={() => setToastMsg(null)} />
 
-      <div>
-        <h2 className="text-xl font-bold text-white">Issue Material from Store</h2>
-        <p className="text-xs text-slate-400 mt-1">
-          Dispense materials to active construction stages for{" "}
-          <strong className="text-slate-200">{selectedProject?.name}</strong>.
-          Consumption is checked against stage milestone progress.
+      {/* Top Architectural Header */}
+      <div className="p-6 bg-[#F2ECE6] border border-[#101010] shadow-[3px_3px_0px_#101010] relative">
+        <div className="absolute -top-1 -left-1 w-2.5 h-2.5 border-t-2 border-l-2 border-[#101010]" />
+        <div className="absolute -top-1 -right-1 w-2.5 h-2.5 border-t-2 border-r-2 border-[#101010]" />
+        <div className="absolute -bottom-1 -left-1 w-2.5 h-2.5 border-b-2 border-l-2 border-[#101010]" />
+        <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 border-b-2 border-r-2 border-[#101010]" />
+
+        <div className="flex items-center gap-2 mb-1">
+          <span className="w-2 h-2 bg-[#FCBC18]" />
+          <span className="font-label-code text-label-code uppercase tracking-widest text-[#504533]">
+            SPEC // MATERIAL-DRAWDOWN-DISPATCH
+          </span>
+        </div>
+        <h2 className="font-headline-lg text-headline-lg font-bold text-[#101010] uppercase tracking-tight">
+          Issue Material from Store
+        </h2>
+        <p className="font-label-meta text-label-meta text-[#5F5E5E] uppercase mt-1">
+          DISPENSE RAW MATERIALS TO ACTIVE STAGES FOR{" "}
+          <strong className="text-[#101010]">{selectedProject?.name || "ACTIVE SITE"}</strong>.
+          CONSUMPTION IS AUDITED AGAINST VERIFIED STRUCTURAL PROGRESS.
         </p>
       </div>
 
-      <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-6">
-        <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Form Card */}
+      <div className="p-6 md:p-8 bg-[#F2ECE6] border border-[#101010] shadow-[3px_3px_0px_#101010] space-y-6">
+        {errorMessage && (
+          <div className="p-3 bg-[#ffdad6] border border-[#ba1a1a] text-[#ba1a1a] font-label-code text-label-code uppercase flex items-center gap-2">
+            <span className="material-symbols-outlined text-base">warning</span>
+            <span>{errorMessage}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-5">
           {/* Stage Selection */}
           <div className="space-y-1">
-            <label className="block text-xs font-medium text-slate-300">
-              Target Milestone Stage *
+            <label className="font-label-meta text-label-meta uppercase text-[#504533] block">
+              TARGET MILESTONE STAGE *
             </label>
             <select
               value={stageId}
               onChange={(e) => setStageId(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-hidden focus:border-amber-500 cursor-pointer"
+              className="w-full bg-[#E6E2DD] border border-[#101010] px-3 py-2.5 font-label-code text-label-code text-[#101010] uppercase outline-none focus:border-[#FCBC18] cursor-pointer"
             >
               {stages.map((stg) => (
                 <option key={stg.id} value={stg.id}>
-                  Stage #{stg.order}: {stg.name} (Progress: {(stg.verified_progress * 100).toFixed(0)}%)
+                  STAGE #{stg.order}: {stg.name} (PROGRESS: {(stg.verified_progress * 100).toFixed(0)}%)
                 </option>
               ))}
             </select>
             {selectedStageObj && (
-              <p className="text-[11px] text-slate-400 font-mono">
-                Verified Progress: {(selectedStageObj.verified_progress * 100).toFixed(1)}% • Status: {selectedStageObj.status}
+              <p className="font-label-meta text-label-meta text-[#5F5E5E] uppercase mt-1">
+                VERIFIED PROGRESS: {(selectedStageObj.verified_progress * 100).toFixed(1)}% • CLEARANCE STATUS: {selectedStageObj.status?.toUpperCase()}
               </p>
             )}
           </div>
 
           {/* Material Selection */}
           <div className="space-y-1">
-            <label className="block text-xs font-medium text-slate-300">
-              Material *
+            <label className="font-label-meta text-label-meta uppercase text-[#504533] block">
+              MATERIAL SPECIFICATION *
             </label>
             <select
               value={materialId}
               onChange={(e) => setMaterialId(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-hidden focus:border-amber-500 cursor-pointer"
+              className="w-full bg-[#E6E2DD] border border-[#101010] px-3 py-2.5 font-label-code text-label-code text-[#101010] uppercase outline-none focus:border-[#FCBC18] cursor-pointer"
             >
               {materials.map((m) => (
                 <option key={m.id} value={m.id}>
-                  {m.name} (Base unit: {m.base_unit})
+                  {m.name} (BASE UNIT: {m.base_unit})
                 </option>
               ))}
             </select>
@@ -189,8 +204,8 @@ export const IssueMaterial = () => {
           {/* Quantity & Unit */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="block text-xs font-medium text-slate-300">
-                Quantity to Issue *
+              <label className="font-label-meta text-label-meta uppercase text-[#504533] block">
+                QUANTITY TO ISSUE *
               </label>
               <input
                 type="number"
@@ -199,80 +214,91 @@ export const IssueMaterial = () => {
                 placeholder="e.g. 100"
                 value={qty}
                 onChange={(e) => setQty(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-hidden focus:border-amber-500"
+                className="w-full bg-[#E6E2DD] border border-[#101010] px-3 py-2 text-[#101010] font-label-code text-label-code uppercase outline-none focus:border-[#FCBC18]"
               />
             </div>
 
             <div className="space-y-1">
-              <label className="block text-xs font-medium text-slate-300">
-                Unit *
+              <label className="font-label-meta text-label-meta uppercase text-[#504533] block">
+                DISPENSE UNIT *
               </label>
               <select
                 value={unit}
                 onChange={(e) => setUnit(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-hidden focus:border-amber-500 cursor-pointer"
+                className="w-full bg-[#E6E2DD] border border-[#101010] px-3 py-2.5 font-label-code text-label-code text-[#101010] uppercase outline-none focus:border-[#FCBC18] cursor-pointer"
               >
-                <option value="kg">kg</option>
-                <option value="bag">bag (50kg)</option>
-                <option value="tonne">tonne (1000kg)</option>
-                <option value="bundle">bundle (50kg)</option>
+                <option value="kg">kg (Kilograms)</option>
+                <option value="bag">bag (50kg cement bag)</option>
+                <option value="tonne">tonne (1,000kg metric tonne)</option>
+                <option value="bundle">bundle (50kg rebar bundle)</option>
               </select>
             </div>
           </div>
 
           {/* Issued To Recipient */}
           <div className="space-y-1">
-            <label className="block text-xs font-medium text-slate-300">
-              Issued To (Recipient / Subcontractor) *
+            <label className="font-label-meta text-label-meta uppercase text-[#504533] block">
+              ISSUED TO (RECIPIENT / SUBCONTRACTOR) *
             </label>
             <input
               type="text"
               placeholder="e.g. Foreman John / Apex Structural Works"
               value={issuedTo}
               onChange={(e) => setIssuedTo(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-hidden focus:border-amber-500"
+              className="w-full bg-[#E6E2DD] border border-[#101010] px-3 py-2 text-[#101010] font-label-code text-label-code uppercase outline-none focus:border-[#FCBC18]"
             />
           </div>
 
           {/* Note */}
           <div className="space-y-1">
-            <label className="block text-xs font-medium text-slate-300">
-              Notes / Purpose (Optional)
+            <label className="font-label-meta text-label-meta uppercase text-[#504533] block">
+              PURPOSE / TECHNICAL REMARKS (OPTIONAL)
             </label>
             <textarea
               rows={2}
-              placeholder="e.g. Foundation pile concreting"
+              placeholder="e.g. Foundation pile concreting // Grid C-4"
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-hidden focus:border-amber-500 resize-none"
+              className="w-full bg-[#E6E2DD] border border-[#101010] px-3 py-2 text-[#101010] font-label-code text-label-code uppercase outline-none focus:border-[#FCBC18] resize-none"
             />
           </div>
 
-          {/* Live Anomaly Evaluation Banner */}
+          {/* Live Anomaly Evaluation Strip */}
           {evaluatingPreview && (
-            <div className="text-[11px] font-mono text-slate-400 flex items-center gap-1.5 animate-pulse">
-              <span>⏳</span>
-              <span>Evaluating milestone consumption model...</span>
+            <div className="p-3 bg-[#E6E2DD] border border-[#101010] text-[#5F5E5E] font-label-code text-label-code uppercase animate-pulse flex items-center gap-2">
+              <span className="material-symbols-outlined text-sm">sync</span>
+              <span>CHECKING CONSUMPTION AGAINST STAGE BOQ ENVELOPE...</span>
             </div>
           )}
 
-          {previewResult && <AnomalyBanner anomalyResult={previewResult} />}
-
-          {errorMessage && (
-            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
-              <span>⚠️</span>
-              <span>{errorMessage}</span>
+          {previewResult && !evaluatingPreview && (
+            <div className="space-y-2">
+              <AnomalyBanner anomalyResult={previewResult} />
+              {!previewResult.is_anomalous && (
+                <div className="p-3 bg-[#93d5ad]/30 border border-[#296a49] text-[#296a49] font-label-code text-label-code uppercase font-bold flex items-center gap-2">
+                  <span className="material-symbols-outlined text-sm">check_circle</span>
+                  <span>WITHIN NOMINAL BOQ PROGRESS TOLERANCE ENVELOPE</span>
+                </div>
+              )}
             </div>
           )}
 
-          {/* Action Button */}
-          <div className="pt-2">
+          {/* Submit Action */}
+          <div className="pt-4 border-t border-[#A39B8F]/30 flex items-center justify-between gap-4">
+            <button
+              type="button"
+              onClick={() => navigate("/store")}
+              className="px-4 py-2 bg-[#E6E2DD] hover:bg-[#101010] text-[#101010] hover:text-[#F2ECE6] font-label-code text-label-code uppercase font-bold border border-[#101010] transition-colors cursor-pointer"
+            >
+              CANCEL
+            </button>
             <button
               type="submit"
               disabled={submitting}
-              className="w-full py-2.5 rounded-xl font-bold text-xs bg-amber-500 hover:bg-amber-400 text-slate-950 transition disabled:opacity-50 shadow-sm cursor-pointer"
+              className="px-6 py-3 bg-[#FCBC18] hover:bg-[#101010] text-[#101010] hover:text-[#FCBC18] font-label-code text-label-code uppercase font-bold border border-[#101010] shadow-[2px_2px_0px_#101010] transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-2"
             >
-              {submitting ? "Logging Issue..." : "📤 Confirm & Record Material Issue"}
+              <span className="material-symbols-outlined text-base">check</span>
+              <span>{submitting ? "RECORDING..." : "DISPATCH & LOG DRAWDOWN"}</span>
             </button>
           </div>
         </form>
@@ -280,3 +306,5 @@ export const IssueMaterial = () => {
     </div>
   );
 };
+
+export default IssueMaterial;

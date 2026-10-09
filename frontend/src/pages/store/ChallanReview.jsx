@@ -163,10 +163,10 @@ export const ChallanReview = () => {
       const updated = await updateChallanDraft(challan.id, payload);
       setChallan(updated);
       setToastType("success");
-      setToastMsg("Draft changes saved successfully.");
+      setToastMsg("CHALLAN DRAFT MUTATION COMMITTED.");
     } catch (err) {
       if (err.status === 409) {
-        setErrorMessage("Conflict: This challan was updated by another request. Please reload to sync.");
+        setErrorMessage("CONFLICT: Concurrently updated by another session. Please reload to sync.");
       } else {
         setErrorMessage(err.message || "Failed to save draft.");
       }
@@ -179,10 +179,8 @@ export const ChallanReview = () => {
     setConfirming(true);
     setErrorMessage(null);
     try {
-      // First save draft changes
       await handleSaveDraft();
 
-      // Trigger confirm
       const confirmData = await confirmChallan(challan.id, {
         version: challan.version + 1,
       });
@@ -191,7 +189,7 @@ export const ChallanReview = () => {
       setReconcileResult(confirmData);
       setConfirmModalOpen(true);
       setToastType("success");
-      setToastMsg("Challan confirmed & reconciled against BOQ.");
+      setToastMsg("CHALLAN RECONCILED AGAINST BOQ BASELINE.");
     } catch (err) {
       setErrorMessage(err.message || "Confirmation failed.");
     } finally {
@@ -205,8 +203,8 @@ export const ChallanReview = () => {
 
   if (!challan) {
     return (
-      <div className="p-8 text-center text-slate-400">
-        Challan not found.
+      <div className="p-8 text-center font-mono text-xs text-[#6E675F] border-2 border-[#101010] bg-[#E6E2DD]">
+        CHALLAN RECORD NOT LOCATED
       </div>
     );
   }
@@ -225,75 +223,75 @@ export const ChallanReview = () => {
     <div className="space-y-6">
       <Toast message={toastMsg} type={toastType} onClose={() => setToastMsg(null)} />
 
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-slate-900/60 border border-slate-800">
+      {/* Top Brutalist Command Bar */}
+      <div className="border-2 border-[#101010] bg-[#F2ECE6] shadow-[3px_3px_0px_#101010] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-3">
             <button
               onClick={() => navigate("/store/deliveries")}
-              className="text-xs text-slate-400 hover:text-white"
+              className="text-xs font-mono uppercase tracking-wider font-bold text-[#101010] hover:text-[#FCBC18] bg-[#E6E2DD] border border-[#101010] px-2 py-0.5"
             >
-              ← Back to Deliveries
+              ← DELIVERIES
             </button>
             <StatusBadge status={challan.status} />
             {challan.version && (
-              <span className="text-[11px] font-mono text-slate-500">
-                v{challan.version}
+              <span className="text-[11px] font-mono text-[#6E675F] bg-white border border-[#A39B8F] px-1.5 py-0.5">
+                REV. {challan.version}
               </span>
             )}
           </div>
-          <h2 className="text-lg font-bold text-white">
-            {challan.challan_no ? `Challan #${challan.challan_no}` : "Draft Challan Review"}
+          <h2 className="font-['Space_Grotesk'] text-xl font-bold uppercase tracking-wider text-[#101010] mt-1">
+            {challan.challan_no ? `CHALLAN // #${challan.challan_no}` : "DRAFT CHALLAN REVIEW"}
           </h2>
-          <p className="text-xs text-slate-400">
-            Uploaded by {challan.uploader_name || "Storekeeper"} on{" "}
+          <p className="font-['Archivo_Narrow'] text-xs text-[#6E675F] font-mono">
+            INTAKE BY: {challan.uploader_name || "STORE_IN_CHARGE"} // TIMESTAMP:{" "}
             {new Date(challan.uploaded_at).toLocaleString()}
           </p>
         </div>
 
         {!isReadOnly && (
-          <div className="flex items-center gap-2 self-start sm:self-auto">
+          <div className="flex items-center gap-2 self-start sm:self-auto font-mono">
             <button
               type="button"
               onClick={handleSaveDraft}
               disabled={saving || confirming}
-              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold rounded-xl transition disabled:opacity-50"
+              className="px-4 py-2 bg-[#E6E2DD] hover:bg-[#d8d4cf] text-[#101010] border-2 border-[#101010] text-xs font-bold uppercase tracking-wider shadow-[2px_2px_0px_#101010] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-none cursor-pointer disabled:opacity-50"
             >
-              {saving ? "Saving..." : "Save Draft"}
+              {saving ? "SAVING..." : "SAVE DRAFT"}
             </button>
             <button
               type="button"
               onClick={handleConfirmDelivery}
               disabled={saving || confirming}
-              className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs rounded-xl transition disabled:opacity-50 shadow-sm"
+              className="px-4 py-2 bg-[#FCBC18] hover:bg-[#e5aa16] text-[#101010] border-2 border-[#101010] font-bold text-xs uppercase tracking-wider shadow-[2px_2px_0px_#101010] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-none cursor-pointer disabled:opacity-50"
             >
-              {confirming ? "Confirming..." : "✓ Confirm & Reconcile"}
+              {confirming ? "CONFIRMING..." : "✓ CONFIRM & RECONCILE"}
             </button>
           </div>
         )}
       </div>
 
       {isProcessing && (
-        <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/30 text-blue-300 text-xs flex items-center gap-3 animate-pulse">
-          <span className="text-lg">⏳</span>
+        <div className="p-4 bg-[#FCBC18]/20 border-2 border-[#101010] shadow-[2px_2px_0px_#101010] text-[#101010] text-xs font-mono flex items-center gap-3">
+          <span className="material-symbols-outlined text-xl animate-spin text-[#101010]">refresh</span>
           <div>
-            <strong>OCR Processing in Background:</strong> Our system is currently extracting challan fields from the uploaded slip. This page will update automatically.
+            <strong>OCR NEURAL PARSER EXECUTING:</strong> Extracting line item matrices and vendor identification from uploaded slip. Live polling active.
           </div>
         </div>
       )}
 
       {isFailed && (
-        <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-3">
-          <span className="text-lg">✗</span>
+        <div className="p-4 bg-[#B3261E]/15 border-2 border-[#B3261E] text-[#B3261E] text-xs font-mono flex items-center gap-3">
+          <span className="font-bold text-base">⚠</span>
           <div>
-            <strong>OCR Parsing Failed:</strong> {challan.failure_reason || "Unable to parse text from scan."}. You can manually fill in fields below.
+            <strong>OCR PARSING FAILED:</strong> {challan.failure_reason || "Document illegible or format unsupported."} Enter field telemetry manually below.
           </div>
         </div>
       )}
 
       {errorMessage && (
-        <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
-          <span>⚠️</span>
+        <div className="p-4 bg-[#B3261E]/15 border-2 border-[#B3261E] text-[#B3261E] text-xs font-mono flex items-center gap-2">
+          <span className="font-bold">⚠</span>
           <span>{errorMessage}</span>
         </div>
       )}
@@ -309,26 +307,37 @@ export const ChallanReview = () => {
               isPdf={isPdf}
             />
           ) : (
-            <div className="h-full rounded-xl border border-slate-800 bg-slate-900/40 p-8 flex flex-col items-center justify-center text-center text-slate-500 text-xs">
-              <span className="text-3xl mb-2">✍️</span>
-              <p>Manual Entry Challan</p>
-              <p className="text-[11px] text-slate-600 mt-1">No scanned document attached.</p>
+            <div className="h-full border-2 border-dashed border-[#101010] bg-[#E6E2DD]/50 p-8 flex flex-col items-center justify-center text-center text-[#6E675F] text-xs font-mono">
+              <span className="material-symbols-outlined text-4xl mb-2 text-[#101010]">edit_document</span>
+              <p className="font-['Space_Grotesk'] text-sm font-bold uppercase tracking-wider text-[#101010]">
+                MANUAL ENTRY CHALLAN
+              </p>
+              <p className="text-[11px] mt-1">No scanned raster or vector document attached to this revision.</p>
             </div>
           )}
         </div>
 
         {/* Right Pane: Extracted Fields Review Form (7 cols) */}
-        <div className="lg:col-span-7 p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-6 overflow-y-auto">
-          <div className="border-b border-slate-800 pb-4">
-            <h3 className="text-sm font-bold text-white">Challan Metadata</h3>
-            <p className="text-xs text-slate-400">Review OCR confidence ratings before confirmation</p>
+        <div className="lg:col-span-7 p-6 border-2 border-[#101010] bg-[#F2ECE6] shadow-[3px_3px_0px_#101010] space-y-6 overflow-y-auto">
+          <div className="border-b-2 border-[#101010] pb-3 flex items-center justify-between">
+            <div>
+              <h3 className="font-['Space_Grotesk'] text-sm font-bold uppercase tracking-wider text-[#101010]">
+                Challan Telemetry & Spec
+              </h3>
+              <p className="font-['Archivo_Narrow'] text-xs text-[#6E675F]">
+                Verify neural confidence ratings and adjust values prior to stock ledger commit
+              </p>
+            </div>
+            <span className="font-mono text-[10px] text-[#101010] bg-[#FCBC18] border border-[#101010] px-2 py-0.5 font-bold uppercase">
+              SPEC-VALIDATION
+            </span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Challan Number */}
             <ConfidenceField
               confidence={challan.ocr_confidence}
-              label="Challan Number *"
+              label="CHALLAN NUMBER *"
             >
               <input
                 type="text"
@@ -336,21 +345,21 @@ export const ChallanReview = () => {
                 value={challanNo}
                 onChange={(e) => setChallanNo(e.target.value)}
                 placeholder="e.g. CH-2024-001"
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs font-mono text-white focus:outline-hidden focus:border-amber-500 disabled:opacity-60"
+                className="w-full bg-white border border-[#101010] px-3 py-2 text-xs font-mono text-[#101010] rounded-none focus:outline-hidden focus:ring-1 focus:ring-[#101010] disabled:bg-[#E6E2DD] disabled:text-[#6E675F]"
               />
             </ConfidenceField>
 
             {/* Challan Date */}
             <ConfidenceField
               confidence={challan.ocr_confidence}
-              label="Delivery Date"
+              label="DELIVERY DATE"
             >
               <input
                 type="date"
                 disabled={isReadOnly}
                 value={challanDate}
                 onChange={(e) => setChallanDate(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs font-mono text-white focus:outline-hidden focus:border-amber-500 disabled:opacity-60"
+                className="w-full bg-white border border-[#101010] px-3 py-2 text-xs font-mono text-[#101010] rounded-none focus:outline-hidden focus:ring-1 focus:ring-[#101010] disabled:bg-[#E6E2DD] disabled:text-[#6E675F]"
               />
             </ConfidenceField>
           </div>
@@ -359,18 +368,18 @@ export const ChallanReview = () => {
           <div className="space-y-2">
             <ConfidenceField
               confidence={challan.ocr_confidence}
-              label="Supplier / Vendor *"
+              label="SUPPLIER / VENDOR ENTITY *"
             >
               <select
                 disabled={isReadOnly}
                 value={vendorId}
                 onChange={(e) => setVendorId(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-hidden focus:border-amber-500 disabled:opacity-60 cursor-pointer"
+                className="w-full bg-white border border-[#101010] px-3 py-2 text-xs font-mono text-[#101010] rounded-none focus:outline-hidden focus:ring-1 focus:ring-[#101010] disabled:bg-[#E6E2DD] disabled:text-[#6E675F] cursor-pointer"
               >
-                <option value="">-- Select Registered Vendor --</option>
+                <option value="">-- SELECT REGISTERED VENDOR ENTITY --</option>
                 {vendors.map((v) => (
                   <option key={v.id} value={v.id}>
-                    {v.name} {!v.is_approved ? "⚠️ (Unapproved)" : "✓ (Approved)"}
+                    {v.name} {!v.is_approved ? "[!] (UNAPPROVED)" : "✓ (APPROVED)"}
                   </option>
                 ))}
               </select>
@@ -378,38 +387,40 @@ export const ChallanReview = () => {
 
             {/* Raw extracted vendor string */}
             {vendorNameRaw && (
-              <p className="text-[11px] text-slate-400 font-mono">
-                OCR Extracted Text: <span className="text-slate-300">"{vendorNameRaw}"</span>
+              <p className="text-[11px] text-[#6E675F] font-mono">
+                OCR PARSED STRING: <span className="text-[#101010] font-bold">"{vendorNameRaw}"</span>
               </p>
             )}
 
             {selectedVendorObj && !selectedVendorObj.is_approved && (
-              <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-center gap-2">
-                <span>⚠️</span>
+              <div className="p-3 bg-[#FCBC18]/25 border border-[#101010] text-[#101010] text-xs font-mono flex items-center gap-2">
+                <span className="font-bold text-sm">⚠</span>
                 <span>
-                  <strong>Vendor Notice:</strong> This vendor is unapproved. An audit alert will be raised upon confirmation.
+                  <strong>UNAPPROVED VENDOR NOTICE:</strong> This vendor entity is not accredited in master registry. Confirmation will trigger an AUD-ALERT-VND.
                 </span>
               </div>
             )}
           </div>
 
           {/* Line Items Section */}
-          <div className="space-y-3 pt-4 border-t border-slate-800">
+          <div className="space-y-3 pt-4 border-t-2 border-[#101010]">
             <div className="flex items-center justify-between">
               <div>
-                <h4 className="text-xs font-bold text-white uppercase tracking-wider font-mono">
+                <h4 className="font-['Space_Grotesk'] text-xs font-bold uppercase tracking-wider text-[#101010]">
                   Delivered Materials ({items.length})
                 </h4>
-                <p className="text-[11px] text-slate-400">Match lines against project materials catalog</p>
+                <p className="font-['Archivo_Narrow'] text-[11px] text-[#6E675F]">
+                  Match line specifications against approved project material catalog
+                </p>
               </div>
 
               {!isReadOnly && (
                 <button
                   type="button"
                   onClick={handleAddItem}
-                  className="px-2.5 py-1 text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-amber-400 rounded-lg border border-slate-700 transition"
+                  className="px-3 py-1 text-xs font-mono uppercase tracking-wider font-bold bg-[#101010] text-[#F2ECE6] hover:bg-[#FCBC18] hover:text-[#101010] border border-[#101010] shadow-[1px_1px_0px_#101010] transition-none cursor-pointer"
                 >
-                  + Add Line Item
+                  + APPEND LINE
                 </button>
               )}
             </div>
@@ -418,41 +429,41 @@ export const ChallanReview = () => {
               {items.map((it, idx) => (
                 <div
                   key={idx}
-                  className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 space-y-3"
+                  className="p-3.5 border border-[#101010] bg-white shadow-[2px_2px_0px_#101010] space-y-3"
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-mono font-bold text-slate-400">
-                      Line #{idx + 1}
+                  <div className="flex items-center justify-between border-b border-[#A39B8F]/30 pb-2">
+                    <span className="text-xs font-mono font-bold text-[#101010]">
+                      LINE ITEM #{String(idx + 1).padStart(2, "0")}
                     </span>
                     {it.field_confidence && (
-                      <span className="text-[10px] font-mono text-slate-500">
-                        Conf: {Math.round(it.field_confidence)}%
+                      <span className="text-[10px] font-mono text-[#6E675F] bg-[#E6E2DD] px-1.5 py-0.5 border border-[#A39B8F]">
+                        CONF: {Math.round(it.field_confidence)}%
                       </span>
                     )}
                     {!isReadOnly && items.length > 1 && (
                       <button
                         type="button"
                         onClick={() => handleRemoveItem(idx)}
-                        className="text-xs text-rose-400 hover:text-rose-300 font-bold"
+                        className="text-xs text-[#B3261E] font-mono uppercase font-bold hover:underline cursor-pointer"
                       >
-                        Remove ×
+                        [REMOVE ×]
                       </button>
                     )}
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     {/* Material Select */}
                     <div className="sm:col-span-1">
-                      <label className="block text-[10px] font-mono text-slate-400 mb-1">
-                        Material Catalog
+                      <label className="block text-[10px] font-mono uppercase tracking-wider text-[#6E675F] font-bold mb-1">
+                        CATALOG MAT-ID
                       </label>
                       <select
                         disabled={isReadOnly}
                         value={it.material_id}
                         onChange={(e) => handleItemChange(idx, "material_id", e.target.value)}
-                        className="w-full bg-slate-900 border border-slate-800 rounded px-2 py-1.5 text-xs text-white focus:outline-hidden"
+                        className="w-full bg-[#F2ECE6] border border-[#101010] px-2 py-1.5 text-xs font-mono text-[#101010] rounded-none focus:outline-hidden cursor-pointer"
                       >
-                        <option value="">-- Match Material --</option>
+                        <option value="">-- MATCH CATALOG --</option>
                         {materials.map((m) => (
                           <option key={m.id} value={m.id}>
                             {m.name}
@@ -460,16 +471,16 @@ export const ChallanReview = () => {
                         ))}
                       </select>
                       {it.material_name_raw && (
-                        <p className="text-[10px] text-slate-400 font-mono mt-1 truncate" title={it.material_name_raw}>
-                          OCR: <span className="text-slate-300">"{it.material_name_raw}"</span>
+                        <p className="text-[10px] text-[#6E675F] font-mono mt-1 truncate" title={it.material_name_raw}>
+                          OCR: <span className="text-[#101010] font-bold">"{it.material_name_raw}"</span>
                         </p>
                       )}
                     </div>
 
                     {/* Quantity */}
                     <div>
-                      <label className="block text-[10px] font-mono text-slate-400 mb-1">
-                        Quantity
+                      <label className="block text-[10px] font-mono uppercase tracking-wider text-[#6E675F] font-bold mb-1">
+                        DISPATCH QTY
                       </label>
                       <input
                         type="number"
@@ -477,14 +488,14 @@ export const ChallanReview = () => {
                         disabled={isReadOnly}
                         value={it.qty}
                         onChange={(e) => handleItemChange(idx, "qty", e.target.value)}
-                        className="w-full bg-slate-900 border border-slate-800 rounded px-2 py-1.5 text-xs font-mono text-white focus:outline-hidden"
+                        className="w-full bg-[#F2ECE6] border border-[#101010] px-2 py-1.5 text-xs font-mono text-[#101010] rounded-none focus:outline-hidden tabular-nums font-bold"
                       />
                     </div>
 
                     {/* Unit */}
                     <div>
-                      <label className="block text-[10px] font-mono text-slate-400 mb-1">
-                        Unit
+                      <label className="block text-[10px] font-mono uppercase tracking-wider text-[#6E675F] font-bold mb-1">
+                        UNIT SPEC
                       </label>
                       {(() => {
                         const matObj = materials.find((m) => String(m.id) === String(it.material_id));
@@ -495,7 +506,7 @@ export const ChallanReview = () => {
                             disabled={isReadOnly}
                             value={it.unit}
                             onChange={(e) => handleItemChange(idx, "unit", e.target.value)}
-                            className="w-full bg-slate-900 border border-slate-800 rounded px-2 py-1.5 text-xs font-mono text-white focus:outline-hidden cursor-pointer"
+                            className="w-full bg-[#F2ECE6] border border-[#101010] px-2 py-1.5 text-xs font-mono text-[#101010] rounded-none focus:outline-hidden cursor-pointer"
                           >
                             {unitOptions.map((u) => (
                               <option key={u} value={u}>
@@ -517,15 +528,15 @@ export const ChallanReview = () => {
       {/* Confirmation & Reconcile Summary Modal */}
       <ConfirmDialog
         isOpen={confirmModalOpen}
-        title="Delivery Reconciled Against BOQ"
-        confirmText="Done"
-        cancelText="Close"
+        title="DELIVERY RECONCILED AGAINST BOQ SPEC"
+        confirmText="FINALIZE"
+        cancelText="DISMISS"
         onConfirm={() => setConfirmModalOpen(false)}
         onCancel={() => setConfirmModalOpen(false)}
       >
-        <div className="space-y-4">
-          <p className="text-xs text-slate-300">
-            Delivery Challan #{challan.challan_no} has been confirmed. Stock balances have been updated.
+        <div className="space-y-4 font-mono">
+          <p className="text-xs text-[#101010] leading-relaxed">
+            Delivery Challan #{challan.challan_no} has been confirmed. Stock balances and ledger ledgers have been updated under ISO-19650 audit protocol.
           </p>
 
           {reconcileResult?.reconcile_summary && (
@@ -533,9 +544,9 @@ export const ChallanReview = () => {
           )}
 
           {reconcileResult?.alerts_created && reconcileResult.alerts_created.length > 0 && (
-            <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs space-y-1">
-              <strong>⚠️ Alerts Raised:</strong>
-              <ul className="list-disc list-inside space-y-0.5">
+            <div className="p-3 bg-[#FCBC18]/25 border-2 border-[#101010] text-[#101010] text-xs space-y-1">
+              <strong className="font-bold">⚠️ AUDIT ALERTS TRIGGERED:</strong>
+              <ul className="list-disc list-inside space-y-0.5 text-[11px]">
                 {reconcileResult.alerts_created.map((a, i) => (
                   <li key={i}>{a.explanation}</li>
                 ))}
@@ -547,3 +558,4 @@ export const ChallanReview = () => {
     </div>
   );
 };
+

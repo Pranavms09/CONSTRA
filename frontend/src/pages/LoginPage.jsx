@@ -7,34 +7,38 @@ const ROLES = [
   {
     id: "supervisor",
     title: "Site Supervisor",
-    badge: "Field Operations",
+    level: "LEVEL-01",
+    levelClass: "text-[#296a49] bg-[#93d5ad]/30 border-[#296a49]/30",
     email: "supervisor@siteverify.com",
-    description: "Upload on-site progress photos, inspect stage checklists, and resolve evidence flags.",
-    icon: "🏗️",
-    accent: "blue",
+    description: "Captures ground truth and execution milestones on site.",
+    icon: "photo_camera",
+    empId: "CNS-10492-SUP",
   },
   {
     id: "store_incharge",
     title: "Store In-Charge",
-    badge: "Inventory & Logistics",
+    level: "LEVEL-02",
+    levelClass: "text-[#504533] bg-[#E6E2DD] border-[#827560]/30",
     email: "store@siteverify.com",
-    description: "Scan incoming delivery challans, reconcile BOQ items, and log material drawdowns.",
-    icon: "📦",
-    accent: "amber",
+    description: "Reconciles delivery challans against dispatches and issues.",
+    icon: "receipt_long",
+    empId: "CNS-20814-STR",
   },
   {
     id: "auditor",
     title: "Project Auditor",
-    badge: "Quality & Compliance",
+    level: "CLEARANCE-A",
+    levelClass: "text-[#7a5900] bg-[#ffdea2] border-[#7a5900]/40",
     email: "auditor@siteverify.com",
-    description: "Triage verification flags, review cross-checks, and sign off milestone payment certificates.",
-    icon: "🛡️",
-    accent: "purple",
+    description: "Final milestone approval, evidence triage, and threshold authority.",
+    icon: "verified_user",
+    empId: "CNS-89420-AUD",
   },
 ];
 
 export const LoginPage = () => {
   const [selectedRole, setSelectedRole] = useState("supervisor");
+  const [employeeIdInput, setEmployeeIdInput] = useState("");
   const [loadingRole, setLoadingRole] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
 
@@ -48,9 +52,8 @@ export const LoginPage = () => {
     }
   }, [user, navigate]);
 
-  const handleDemoLogin = async (roleId) => {
+  const handleLogin = async (roleId) => {
     if (loadingRole) return;
-
     setLoadingRole(roleId);
     setErrorMessage(null);
 
@@ -67,185 +70,299 @@ export const LoginPage = () => {
     }
   };
 
+  const handleDirectIdSubmit = (e) => {
+    e.preventDefault();
+    const cleanId = employeeIdInput.trim().toUpperCase();
+    if (!cleanId) {
+      setErrorMessage("Please enter an Employee Credential ID (e.g., CNS-89420-AUD).");
+      return;
+    }
+
+    if (cleanId.includes("AUD") || cleanId.includes("CLEARANCE")) {
+      handleLogin("auditor");
+    } else if (cleanId.includes("STR") || cleanId.includes("STORE")) {
+      handleLogin("store_incharge");
+    } else {
+      handleLogin("supervisor");
+    }
+  };
+
   return (
-    <div className="min-h-dvh bg-slate-950 text-slate-100 flex flex-col justify-between selection:bg-amber-500 selection:text-slate-950">
-      {/* Top Banner / System Tag */}
-      <header className="border-b border-slate-800/80 bg-slate-900/50 backdrop-blur px-4 py-3">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-xs font-mono uppercase tracking-wider text-slate-400">
-              SiteVerify Node • Demo Access Mode
-            </span>
-          </div>
-          <div className="flex items-center gap-2.5">
-            <Link
-              to="/analyze"
-              className="text-xs text-amber-400 hover:text-amber-300 font-mono font-semibold px-2.5 py-1 rounded bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20 transition-colors"
-            >
-              ✨ AI Image Analysis →
-            </Link>
-            <span className="text-xs text-amber-400/90 font-mono font-semibold px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 hidden sm:inline-block">
-              TEST MODE ACTIVE
-            </span>
-          </div>
-        </div>
-      </header>
+    <div className="bg-[#E6E2DD] text-[#1b1b20] font-body-md text-body-md min-h-screen relative flex flex-col justify-center items-center p-4 sm:p-8 selection:bg-[#FCBC18] selection:text-[#101010]">
+      {/* 12-Column Coordinate Hairline Grid */}
+      <div className="pointer-events-none fixed inset-0 z-0 grid grid-cols-12 gap-4 px-6 opacity-[0.06]">
+        {[...Array(12)].map((_, i) => (
+          <div key={i} className="h-full border-r border-[#101010]" />
+        ))}
+      </div>
 
-      {/* Main Content */}
-      <main className="flex-1 max-w-xl w-full mx-auto px-4 py-8 md:py-12 flex flex-col justify-center">
-        {/* Branding & App Title */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 text-2xl mb-4">
-            🏢
+      <main className="relative z-10 w-full max-w-5xl my-auto">
+        <div className="w-full grid grid-cols-1 md:grid-cols-2 shadow-[4px_4px_0px_#101010] border border-[#101010] bg-[#101010]">
+          {/* ========================================================================= */}
+          {/* LEFT PANEL: Technical Ink Spec Layer                                      */}
+          {/* ========================================================================= */}
+          <div className="relative bg-[#101010] text-[#F2ECE6] flex flex-col justify-between p-6 sm:p-10 overflow-hidden border-b md:border-b-0 md:border-r border-[#101010]">
+            {/* Background Image with 60% Scrim */}
+            <div
+              className="absolute inset-0 bg-cover bg-center mix-blend-luminosity opacity-40 filter contrast-125 pointer-events-none"
+              style={{
+                backgroundImage:
+                  "url('https://lh3.googleusercontent.com/aida-public/AB6AXuBZHFuaHoCNx9Jm2RrOSgog654jIij_PzkFbFQxBoLF1Nln9rXDQgo16Zw5eDsGQPIts2qy21ylJTAkg_SQ2Ak3Z5wKiq8Cki4t68YcRv8zDThdm7h3e2BdMJqS5Mzdo16FO91sZePixPpFMT6yjI6s8pjMrJvgKnIiMVkNtJjxS-DlH2FHYX9b_596lZzA6quSqHXfEARgcuTx5U4QDLJ9rc3D59FG7NTR129Su8QvqinS9wZ6Wrk4')",
+              }}
+            />
+            <div className="absolute inset-0 bg-[#101010]/60 pointer-events-none" />
+
+            {/* Corner Drafting Crop Marks */}
+            <div className="absolute top-3 left-3 text-[#FCBC18] font-label-code text-label-code pointer-events-none opacity-80">
+              + 00.00
+            </div>
+            <div className="absolute top-3 right-3 text-[#FCBC18] font-label-code text-label-code pointer-events-none opacity-80">
+              REF: CST-25
+            </div>
+            <div className="absolute bottom-3 left-3 text-[#FCBC18] font-label-code text-label-code pointer-events-none opacity-80">
+              SEC // 08
+            </div>
+
+            {/* Top Technical Wordmark Header */}
+            <div className="relative z-10 flex flex-col gap-y-2">
+              <Link to="/" className="flex items-center gap-x-3 w-max group">
+                <span className="font-display-lg text-headline-lg tracking-[0.2em] font-bold text-white uppercase select-none group-hover:text-[#FCBC18] transition-colors">
+                  CONSTRA
+                </span>
+                <div className="w-[10px] h-[10px] bg-[#FCBC18] shrink-0" />
+              </Link>
+              <div className="h-[1px] w-16 bg-[#FCBC18]/80" />
+              <span className="font-label-code text-label-code uppercase text-[#FCBC18] tracking-[0.25em]">
+                TERMINAL OS // VERIFIED AUDIT MATRIX
+              </span>
+            </div>
+
+            {/* Center Narrative Manifesto */}
+            <div className="relative z-10 my-10 flex flex-col gap-y-4 max-w-md">
+              <div className="inline-flex items-center gap-2 self-start px-2 py-0.5 bg-[#101010]/90 border border-[#A39B8F]/30 text-white font-label-code text-label-code tracking-widest uppercase">
+                <span className="w-1.5 h-1.5 bg-[#2F6F4E]" />
+                FIELD TELEMETRY DIRECTIVE
+              </div>
+              <h1 className="font-headline-lg text-headline-lg text-white leading-tight font-bold tracking-tight uppercase">
+                “Every claim proves itself.”
+              </h1>
+              <p className="font-body-md text-body-md text-[#F2ECE6]/80 leading-relaxed font-normal">
+                Site photos, delivery challans and material issues, checked against the plan before a milestone is cleared.
+              </p>
+
+              {/* Technical Telemetry Badge Strip */}
+              <div className="grid grid-cols-2 gap-3 pt-4 border-t border-[#A39B8F]/20 text-[#A39B8F]">
+                <div className="flex flex-col">
+                  <span className="font-label-meta text-label-meta tracking-widest uppercase">
+                    LATENCY GATE
+                  </span>
+                  <span className="font-label-code text-label-code text-[#F2ECE6] font-bold">
+                    14MS GEO-LOCK
+                  </span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="font-label-meta text-label-meta tracking-widest uppercase">
+                    INTEGRITY SHA
+                  </span>
+                  <span className="font-label-code text-label-code text-[#FCBC18] font-bold">
+                    0x4F92B...C01
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Spec Info Footer */}
+            <div className="relative z-10 pt-4 border-t border-white/10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+              <span className="font-label-code text-label-code text-[#A39B8F] tracking-widest uppercase">
+                CONSTRA KERNEL // ACCESS CONTROL NODE 01 // REV 2025
+              </span>
+              <span className="font-label-code text-label-code text-[#FCBC18] bg-white/5 px-2 py-0.5 border border-white/10 uppercase">
+                PORT: 8084
+              </span>
+            </div>
           </div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white">
-            Construction Milestone Verifier
-          </h1>
-          <p className="mt-2 text-sm text-slate-400 max-w-md mx-auto">
-            Role-segregated verification portal. Select an authorized operational role below for instant demo access.
-          </p>
-        </div>
 
-        {/* Error Notification Box */}
-        {errorMessage && (
-          <div
-            role="alert"
-            className="mb-6 p-4 rounded-lg bg-red-950/60 border border-red-500/40 text-red-200 text-sm flex items-start gap-3 transition-all animate-in fade-in"
-          >
-            <span className="text-lg leading-none text-red-400">⚠️</span>
-            <div className="flex-1 font-medium">{errorMessage}</div>
-            <button
-              onClick={() => setErrorMessage(null)}
-              className="text-red-400 hover:text-red-200 text-xs uppercase tracking-wider font-semibold cursor-pointer"
-            >
-              Dismiss
-            </button>
-          </div>
-        )}
+          {/* ========================================================================= */}
+          {/* RIGHT PANEL: Paper Technical UI                                           */}
+          {/* ========================================================================= */}
+          <div className="relative bg-[#E6E2DD] text-[#101010] p-6 sm:p-10 flex flex-col justify-between">
+            {/* Outer Architectural Registration Markers */}
+            <div className="absolute top-2 right-2 text-[#101010]/30 font-label-code text-label-code select-none pointer-events-none">
+              +
+            </div>
+            <div className="absolute bottom-2 right-2 text-[#101010]/30 font-label-code text-label-code select-none pointer-events-none">
+              +
+            </div>
 
-        {/* Authorized Roles Section */}
-        <div className="space-y-4 mb-6">
-          <div className="flex items-center justify-between">
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400">
-              Select Authorized Role To Enter
-            </label>
-            <span className="text-[11px] text-slate-500 font-mono">1-Click Sign In</span>
-          </div>
+            <div>
+              {/* Portal Subheader & Title */}
+              <div className="flex flex-col gap-1 pb-4 border-b border-[#101010]/15">
+                <span className="font-label-code text-label-code text-[#504533] uppercase tracking-[0.2em] flex items-center gap-2">
+                  <span className="w-2 h-2 bg-[#101010]" />
+                  SIGN IN // SELECT ROLE PORTAL
+                </span>
+                <h2 className="font-headline-lg text-headline-lg text-[#101010] uppercase font-bold tracking-tight">
+                  Access Audit Terminal
+                </h2>
+              </div>
 
-          <div className="grid grid-cols-1 gap-3.5">
-            {ROLES.map((role) => {
-              const isSelected = selectedRole === role.id;
-              const isLoadingThis = loadingRole === role.id;
-
-              return (
+              {/* Error Message Box */}
+              {errorMessage && (
                 <div
-                  key={role.id}
-                  onClick={() => setSelectedRole(role.id)}
-                  className={`p-4 rounded-xl border transition-all duration-150 flex flex-col gap-3 cursor-pointer ${
-                    isSelected
-                      ? "bg-slate-900/90 border-amber-500/70 shadow-[0_0_20px_rgba(245,158,11,0.12)] ring-1 ring-amber-500/50"
-                      : "bg-slate-900/40 border-slate-800 hover:border-slate-700 hover:bg-slate-900/70"
-                  }`}
+                  role="alert"
+                  className="mt-4 p-3 bg-[#ffdad6] border border-[#ba1a1a] text-[#ba1a1a] font-label-code text-label-code uppercase flex items-center justify-between"
                 >
-                  <div className="flex items-start gap-3.5">
-                    <div
-                      className={`w-10 h-10 rounded-lg flex items-center justify-center text-xl shrink-0 transition-colors ${
-                        isSelected
-                          ? "bg-amber-500 text-slate-950"
-                          : "bg-slate-800 text-slate-300"
-                      }`}
-                    >
-                      {role.icon}
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="font-semibold text-slate-100 text-base">
-                          {role.title}
-                        </span>
-                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-full border bg-slate-800 text-slate-400 border-slate-700">
-                          {role.badge}
-                        </span>
-                      </div>
-                      <p className="mt-1 text-xs text-slate-400 leading-relaxed">
-                        {role.description}
-                      </p>
-                      <p className="mt-1 text-[11px] text-slate-500 font-mono">
-                        Demo Account: <span className="text-slate-400">{role.email}</span>
-                      </p>
-                    </div>
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-sm">warning</span>
+                    <span>{errorMessage}</span>
                   </div>
+                  <button
+                    onClick={() => setErrorMessage(null)}
+                    className="font-bold underline cursor-pointer"
+                  >
+                    DISMISS
+                  </button>
+                </div>
+              )}
 
-                  {/* Direct Launch Button on Card */}
-                  <div className="pt-2 border-t border-slate-800/80 flex items-center justify-end">
+              {/* Role Selector Matrix */}
+              <fieldset className="mt-5">
+                <legend className="font-label-meta text-label-meta uppercase text-[#504533] tracking-widest mb-3 flex items-center justify-between w-full">
+                  <span>OPERATIONAL SECTOR SPECIFICATION</span>
+                  <span className="text-[#827560]">SELECT 01</span>
+                </legend>
+                <div className="flex flex-col gap-2.5">
+                  {ROLES.map((r) => {
+                    const isSelected = selectedRole === r.id;
+                    return (
+                      <label
+                        key={r.id}
+                        onClick={() => setSelectedRole(r.id)}
+                        className={`cursor-pointer relative bg-[#F2ECE6] border p-3.5 flex items-start gap-3 transition-all select-none ${
+                          isSelected
+                            ? "border-[#101010] shadow-[2px_2px_0px_#101010]"
+                            : "border-[#101010]/30 hover:border-[#101010]"
+                        }`}
+                      >
+                        <div
+                          className={`absolute top-0 left-0 right-0 h-[3px] transition-colors ${
+                            isSelected ? "bg-[#FCBC18]" : "bg-transparent"
+                          }`}
+                        />
+                        <input
+                          type="radio"
+                          name="access_role"
+                          value={r.id}
+                          checked={isSelected}
+                          onChange={() => setSelectedRole(r.id)}
+                          className="mt-1 accent-[#101010] w-4 h-4 rounded-none cursor-pointer"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span className="material-symbols-outlined text-[1.125rem] text-[#101010]">
+                                {r.icon}
+                              </span>
+                              <span className="font-headline-md text-body-lg font-bold uppercase tracking-tight text-[#101010]">
+                                {r.title}
+                              </span>
+                            </div>
+                            <span
+                              className={`font-label-code text-label-code px-1.5 py-0.5 border uppercase font-bold ${r.levelClass}`}
+                            >
+                              {r.level}
+                            </span>
+                          </div>
+                          <p className="font-body-sm text-body-sm text-[#504533] mt-0.5 leading-snug">
+                            {r.description}
+                          </p>
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+              </fieldset>
+
+              {/* Primary Action Button */}
+              <div className="mt-5 flex flex-col gap-3">
+                <button
+                  onClick={() => handleLogin(selectedRole)}
+                  disabled={loadingRole !== null}
+                  className="w-full h-[52px] bg-[#FCBC18] hover:bg-[#101010] text-[#101010] hover:text-[#FCBC18] border border-[#101010] font-headline-md text-headline-md font-bold uppercase tracking-wider flex items-center justify-center gap-3 transition-colors shadow-[2px_2px_0px_#101010] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none cursor-pointer"
+                  type="button"
+                >
+                  {loadingRole ? (
+                    <span className="font-label-code text-label-code uppercase">
+                      INITIALIZING SESSION...
+                    </span>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined text-[1.25rem]">login</span>
+                      <span>
+                        ENTER AS{" "}
+                        {ROLES.find((r) => r.id === selectedRole)?.title.toUpperCase()}
+                      </span>
+                    </>
+                  )}
+                </button>
+
+                {/* Alternative Direct ID Override Option */}
+                <div className="relative flex items-center justify-center my-1">
+                  <div className="w-full h-[1px] bg-[#101010]/20" />
+                  <span className="absolute bg-[#E6E2DD] px-3 font-label-code text-label-code uppercase tracking-widest text-[#504533]">
+                    OR DIRECT ID OVERRIDE
+                  </span>
+                </div>
+
+                {/* Employee ID Technical Input */}
+                <form onSubmit={handleDirectIdSubmit} className="flex flex-col gap-1">
+                  <label
+                    className="font-label-meta text-label-meta uppercase text-[#504533] tracking-wider flex justify-between"
+                    htmlFor="emp-id"
+                  >
+                    <span>EMPLOYEE CREDENTIAL ID</span>
+                    <span className="text-[#827560]">FORMAT: CNS-XXXXX</span>
+                  </label>
+                  <div className="relative group">
+                    <input
+                      id="emp-id"
+                      type="text"
+                      value={employeeIdInput}
+                      onChange={(e) => setEmployeeIdInput(e.target.value)}
+                      placeholder={
+                        ROLES.find((r) => r.id === selectedRole)?.empId || "CNS-89420-AUD"
+                      }
+                      className="w-full h-[50px] bg-[#F2ECE6] border border-[#101010]/40 text-[#101010] px-4 font-headline-md text-body-lg uppercase tracking-wider placeholder:text-[#827560]/50 outline-none focus:border-[#101010] transition-colors rounded-none"
+                    />
+                    <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-transparent group-focus-within:bg-[#FCBC18] transition-colors pointer-events-none" />
                     <button
-                      type="button"
-                      disabled={loadingRole !== null}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDemoLogin(role.id);
-                      }}
-                      className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
-                        isSelected
-                          ? "bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-sm"
-                          : "bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700"
-                      } disabled:opacity-50`}
+                      type="submit"
+                      className="absolute right-2 top-2 bottom-2 px-3 bg-[#101010] text-[#F2ECE6] hover:bg-[#FCBC18] hover:text-[#101010] border border-[#101010] font-label-code text-label-code uppercase transition-colors flex items-center gap-1 cursor-pointer"
                     >
-                      {isLoadingThis ? (
-                        <>
-                          <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                          <span>Entering...</span>
-                        </>
-                      ) : (
-                        <>
-                          <span>Enter as {role.title}</span>
-                          <span>→</span>
-                        </>
-                      )}
+                      <span>ENTER</span>
+                      <span className="material-symbols-outlined text-[0.875rem]">
+                        arrow_forward
+                      </span>
                     </button>
                   </div>
-                </div>
-              );
-            })}
+                </form>
+              </div>
+            </div>
+
+            {/* Security / Compliance Disclaimer */}
+            <div className="mt-6 pt-4 border-t border-[#101010]/15 flex items-start gap-2 text-[#504533]">
+              <span className="material-symbols-outlined text-[1rem] text-[#ba1a1a] shrink-0 mt-0.5">
+                lock
+              </span>
+              <p className="font-label-meta text-label-meta tracking-wider uppercase leading-tight">
+                Restricted system. All authentication attempts are logged and geo-verified. Unauthorized intrusion violates Civil Compliance Standard ISO-19650.
+              </p>
+            </div>
           </div>
         </div>
-
-        {/* Primary Bottom Action */}
-        <div className="space-y-3">
-          <button
-            type="button"
-            disabled={loadingRole !== null}
-            onClick={() => handleDemoLogin(selectedRole)}
-            className="w-full py-3.5 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 bg-white text-slate-950 hover:bg-slate-100 transition-all duration-150 outline-none focus-visible:ring-2 focus-visible:ring-amber-400 active:scale-[0.99] cursor-pointer shadow-lg shadow-white/5 disabled:opacity-50"
-          >
-            {loadingRole ? (
-              <>
-                <span className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
-                <span>Authorizing Portal Entry...</span>
-              </>
-            ) : (
-              <>
-                <span>
-                  Launch Portal as{" "}
-                  {ROLES.find((r) => r.id === selectedRole)?.title}
-                </span>
-                <span>⚡</span>
-              </>
-            )}
-          </button>
-        </div>
-
-        {/* Security & Isolation Note */}
-        <p className="mt-6 text-center text-xs text-slate-500">
-          🔒 Roles are segregated and strictly enforced on the server. Cross-role URL tampering redirects automatically.
-        </p>
       </main>
-
-      {/* Footer */}
-      <footer className="border-t border-slate-900 bg-slate-950 px-4 py-4 text-center text-xs text-slate-600 font-mono">
-        SiteVerify &copy; {new Date().getFullYear()} • Role-Segregated Construction Verification
-      </footer>
     </div>
   );
 };
+
+export default LoginPage;

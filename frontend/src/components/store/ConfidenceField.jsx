@@ -3,8 +3,12 @@ import React from "react";
 export const ConfidenceField = ({ confidence, label, children }) => {
   if (confidence === undefined || confidence === null) {
     return (
-      <div className="space-y-1">
-        {label && <label className="block text-xs font-medium text-slate-300">{label}</label>}
+      <div className="space-y-1.5">
+        {label && (
+          <label className="block text-[11px] font-mono uppercase tracking-wider text-[#101010] font-bold">
+            {label}
+          </label>
+        )}
         {children}
       </div>
     );
@@ -12,22 +16,28 @@ export const ConfidenceField = ({ confidence, label, children }) => {
 
   const num = typeof confidence === "number" ? confidence : parseFloat(confidence) || 0;
 
-  let badgeStyle = "bg-rose-500/20 text-rose-300 border-rose-500/40";
-  let labelText = `${Math.round(num)}% (Low Confidence)`;
+  let badgeStyle = "bg-[#B3261E]/15 text-[#B3261E] border-[#B3261E]";
+  let labelText = `${Math.round(num)}% LOW`;
 
   if (num >= 80) {
-    badgeStyle = "bg-emerald-500/20 text-emerald-300 border-emerald-500/40";
-    labelText = `${Math.round(num)}% Confidence`;
+    badgeStyle = "bg-[#2F6F4E]/15 text-[#2F6F4E] border-[#2F6F4E]";
+    labelText = `${Math.round(num)}% CONF`;
   } else if (num >= 60) {
-    badgeStyle = "bg-amber-500/20 text-amber-300 border-amber-500/40";
-    labelText = `${Math.round(num)}% (Review Advised)`;
+    badgeStyle = "bg-[#FCBC18]/25 text-[#101010] border-[#FCBC18]";
+    labelText = `${Math.round(num)}% REVIEW`;
   }
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-1.5">
       <div className="flex items-center justify-between">
-        {label && <label className="block text-xs font-medium text-slate-300">{label}</label>}
-        <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded border ${badgeStyle}`}>
+        {label && (
+          <label className="block text-[11px] font-mono uppercase tracking-wider text-[#101010] font-bold">
+            {label}
+          </label>
+        )}
+        <span
+          className={`text-[10px] font-mono uppercase tracking-wider px-1.5 py-0.5 border rounded-none font-bold ${badgeStyle}`}
+        >
           {labelText}
         </span>
       </div>
@@ -35,3 +45,4 @@ export const ConfidenceField = ({ confidence, label, children }) => {
     </div>
   );
 };
+

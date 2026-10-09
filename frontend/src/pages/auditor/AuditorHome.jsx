@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "../../auth/AuthContext";
 import { pingAuditor, fetchUsers, createUser, fetchExifGpsReport } from "../../api/client";
 import { ClaimAuditDesk } from "./ClaimAuditDesk";
@@ -98,10 +99,9 @@ export const AuditorHome = () => {
       setFormSuccess(`User ${newUser.email} added successfully with role ${newUser.role}!`);
       setFullName("");
       setEmail("");
-      setRole("supervisor");
-      await loadUsers();
+      loadUsers();
     } catch (err) {
-      setFormError(err?.message || "Failed to create user");
+      setFormError(err?.message || "Failed to register new user");
     } finally {
       setSubmittingUser(false);
     }
@@ -110,82 +110,117 @@ export const AuditorHome = () => {
   const getStatusBadge = (status) => {
     switch (status) {
       case "PASS":
-        return "bg-emerald-500/10 text-emerald-400 border-emerald-500/30";
-      case "FAIL":
+        return "bg-[#93d5ad]/30 text-[#296a49] border-[#296a49]";
       case "FLAGGED":
-        return "bg-red-500/10 text-red-400 border-red-500/30";
-      case "WARNING":
+      case "FAIL":
+        return "bg-[#ffdad6] text-[#ba1a1a] border-[#ba1a1a]";
       case "REVIEW_REQUIRED":
-        return "bg-amber-500/10 text-amber-400 border-amber-500/30";
+      case "WARNING":
+        return "bg-[#ffdea2] text-[#7a5900] border-[#7a5900]";
       default:
-        return "bg-slate-500/10 text-slate-400 border-slate-500/30";
+        return "bg-[#E6E2DD] text-[#5F5E5E] border-[#A39B8F]/30";
+    }
+  };
+
+  const getRoleBadge = (r) => {
+    switch (r) {
+      case "auditor":
+        return "bg-[#ffdea2] text-[#7a5900] border-[#7a5900]";
+      case "store_incharge":
+        return "bg-[#E6E2DD] text-[#504533] border-[#827560]";
+      case "supervisor":
+        return "bg-[#93d5ad]/30 text-[#296a49] border-[#296a49]";
+      default:
+        return "bg-[#E6E2DD] text-[#504533] border-[#A39B8F]";
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
-      {/* Top Bar */}
-      <header className="border-b border-slate-800 bg-slate-900/60 px-6 py-4 flex items-center justify-between">
+    <div className="min-h-screen bg-[#E6E2DD] text-[#101010] flex flex-col font-body-md text-body-md selection:bg-[#FCBC18] selection:text-[#101010]">
+      {/* Background Hairline Grid */}
+      <div className="pointer-events-none fixed inset-0 z-0 grid grid-cols-12 gap-4 px-6 opacity-[0.06]">
+        {[...Array(12)].map((_, i) => (
+          <div key={i} className="h-full border-r border-[#101010]" />
+        ))}
+      </div>
+
+      {/* Top Header Bar */}
+      <header className="border-b border-[#101010] bg-[#101010] text-[#F2ECE6] sticky top-0 z-40 px-4 sm:px-6 py-3 flex items-center justify-between gap-4 shadow-[0_2px_0px_#101010]">
         <div className="flex items-center gap-3">
-          <span className="text-xl">🛡️</span>
-          <div>
-            <h1 className="text-sm font-semibold text-white">SiteVerify Portal</h1>
-            <p className="text-xs text-slate-400">Auditor Command Center</p>
+          <Link to="/" className="flex items-center gap-2 group">
+            <span className="font-headline-md text-headline-md tracking-wider uppercase font-bold text-[#F2ECE6] group-hover:text-[#FCBC18] transition-colors">
+              CONSTRA
+            </span>
+            <div className="w-2.5 h-2.5 bg-[#FCBC18] shrink-0" />
+          </Link>
+          <div className="h-4 w-[1px] bg-[#A39B8F]/30 hidden sm:block" />
+          <div className="hidden sm:flex items-center gap-2">
+            <span className="font-label-code text-label-code uppercase tracking-widest text-[#A39B8F] border border-[#A39B8F]/30 px-2 py-[1px]">
+              CIVIL AUDIT PLATFORM
+            </span>
+            <span className="font-label-meta text-label-meta uppercase tracking-wider text-[#FCBC18]">
+              APEX GOVERNANCE // TIER 03
+            </span>
           </div>
         </div>
+
         <div className="flex items-center gap-4">
           <div className="text-right hidden sm:block">
-            <p className="text-sm font-medium text-white">{user?.full_name}</p>
-            <p className="text-xs text-slate-400 font-mono">{user?.email}</p>
+            <p className="font-label-code text-label-code text-[#F2ECE6] uppercase font-bold">
+              {user?.full_name || "Lead Auditor"}
+            </p>
+            <p className="font-label-meta text-label-meta text-[#A39B8F] uppercase">
+              {user?.email}
+            </p>
           </div>
-          <span className="px-2.5 py-1 text-xs font-mono font-medium rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">
-            AUDITOR
+          <span className="px-2.5 py-1 font-label-code text-label-code uppercase font-bold bg-[#ffdea2] text-[#7a5900] border border-[#7a5900]">
+            CLEARANCE-A
           </span>
           <button
             onClick={() => logout()}
-            className="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors cursor-pointer"
+            className="px-3 py-1 font-label-code text-label-code uppercase border border-[#F2ECE6] text-[#F2ECE6] hover:bg-[#F2ECE6] hover:text-[#101010] transition-colors cursor-pointer"
           >
-            Logout
+            LOGOUT
           </button>
         </div>
       </header>
 
       {/* Main Body */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-8 space-y-6">
+      <main className="relative z-10 flex-1 max-w-7xl w-full mx-auto p-4 md:p-8 space-y-6">
         {/* Navigation Tabs */}
-        <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
+        <div className="flex items-center gap-2 border-b border-[#101010] pb-3 overflow-x-auto">
           <button
             onClick={() => setActiveTab("desk")}
-            className={`px-4 py-2 rounded-xl text-xs font-bold font-mono transition-all cursor-pointer flex items-center gap-2 ${
+            className={`px-4 py-2 font-label-code text-label-code uppercase tracking-wider font-bold transition-all border cursor-pointer flex items-center gap-2 ${
               activeTab === "desk"
-                ? "bg-amber-500 text-slate-950 shadow-md"
-                : "bg-slate-900 text-slate-400 border border-slate-800 hover:text-white"
+                ? "bg-[#FCBC18] text-[#101010] border-[#101010] shadow-[2px_2px_0px_#101010]"
+                : "bg-[#F2ECE6] text-[#5F5E5E] border-[#A39B8F]/40 hover:text-[#101010] hover:border-[#101010]"
             }`}
           >
-            <span>📋</span>
-            <span>Claim Audit Desk</span>
+            <span className="material-symbols-outlined text-[15px]">assignment</span>
+            <span>CLAIM AUDIT DESK</span>
           </button>
           <button
             onClick={() => setActiveTab("exif")}
-            className={`px-4 py-2 rounded-xl text-xs font-bold font-mono transition-all cursor-pointer flex items-center gap-2 ${
+            className={`px-4 py-2 font-label-code text-label-code uppercase tracking-wider font-bold transition-all border cursor-pointer flex items-center gap-2 ${
               activeTab === "exif"
-                ? "bg-amber-500 text-slate-950 shadow-md"
-                : "bg-slate-900 text-slate-400 border border-slate-800 hover:text-white"
+                ? "bg-[#FCBC18] text-[#101010] border-[#101010] shadow-[2px_2px_0px_#101010]"
+                : "bg-[#F2ECE6] text-[#5F5E5E] border-[#A39B8F]/40 hover:text-[#101010] hover:border-[#101010]"
             }`}
           >
-            <span>📍</span>
-            <span>EXIF & GPS Inspector</span>
+            <span className="material-symbols-outlined text-[15px]">location_on</span>
+            <span>EXIF &amp; GPS INSPECTOR</span>
           </button>
           <button
             onClick={() => setActiveTab("users")}
-            className={`px-4 py-2 rounded-xl text-xs font-bold font-mono transition-all cursor-pointer flex items-center gap-2 ${
+            className={`px-4 py-2 font-label-code text-label-code uppercase tracking-wider font-bold transition-all border cursor-pointer flex items-center gap-2 ${
               activeTab === "users"
-                ? "bg-amber-500 text-slate-950 shadow-md"
-                : "bg-slate-900 text-slate-400 border border-slate-800 hover:text-white"
+                ? "bg-[#FCBC18] text-[#101010] border-[#101010] shadow-[2px_2px_0px_#101010]"
+                : "bg-[#F2ECE6] text-[#5F5E5E] border-[#A39B8F]/40 hover:text-[#101010] hover:border-[#101010]"
             }`}
           >
-            <span>👥</span>
-            <span>User Allowlist & Auth</span>
+            <span className="material-symbols-outlined text-[15px]">manage_accounts</span>
+            <span>USER ALLOWLIST &amp; AUTH</span>
           </button>
         </div>
 
@@ -198,69 +233,72 @@ export const AuditorHome = () => {
 
         {/* TAB 2: EXIF & GPS INSPECTOR */}
         {activeTab === "exif" && (
-          <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+          <div className="p-6 bg-[#F2ECE6] border border-[#101010] shadow-[3px_3px_0px_#101010] space-y-6 relative">
+            <div className="absolute -top-1 -left-1 w-2.5 h-2.5 border-t-2 border-l-2 border-[#101010]" />
+            <div className="absolute -top-1 -right-1 w-2.5 h-2.5 border-t-2 border-r-2 border-[#101010]" />
+            <div className="absolute -bottom-1 -left-1 w-2.5 h-2.5 border-b-2 border-l-2 border-[#101010]" />
+            <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 border-b-2 border-r-2 border-[#101010]" />
+
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[#A39B8F]/30">
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xl">📍</span>
-                  <h3 className="text-lg font-bold text-white">Construction Photo EXIF & GPS Audit</h3>
+                  <span className="w-2.5 h-2.5 bg-[#FCBC18]" />
+                  <h3 className="font-headline-lg text-headline-lg font-bold text-[#101010] uppercase tracking-tight">
+                    Construction Photo EXIF &amp; GPS Audit
+                  </h3>
                 </div>
-                <p className="text-xs text-slate-400 mt-1">
-                  Inspect photo capture timestamps, geofence radius, software editing signatures, and SHA-256 hash duplication.
+                <p className="font-label-meta text-label-meta text-[#5F5E5E] uppercase mt-1">
+                  INSPECT PHOTO CAPTURE TIMESTAMPS, GEOFENCE RADIUS, SOFTWARE EDITING SIGNATURES, AND SHA-256 HASH DUPLICATION.
                 </p>
               </div>
-              <div className="flex items-center gap-2">
-                <code className="text-[11px] font-mono bg-slate-950 px-2.5 py-1 rounded border border-slate-800 text-amber-400">
-                  GET /api/v1/projects/{projectId}/evidence/{fileName}/exif-gps
-                </code>
+              <div className="font-label-code text-label-code bg-[#101010] text-[#FCBC18] px-3 py-1 font-bold">
+                WGS 84 // EPSG:4326
               </div>
             </div>
 
-            {/* Form & Controls */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-950/60 p-4 rounded-xl border border-slate-800">
+            {/* Form Controls */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-[#E6E2DD] p-4 border border-[#101010]">
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">Project ID</label>
+                <label className="font-label-meta text-label-meta uppercase text-[#504533] block mb-1">
+                  PROJECT IDENTIFIER
+                </label>
                 <input
                   type="text"
                   value={projectId}
                   onChange={(e) => setProjectId(e.target.value)}
                   placeholder="project-001"
-                  className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs font-mono focus:outline-none focus:border-amber-400"
+                  className="w-full bg-[#F2ECE6] border border-[#101010] px-3 py-2 text-[#101010] font-label-code text-label-code uppercase outline-none"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">Evidence Photo Filename</label>
+                <label className="font-label-meta text-label-meta uppercase text-[#504533] block mb-1">
+                  EVIDENCE PHOTO FILENAME
+                </label>
                 <input
                   type="text"
                   value={fileName}
                   onChange={(e) => setFileName(e.target.value)}
                   placeholder="column_casting.jpg"
-                  className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs font-mono focus:outline-none focus:border-amber-400"
+                  className="w-full bg-[#F2ECE6] border border-[#101010] px-3 py-2 text-[#101010] font-label-code text-label-code outline-none"
                 />
               </div>
               <div className="flex items-end">
                 <button
                   onClick={() => handleFetchExifReport(projectId, fileName)}
                   disabled={loadingExif}
-                  className="w-full py-1.5 px-4 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold text-xs transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="w-full py-2 px-4 bg-[#FCBC18] hover:bg-[#101010] text-[#101010] hover:text-[#FCBC18] font-label-code text-label-code uppercase font-bold border border-[#101010] shadow-[2px_2px_0px_#101010] transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  {loadingExif ? "Analyzing Photo..." : "🔍 Run EXIF & GPS Audit"}
+                  <span className="material-symbols-outlined text-base">search</span>
+                  <span>{loadingExif ? "ANALYZING BLOB..." : "RUN EXIF & GPS AUDIT"}</span>
                 </button>
               </div>
             </div>
 
             {/* Error Message */}
             {exifError && (
-              <div className="p-4 rounded-xl bg-red-950/40 border border-red-500/40 text-red-300 text-xs">
-                <div className="font-semibold text-red-400 mb-1">Audit Failed</div>
+              <div className="p-4 bg-[#ffdad6] border border-[#ba1a1a] text-[#ba1a1a] font-label-code text-label-code uppercase">
+                <div className="font-bold mb-1">AUDIT PIPELINE FAILURE</div>
                 <p>{exifError}</p>
-              </div>
-            )}
-
-            {/* Loading Indicator */}
-            {loadingExif && (
-              <div className="p-8 text-center text-slate-400 text-xs animate-pulse font-mono">
-                Extracting EXIF tags, checking geofence coordinates, verifying SHA-256 hash...
               </div>
             )}
 
@@ -268,96 +306,99 @@ export const AuditorHome = () => {
             {exifReport && !loadingExif && (
               <div className="space-y-6">
                 {/* Report Header Card */}
-                <div className="p-5 rounded-xl bg-slate-950 border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="p-5 bg-[#E6E2DD] border border-[#101010] flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div>
                     <div className="flex items-center gap-3">
-                      <span className="text-xs font-mono uppercase tracking-wider text-slate-400">Report Type:</span>
-                      <span className="text-xs font-mono font-bold text-white bg-slate-800 px-2 py-0.5 rounded">
+                      <span className="font-label-meta text-label-meta text-[#5F5E5E] uppercase">
+                        REPORT TYPE:
+                      </span>
+                      <span className="font-label-code text-label-code font-bold text-[#101010] bg-[#F2ECE6] px-2 py-0.5 border border-[#101010] uppercase">
                         {exifReport.report_type}
                       </span>
                     </div>
-                    <h4 className="text-base font-bold text-white mt-1 flex items-center gap-2 font-mono">
-                      📄 {exifReport.file_name}
+                    <h4 className="font-headline-md text-headline-md font-bold text-[#101010] uppercase mt-1 flex items-center gap-2">
+                      <span>📄 {exifReport.file_name}</span>
                     </h4>
-                    <p className="text-[11px] font-mono text-slate-400 mt-1">
-                      SHA256: <span className="text-slate-300">{exifReport.file_sha256}</span>
+                    <p className="font-label-meta text-label-meta text-[#5F5E5E] uppercase mt-1">
+                      SHA-256: <strong className="text-[#101010]">{exifReport.file_sha256}</strong>
                     </p>
                   </div>
 
                   <div className="flex flex-col items-start md:items-end gap-1">
-                    <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400">Overall Status</span>
+                    <span className="font-label-meta text-label-meta uppercase text-[#5F5E5E]">
+                      OVERALL GATE STATUS
+                    </span>
                     <span
-                      className={`px-4 py-1.5 rounded-full font-mono text-xs font-bold uppercase border tracking-wider ${getStatusBadge(
+                      className={`px-4 py-1.5 font-label-code text-label-code font-bold uppercase border tracking-wider ${getStatusBadge(
                         exifReport.overall_status
                       )}`}
                     >
-                      {exifReport.overall_status === "FLAGGED" && "⚠️ "}
-                      {exifReport.overall_status === "REVIEW_REQUIRED" && "🔍 "}
-                      {exifReport.overall_status === "PASS" && "✓ "}
                       {exifReport.overall_status}
                     </span>
-                    <span className="text-[10px] text-slate-500 font-mono mt-1">
-                      Generated: {new Date(exifReport.generated_at).toLocaleString()}
+                    <span className="font-label-meta text-label-meta text-[#8C8B91] uppercase mt-1">
+                      GENERATED: {new Date(exifReport.generated_at).toLocaleString()}
                     </span>
                   </div>
                 </div>
 
-                {/* Summary Metrics */}
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                  <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-center">
-                    <p className="text-[10px] text-slate-400 uppercase font-mono">Total Checks</p>
-                    <p className="text-xl font-bold text-white mt-1 font-mono">{exifReport.summary.total_checks}</p>
+                {/* Telemetry Spec Rows */}
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 font-label-code text-label-code text-center">
+                  <div className="p-3 bg-[#E6E2DD] border border-[#101010]">
+                    <p className="font-label-meta text-label-meta text-[#5F5E5E] uppercase">TOTAL CHECKS</p>
+                    <p className="text-xl font-bold text-[#101010] mt-1 tabular-nums">{exifReport.summary.total_checks}</p>
                   </div>
-                  <div className="p-3 rounded-xl bg-slate-950 border border-emerald-500/20 text-center">
-                    <p className="text-[10px] text-emerald-400 uppercase font-mono">Passed</p>
-                    <p className="text-xl font-bold text-emerald-400 mt-1 font-mono">{exifReport.summary.passed}</p>
+                  <div className="p-3 bg-[#E6E2DD] border border-[#2F6F4E] border-t-4 border-t-[#2F6F4E]">
+                    <p className="font-label-meta text-label-meta text-[#2F6F4E] uppercase">PASSED</p>
+                    <p className="text-xl font-bold text-[#2F6F4E] mt-1 tabular-nums">{exifReport.summary.passed}</p>
                   </div>
-                  <div className="p-3 rounded-xl bg-slate-950 border border-red-500/20 text-center">
-                    <p className="text-[10px] text-red-400 uppercase font-mono">Failed</p>
-                    <p className="text-xl font-bold text-red-400 mt-1 font-mono">{exifReport.summary.failed}</p>
+                  <div className="p-3 bg-[#E6E2DD] border border-[#B3261E] border-t-4 border-t-[#B3261E]">
+                    <p className="font-label-meta text-label-meta text-[#B3261E] uppercase">FAILED</p>
+                    <p className="text-xl font-bold text-[#B3261E] mt-1 tabular-nums">{exifReport.summary.failed}</p>
                   </div>
-                  <div className="p-3 rounded-xl bg-slate-950 border border-amber-500/20 text-center">
-                    <p className="text-[10px] text-amber-400 uppercase font-mono">Warnings</p>
-                    <p className="text-xl font-bold text-amber-400 mt-1 font-mono">{exifReport.summary.warnings}</p>
+                  <div className="p-3 bg-[#E6E2DD] border border-[#FCBC18] border-t-4 border-t-[#FCBC18]">
+                    <p className="font-label-meta text-label-meta text-[#7a5900] uppercase">WARNINGS</p>
+                    <p className="text-xl font-bold text-[#7a5900] mt-1 tabular-nums">{exifReport.summary.warnings}</p>
                   </div>
-                  <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-center">
-                    <p className="text-[10px] text-slate-400 uppercase font-mono">Not Checked</p>
-                    <p className="text-xl font-bold text-slate-400 mt-1 font-mono">{exifReport.summary.not_checked}</p>
+                  <div className="p-3 bg-[#E6E2DD] border border-[#101010]">
+                    <p className="font-label-meta text-label-meta text-[#8C8B91] uppercase">NOT CHECKED</p>
+                    <p className="text-xl font-bold text-[#8C8B91] mt-1 tabular-nums">{exifReport.summary.not_checked}</p>
                   </div>
                 </div>
 
                 {/* Checks Breakdown */}
                 <div className="space-y-3">
-                  <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                    Automated Check Pipeline Results
+                  <h4 className="font-label-code text-label-code font-bold uppercase tracking-wider text-[#101010]">
+                    AUTOMATED CHECK PIPELINE RESULTS
                   </h4>
-                  <div className="grid grid-cols-1 gap-3">
+                  <div className="grid grid-cols-1 gap-3 font-label-code text-label-code">
                     {exifReport.checks.map((check, idx) => (
                       <div
                         key={idx}
-                        className="p-4 rounded-xl bg-slate-950 border border-slate-800 hover:border-slate-700 transition-colors"
+                        className="p-4 bg-[#E6E2DD] border border-[#101010] flex flex-col gap-2"
                       >
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
-                          <div className="flex items-center gap-2">
-                            <span className="font-mono font-bold text-sm text-white">{check.name}</span>
-                          </div>
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                          <span className="font-headline-md text-headline-md font-bold uppercase text-[#101010]">
+                            {check.name}
+                          </span>
                           <span
-                            className={`px-2.5 py-0.5 rounded text-[11px] font-mono font-bold uppercase border self-start sm:self-auto ${getStatusBadge(
+                            className={`px-2.5 py-0.5 uppercase font-bold border self-start sm:self-auto ${getStatusBadge(
                               check.status
                             )}`}
                           >
                             {check.status}
                           </span>
                         </div>
-                        <p className="text-xs text-slate-300">{check.message}</p>
+                        <p className="font-body-md text-body-md text-[#5F5E5E]">
+                          {check.message}
+                        </p>
 
                         {/* Details */}
                         {check.details && Object.keys(check.details).length > 0 && (
-                          <div className="mt-3 pt-3 border-t border-slate-900 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-[11px] font-mono">
+                          <div className="mt-2 pt-2 border-t border-[#A39B8F]/30 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                             {Object.entries(check.details).map(([k, v]) => (
-                              <div key={k} className="bg-slate-900/80 px-2.5 py-1 rounded border border-slate-800/80">
-                                <span className="text-slate-400 uppercase text-[9px] block">{k}</span>
-                                <span className="text-slate-200 break-all">{String(v)}</span>
+                              <div key={k} className="bg-[#F2ECE6] px-2.5 py-1 border border-[#A39B8F]/40">
+                                <span className="font-label-meta text-label-meta uppercase text-[#5F5E5E] block">{k}</span>
+                                <span className="font-bold text-[#101010] break-all">{String(v)}</span>
                               </div>
                             ))}
                           </div>
@@ -366,17 +407,6 @@ export const AuditorHome = () => {
                     ))}
                   </div>
                 </div>
-
-                {/* Disclaimer */}
-                {exifReport.disclaimer && (
-                  <div className="p-4 rounded-xl bg-amber-950/20 border border-amber-500/30 text-amber-200/90 text-xs leading-relaxed flex items-start gap-3">
-                    <span className="text-lg">ℹ️</span>
-                    <div>
-                      <span className="font-semibold text-amber-400 block mb-0.5">Auditor Verification Disclaimer</span>
-                      {exifReport.disclaimer}
-                    </div>
-                  </div>
-                )}
               </div>
             )}
           </div>
@@ -386,171 +416,176 @@ export const AuditorHome = () => {
         {activeTab === "users" && (
           <div className="space-y-6">
             {/* API Authorization Test */}
-            <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                API Authorization Test
-              </h3>
-              <p className="text-xs text-slate-400 mb-4">
-                Sends an authenticated request with your Firebase Bearer token to <code className="text-amber-400 font-mono">GET /auditor/ping</code>.
+            <div className="p-6 bg-[#F2ECE6] border border-[#101010] shadow-[2px_2px_0px_#101010]">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-2 h-2 bg-[#FCBC18]" />
+                <h3 className="font-headline-md text-headline-md font-bold uppercase text-[#101010]">
+                  API AUTHORIZATION HANDSHAKE TEST
+                </h3>
+              </div>
+              <p className="font-body-md text-body-md text-[#5F5E5E] mb-4">
+                Sends an authenticated request with your Firebase Bearer token to <code className="font-label-code text-label-code bg-[#E6E2DD] px-1.5 py-0.5 border border-[#101010]">GET /auditor/ping</code>.
               </p>
               <button
                 onClick={handleTestPing}
                 disabled={loadingPing}
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold transition-colors disabled:opacity-50 cursor-pointer"
+                className="px-4 py-2 bg-[#FCBC18] hover:bg-[#101010] text-[#101010] hover:text-[#FCBC18] font-label-code text-label-code uppercase font-bold border border-[#101010] shadow-[2px_2px_0px_#101010] transition-colors cursor-pointer disabled:opacity-50"
               >
-                {loadingPing ? "Connecting..." : "Test API Connection (/auditor/ping)"}
+                {loadingPing ? "CONNECTING..." : "TEST API CONNECTION (/auditor/ping)"}
               </button>
 
               {pingResult && (
-                <div className="mt-4 p-4 rounded-xl bg-slate-950 border border-emerald-500/40 text-emerald-300 text-xs font-mono">
-                  <div className="font-bold mb-1 text-emerald-400">✓ 200 OK — Authorized:</div>
-                  <pre>{pingResult}</pre>
+                <div className="mt-4 p-4 bg-[#101010] border border-[#2F6F4E] text-[#93d5ad] font-label-code text-label-code">
+                  <div className="font-bold mb-1 uppercase">✓ 200 OK — AUTHORIZATION CONFIRMED:</div>
+                  <pre className="overflow-x-auto">{pingResult}</pre>
                 </div>
               )}
 
               {errorPing && (
-                <div className="mt-4 p-4 rounded-xl bg-red-950/40 border border-red-500/40 text-red-300 text-xs font-mono">
-                  <div className="font-bold mb-1 text-red-400">✗ Error:</div>
+                <div className="mt-4 p-4 bg-[#ffdad6] border border-[#ba1a1a] text-[#ba1a1a] font-label-code text-label-code uppercase">
+                  <div className="font-bold mb-1">✗ HANDSHAKE ERROR:</div>
                   <p>{errorPing}</p>
                 </div>
               )}
             </div>
 
-            {/* User Management Section */}
+            {/* User Allowlist Roster & Add Form */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Add User Form */}
-              <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 lg:col-span-1">
-                <h3 className="text-base font-bold text-white mb-1">Add Registered User</h3>
-                <p className="text-xs text-slate-400 mb-4">
-                  Allowlist a Google account email and assign their role.
+              <div className="p-6 bg-[#F2ECE6] border border-[#101010] shadow-[2px_2px_0px_#101010] lg:col-span-1">
+                <h3 className="font-headline-md text-headline-md font-bold text-[#101010] uppercase mb-1">
+                  Add Registered User
+                </h3>
+                <p className="font-body-sm text-body-sm text-[#5F5E5E] mb-4">
+                  Allowlist a Google account email and assign their operational role tier.
                 </p>
 
                 {formSuccess && (
-                  <div className="mb-4 p-3 rounded-lg bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 text-xs">
+                  <div className="mb-4 p-3 bg-[#93d5ad]/30 border border-[#296a49] text-[#296a49] font-label-code text-label-code uppercase font-bold">
                     {formSuccess}
                   </div>
                 )}
 
                 {formError && (
-                  <div className="mb-4 p-3 rounded-lg bg-red-950/40 border border-red-500/40 text-red-300 text-xs">
+                  <div className="mb-4 p-3 bg-[#ffdad6] border border-[#ba1a1a] text-[#ba1a1a] font-label-code text-label-code uppercase font-bold">
                     {formError}
                   </div>
                 )}
 
                 <form onSubmit={handleCreateUser} className="space-y-4">
                   <div>
-                    <label className="block text-xs font-medium text-slate-300 mb-1">Full Name</label>
+                    <label className="font-label-meta text-label-meta uppercase text-[#504533] block mb-1">FULL NAME</label>
                     <input
                       type="text"
                       required
                       placeholder="e.g. John Doe"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-sm focus:outline-none focus:border-amber-400"
+                      className="w-full bg-[#E6E2DD] border border-[#101010] px-3 py-2 text-[#101010] font-label-code text-label-code outline-none focus:border-[#FCBC18]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-slate-300 mb-1">Google Account Email</label>
+                    <label className="font-label-meta text-label-meta uppercase text-[#504533] block mb-1">GOOGLE EMAIL ADDRESS</label>
                     <input
                       type="email"
                       required
-                      placeholder="name@example.com"
+                      placeholder="user@gmail.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-sm focus:outline-none focus:border-amber-400"
+                      className="w-full bg-[#E6E2DD] border border-[#101010] px-3 py-2 text-[#101010] font-label-code text-label-code outline-none focus:border-[#FCBC18]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-slate-300 mb-1">Assigned Role</label>
+                    <label className="font-label-meta text-label-meta uppercase text-[#504533] block mb-1">ASSIGNED ROLE CLEARANCE</label>
                     <select
                       value={role}
                       onChange={(e) => setRole(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-sm focus:outline-none focus:border-amber-400"
+                      className="w-full bg-[#E6E2DD] border border-[#101010] px-3 py-2 text-[#101010] font-label-code text-label-code uppercase outline-none focus:border-[#FCBC18]"
                     >
-                      <option value="supervisor">Site Supervisor</option>
-                      <option value="store_incharge">Store In-Charge</option>
-                      <option value="auditor">Project Auditor</option>
+                      <option value="supervisor">SITE SUPERVISOR (LEVEL-01)</option>
+                      <option value="store_incharge">STORE IN-CHARGE (LEVEL-02)</option>
+                      <option value="auditor">PROJECT AUDITOR (CLEARANCE-A)</option>
                     </select>
                   </div>
 
                   <button
                     type="submit"
                     disabled={submittingUser}
-                    className="w-full py-2.5 px-4 rounded-lg bg-white text-slate-950 font-semibold text-sm hover:bg-slate-100 transition-colors disabled:opacity-50 cursor-pointer"
+                    className="w-full py-2.5 px-4 bg-[#FCBC18] hover:bg-[#101010] text-[#101010] hover:text-[#FCBC18] font-label-code text-label-code uppercase font-bold border border-[#101010] shadow-[2px_2px_0px_#101010] transition-colors cursor-pointer disabled:opacity-50"
                   >
-                    {submittingUser ? "Registering..." : "Add to Allowlist"}
+                    {submittingUser ? "REGISTERING..." : "ALLOWLIST CREDENTIAL"}
                   </button>
                 </form>
               </div>
 
-              {/* Registered Users Table */}
-              <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 lg:col-span-2 flex flex-col">
+              {/* Registered Users Roster Table */}
+              <div className="p-6 bg-[#F2ECE6] border border-[#101010] shadow-[2px_2px_0px_#101010] lg:col-span-2">
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h3 className="text-base font-bold text-white">Registered Users (Allowlist)</h3>
-                    <p className="text-xs text-slate-400">
-                      Only accounts listed here can log in through Google.
+                    <h3 className="font-headline-md text-headline-md font-bold text-[#101010] uppercase">
+                      Authorized User Allowlist Roster
+                    </h3>
+                    <p className="font-body-sm text-body-sm text-[#5F5E5E]">
+                      Only emails on this roster can authenticate into operational dashboards.
                     </p>
                   </div>
-                  <button
-                    onClick={loadUsers}
-                    disabled={loadingUsers}
-                    className="px-3 py-1 rounded text-xs text-slate-300 bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-colors cursor-pointer"
-                  >
-                    Refresh
-                  </button>
+                  <span className="font-label-code text-label-code px-2 py-0.5 bg-[#101010] text-[#FCBC18] font-bold">
+                    {usersList.length} USERS
+                  </span>
                 </div>
 
                 {usersError && (
-                  <div className="p-3 mb-4 rounded-lg bg-red-950/40 border border-red-500/40 text-red-300 text-xs">
+                  <div className="p-3 bg-[#ffdad6] border border-[#ba1a1a] text-[#ba1a1a] font-label-code text-label-code uppercase mb-4">
                     {usersError}
                   </div>
                 )}
 
-                <div className="flex-1 overflow-x-auto">
-                  <table className="w-full text-left text-xs text-slate-300">
-                    <thead className="bg-slate-950 text-slate-400 uppercase font-mono border-b border-slate-800">
-                      <tr>
-                        <th className="px-4 py-2.5">ID</th>
-                        <th className="px-4 py-2.5">Full Name</th>
-                        <th className="px-4 py-2.5">Email</th>
-                        <th className="px-4 py-2.5">Role</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800/60">
-                      {usersList.length === 0 ? (
-                        <tr>
-                          <td colSpan={4} className="px-4 py-6 text-center text-slate-500">
-                            {loadingUsers ? "Loading user allowlist..." : "No users found."}
-                          </td>
+                {loadingUsers ? (
+                  <div className="p-8 text-center text-[#5F5E5E] font-label-code text-label-code uppercase animate-pulse">
+                    LOADING AUTHORIZED ROSTER...
+                  </div>
+                ) : (
+                  <div className="border border-[#101010] overflow-x-auto">
+                    <table className="w-full text-left border-collapse font-label-code text-label-code">
+                      <thead>
+                        <tr className="bg-[#101010] text-[#F2ECE6] font-label-meta text-label-meta uppercase tracking-widest">
+                          <th className="py-2.5 px-3 border-r border-[#A39B8F]/30">USER DETAILS</th>
+                          <th className="py-2.5 px-3 border-r border-[#A39B8F]/30">EMAIL ADDRESS</th>
+                          <th className="py-2.5 px-3 text-center border-r border-[#A39B8F]/30">ROLE TIER</th>
+                          <th className="py-2.5 px-3 text-right">STATUS</th>
                         </tr>
-                      ) : (
-                        usersList.map((u) => (
-                          <tr key={u.id} className="hover:bg-slate-800/30">
-                            <td className="px-4 py-3 font-mono text-slate-400">#{u.id}</td>
-                            <td className="px-4 py-3 font-medium text-white">{u.full_name}</td>
-                            <td className="px-4 py-3 font-mono text-slate-300">{u.email}</td>
-                            <td className="px-4 py-3">
+                      </thead>
+                      <tbody className="divide-y divide-[#A39B8F]/30 text-[#101010]">
+                        {usersList.map((u, idx) => (
+                          <tr key={u.id || idx} className="hover:bg-[#E6E2DD] transition-colors">
+                            <td className="py-3 px-3 border-r border-[#A39B8F]/30 font-bold uppercase">
+                              {u.full_name}
+                            </td>
+                            <td className="py-3 px-3 border-r border-[#A39B8F]/30 text-[#5F5E5E]">
+                              {u.email}
+                            </td>
+                            <td className="py-3 px-3 border-r border-[#A39B8F]/30 text-center">
                               <span
-                                className={`px-2 py-0.5 rounded font-mono text-[10px] uppercase border ${
-                                  u.role === "auditor"
-                                    ? "bg-purple-500/20 text-purple-300 border-purple-500/30"
-                                    : u.role === "store_incharge"
-                                    ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
-                                    : "bg-blue-500/20 text-blue-300 border-blue-500/30"
-                                }`}
+                                className={`px-2 py-0.5 border font-bold uppercase text-xs ${getRoleBadge(
+                                  u.role
+                                )}`}
                               >
-                                {u.role}
+                                {u.role?.toUpperCase()}
+                              </span>
+                            </td>
+                            <td className="py-3 px-3 text-right">
+                              <span className="text-[#2F6F4E] font-bold uppercase text-xs">
+                                ✓ ACTIVE
                               </span>
                             </td>
                           </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -559,3 +594,5 @@ export const AuditorHome = () => {
     </div>
   );
 };
+
+export default AuditorHome;

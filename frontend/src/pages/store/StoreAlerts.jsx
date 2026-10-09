@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { useStoreProject } from "./StoreLayout";
 import { fetchStoreAlerts } from "../../api/store";
 import { SeverityTag } from "../../components/store/SeverityTag";
-import { EmptyState } from "../../components/store/EmptyState";
 import { SkeletonLoader } from "../../components/store/SkeletonLoader";
 
 export const StoreAlerts = () => {
@@ -41,117 +40,147 @@ export const StoreAlerts = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-lg font-bold text-white">Store Delivery & Drawdown Alerts</h2>
-        <p className="text-xs text-slate-400">
-          Audit alerts linked to your uploaded delivery challans and recorded material issues
-        </p>
+      {/* Top Architectural Header */}
+      <div className="p-6 bg-[#F2ECE6] border border-[#101010] shadow-[3px_3px_0px_#101010] relative">
+        <div className="absolute -top-1 -left-1 w-2.5 h-2.5 border-t-2 border-l-2 border-[#101010]" />
+        <div className="absolute -top-1 -right-1 w-2.5 h-2.5 border-t-2 border-r-2 border-[#101010]" />
+        <div className="absolute -bottom-1 -left-1 w-2.5 h-2.5 border-b-2 border-l-2 border-[#101010]" />
+        <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 border-b-2 border-r-2 border-[#101010]" />
+
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="w-2 h-2 bg-[#B3261E]" />
+              <span className="font-label-code text-label-code uppercase tracking-widest text-[#504533]">
+                SPEC // ANOMALY-TELEMETRY-STREAM
+              </span>
+            </div>
+            <h2 className="font-headline-lg text-headline-lg font-bold text-[#101010] uppercase tracking-tight">
+              Store Delivery &amp; Drawdown Alerts
+            </h2>
+            <p className="font-label-meta text-label-meta text-[#5F5E5E] uppercase mt-1">
+              AUDIT ALERTS LINKED TO UPLOADED DELIVERY CHALLANS, INVENTORY DEFICITS, AND RECORDED MATERIAL ISSUES
+            </p>
+          </div>
+
+          <span className="font-label-code text-label-code px-3 py-1 bg-[#101010] text-[#FCBC18] font-bold border border-[#101010]">
+            {alerts.length} ALERTS ACTIVE
+          </span>
+        </div>
       </div>
 
       {/* Filter Bar */}
-      <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-wrap items-center gap-3">
+      <div className="p-4 bg-[#F2ECE6] border border-[#101010] flex flex-wrap items-center gap-4 font-label-code text-label-code">
         <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-400">Severity:</span>
+          <span className="text-[#5F5E5E] uppercase">SEVERITY:</span>
           <select
             value={severityFilter}
             onChange={(e) => setSeverityFilter(e.target.value)}
-            className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-hidden focus:border-amber-500 cursor-pointer"
+            className="bg-[#E6E2DD] border border-[#101010] px-3 py-1.5 uppercase font-bold text-[#101010] outline-none"
           >
-            <option value="">All Severities</option>
-            <option value="high">High</option>
-            <option value="medium">Medium</option>
-            <option value="low">Low</option>
+            <option value="">ALL SEVERITIES</option>
+            <option value="critical">CRITICAL</option>
+            <option value="warning">WARNING</option>
+            <option value="info">INFO</option>
           </select>
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-400">Alert Type:</span>
+          <span className="text-[#5F5E5E] uppercase">TYPE:</span>
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
-            className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-hidden focus:border-amber-500 cursor-pointer"
+            className="bg-[#E6E2DD] border border-[#101010] px-3 py-1.5 uppercase font-bold text-[#101010] outline-none"
           >
-            <option value="">All Types</option>
-            <option value="boq_over_delivery">BOQ Over-Delivery</option>
-            <option value="consumption_anomaly">Consumption Anomaly</option>
-            <option value="duplicate_challan">Duplicate Challan</option>
-            <option value="unapproved_vendor">Unapproved Vendor</option>
-            <option value="challan_date_invalid">Invalid Challan Date</option>
+            <option value="">ALL ALERT TYPES</option>
+            <option value="drawdown_anomaly">DRAWDOWN ANOMALY</option>
+            <option value="ocr_flag">OCR MISMATCH</option>
+            <option value="negative_stock">NEGATIVE STOCK</option>
+            <option value="boq_exceeded">BOQ EXCEEDED</option>
           </select>
         </div>
       </div>
 
-      {/* Alerts List */}
+      {/* Alerts Feed */}
       {loading ? (
-        <SkeletonLoader rows={4} type="table" />
+        <SkeletonLoader rows={4} type="card" />
       ) : alerts.length === 0 ? (
-        <EmptyState
-          icon="🛡️"
-          title="No open alerts found"
-          description="All delivery challans and material drawdowns comply with BOQ tolerance and milestone consumption rules."
-        />
+        <div className="p-12 text-center bg-[#F2ECE6] border border-[#101010]">
+          <span className="material-symbols-outlined text-4xl text-[#2F6F4E] mb-2">
+            check_circle
+          </span>
+          <h3 className="font-headline-md text-headline-md uppercase font-bold text-[#101010]">
+            ZERO ACTIVE DISCREPANCY ALERTS
+          </h3>
+          <p className="font-body-md text-body-md text-[#5F5E5E] mt-1">
+            All recent deliveries and material drawdowns conform strictly to BOQ milestone envelopes.
+          </p>
+        </div>
       ) : (
         <div className="space-y-3">
-          {alerts.map((a) => {
-            const isExpanded = expandedId === a.id;
+          {alerts.map((al) => {
+            const isExpanded = expandedId === al.id;
             return (
               <div
-                key={a.id}
-                className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-3 transition-colors"
+                key={al.id}
+                className="p-5 bg-[#F2ECE6] border border-[#101010] shadow-[2px_2px_0px_#101010] space-y-3"
               >
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <div className="flex items-center gap-2.5">
-                    <SeverityTag severity={a.severity} />
-                    <span className="text-xs font-mono font-bold text-white uppercase">
-                      {a.type.replace(/_/g, " ")}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5 flex-wrap">
+                    <SeverityTag severity={al.severity} />
+                    <span className="font-headline-md text-headline-md font-bold uppercase text-[#101010]">
+                      {al.alert_type?.replace(/_/g, " ")}
                     </span>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
-                      {a.status.toUpperCase()}
+                    <span className="font-label-meta text-label-meta text-[#8C8B91] uppercase">
+                      ID: ALT-{al.id}
                     </span>
                   </div>
 
-                  <span className="text-[11px] font-mono text-slate-500">
-                    {new Date(a.created_at).toLocaleString()}
+                  <span className="font-label-meta text-label-meta text-[#5F5E5E] uppercase">
+                    {new Date(al.created_at).toLocaleString()}
                   </span>
                 </div>
 
-                <p className="text-xs text-slate-200 leading-relaxed font-sans">
-                  {a.explanation}
+                <p className="font-body-md text-body-md text-[#101010]">
+                  {al.message}
                 </p>
 
-                {/* Linked References */}
-                <div className="flex flex-wrap items-center gap-4 text-xs font-mono text-slate-400 pt-2 border-t border-slate-800/80">
-                  {a.challan_id && (
-                    <Link
-                      to={`/store/deliveries/${a.challan_id}`}
-                      className="text-amber-400 hover:text-amber-300 flex items-center gap-1"
-                    >
-                      <span>📄</span>
-                      <span>Challan #{a.challan_id} →</span>
-                    </Link>
-                  )}
+                {/* Action Link & Expand Toggle */}
+                <div className="pt-3 border-t border-[#A39B8F]/30 flex flex-wrap items-center justify-between gap-3 font-label-code text-label-code">
+                  <div className="flex items-center gap-3">
+                    {al.challan_id && (
+                      <Link
+                        to={`/store/deliveries/${al.challan_id}`}
+                        className="text-[#7a5900] font-bold hover:underline uppercase flex items-center gap-1"
+                      >
+                        <span>VIEW CHALLAN #{al.challan_id}</span>
+                        <span className="material-symbols-outlined text-xs">arrow_forward</span>
+                      </Link>
+                    )}
+                    {al.stage_id && (
+                      <span className="text-[#5F5E5E] uppercase">
+                        STAGE REF: #{al.stage_id}
+                      </span>
+                    )}
+                  </div>
 
-                  {a.issue_id && (
-                    <span className="text-slate-300">
-                      Issue #{a.issue_id}
-                    </span>
-                  )}
-
-                  {a.evidence && (
+                  {al.metadata && Object.keys(al.metadata).length > 0 && (
                     <button
+                      onClick={() => toggleExpand(al.id)}
+                      className="px-2.5 py-1 bg-[#E6E2DD] hover:bg-[#101010] hover:text-[#FCBC18] text-[#101010] border border-[#101010] uppercase font-bold text-xs cursor-pointer transition-colors"
                       type="button"
-                      onClick={() => toggleExpand(a.id)}
-                      className="text-slate-400 hover:text-white underline cursor-pointer text-[11px]"
                     >
-                      {isExpanded ? "Hide Evidence JSON" : "Inspect Evidence JSON"}
+                      {isExpanded ? "HIDE AUDIT METADATA ▲" : "INSPECT METADATA ▼"}
                     </button>
                   )}
                 </div>
 
-                {/* Evidence Drawer */}
-                {isExpanded && a.evidence && (
-                  <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-[11px] font-mono text-slate-300 overflow-x-auto">
-                    <pre>{JSON.stringify(a.evidence, null, 2)}</pre>
+                {/* Expanded Metadata Block */}
+                {isExpanded && al.metadata && (
+                  <div className="p-3 bg-[#E6E2DD] border border-[#101010] font-label-code text-label-code overflow-x-auto">
+                    <pre className="text-xs text-[#101010]">
+                      {JSON.stringify(al.metadata, null, 2)}
+                    </pre>
                   </div>
                 )}
               </div>
@@ -162,3 +191,5 @@ export const StoreAlerts = () => {
     </div>
   );
 };
+
+export default StoreAlerts;
