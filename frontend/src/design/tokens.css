@@ -1,0 +1,49 @@
+/* ==========================================================================
+   CONSTRA DESIGN SYSTEM TOKENS
+   Technical Blueprint & Site Spec System (Stitch Project: 1559965896611013562)
+   ========================================================================== */
+
+:root {
+  /* Surfaces & Paper Grounds */
+  --color-paper: #E6E2DD;             /* Warm Drafting Paper Gray */
+  --color-ivory: #F2ECE6;             /* Warm Ivory Stock */
+  --color-ink: #101010;               /* Deep Carbon Black Ink */
+  --color-ink-subtle: #1c1b1b;
+  --color-surface-bg: #fbf8ff;
+
+  /* Primary Accent & Brand */
+  --color-primary: #7a5900;
+  --color-signal-yellow: #FCBC18;     /* High-Visibility Job-site Signal Yellow */
+  --color-primary-container: #FCBC18;
+  --color-on-primary-container: #6b4d00;
+  --color-primary-fixed: #ffdea2;
+
+  /* Grid, Hairlines & Architectural Rules */
+  --color-stone: #A39B8F;             /* 14% Stone Divider Border */
+  --color-neutral-gray: #8C8B91;      /* Secondary Field Register */
+  --color-outline: #827560;
+  --color-outline-variant: #d4c5ac;
+
+  /* Functional Verification Status */
+  --color-status-pass: #2F6F4E;       /* Field-grade Pass Green (OK Green) */
+  --color-status-pass-bg: #93d5ad;
+  --color-status-flag: #FCBC18;       /* Pending Remediation Yellow */
+  --color-status-defect: #B3261E;     /* Critical Defect Red (Danger Red) */
+  --color-status-defect-bg: #ffdad6;
+
+  /* Typography Stacks */
+  --font-display: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+  --font-headline: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+  --font-body: 'Archivo Narrow', 'Arial Narrow', sans-serif;
+  --font-label: 'Space Grotesk', monospace, sans-serif;
+  --font-mono: 'Space Grotesk', ui-monospace, monospace;
+
+  /* Elevation (Strictly Hard 90-degree offsets, No blurred shadows) */
+  --shadow-hard-sm: 2px 2px 0px #101010;
+  --shadow-hard-md: 3px 3px 0px #101010;
+  --shadow-hard-yellow: 2px 2px 0px #FCBC18;
+  --shadow-hard-defect: 2px 2px 0px #B3261E;
+
+  /* Strict Radii (Zero Radius Discipline) */
+  --radius-sharp: 0px;
+}

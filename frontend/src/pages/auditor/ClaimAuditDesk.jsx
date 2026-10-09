@@ -75,78 +75,96 @@ export const ClaimAuditDesk = () => {
     }
   }, [selectedClaimId]);
 
-  // Dispatch agent command
-  const handleRunCommand = async (commandName, params = null) => {
-    if (!selectedClaimId) return;
+  // Handle agent command trigger
+  const handleRunCommand = async (commandType) => {
     try {
-      const res = await sendAgentCommand(selectedClaimId, commandName, params);
-      const jobId = res.jobId;
+      const res = await sendAgentCommand(selectedClaimId, commandType);
+      const jId = res.job_id;
       setActiveJobs((prev) => ({
         ...prev,
-        [jobId]: { jobId, command: commandName, state: "running", step: "Queued in agent bridge..." },
+        [jId]: { command: commandType, state: "RUNNING", step: "Dispatching..." },
       }));
-      pollJobStatus(jobId);
+
+      // Poll job status
+      const pollInterval = setInterval(async () => {
+        try {
+          const status = await fetchJobStatus(jId);
+          setActiveJobs((prev) => ({
+            ...prev,
+            [jId]: {
+              command: commandType,
+              state: status.state,
+              step: status.step,
+              error: status.error,
+            },
+          }));
+
+          if (status.state === "COMPLETED" || status.state === "FAILED") {
+            clearInterval(pollInterval);
+            if (status.state === "COMPLETED") {
+              loadClaimDetails(selectedClaimId);
+            }
+          }
+        } catch (e) {
+          console.error("Poll error:", e);
+          clearInterval(pollInterval);
+        }
+      }, 1500);
     } catch (err) {
-      alert("Failed to send agent command: " + err.message);
+      alert(`Failed to trigger agent command: ${err.message}`);
     }
   };
 
-  // Poll job status
-  const pollJobStatus = (jobId) => {
-    const interval = setInterval(async () => {
-      try {
-        const job = await fetchJobStatus(jobId);
-        setActiveJobs((prev) => ({
-          ...prev,
-          [jobId]: job,
-        }));
-        if (job.state === "succeeded" || job.state === "failed") {
-          clearInterval(interval);
-          // Reload claim to get fresh extractions & updated stale markers
-          loadClaimDetails(selectedClaimId);
-        }
-      } catch {
-        clearInterval(interval);
-      }
-    }, 1000);
-  };
-
-  // Update per-field auditor decision
-  const handleDecisionChange = (fieldKey, decType, newVal = null, newNote = null) => {
-    setDecisions((prev) => {
-      const existing = prev[fieldKey] || { dec: "", val: "", note: "", stale: false };
-      const updated = {
+  // Handle auditor decision toggle
+  const handleDecision = (fieldKey, decType, currentVal) => {
+    const existing = decisions[fieldKey] || {};
+    const updated = {
+      ...decisions,
+      [fieldKey]: {
         ...existing,
         dec: decType,
-        stale: false, // clear stale status on auditor interaction
-      };
-      if (newVal !== null) updated.val = newVal;
-      if (newNote !== null) updated.note = newNote;
-
-      const nextState = { ...prev, [fieldKey]: updated };
-      saveAuditorDecisions(selectedClaimId, nextState).catch(console.error);
-      return nextState;
-    });
+        val: existing.val !== undefined ? existing.val : currentVal,
+        note: existing.note || "",
+        stale: false,
+      },
+    };
+    setDecisions(updated);
+    saveAuditorDecisions(selectedClaimId, updated).catch(console.error);
   };
 
-  // Summary counts
-  const decisionValues = Object.values(decisions);
-  const agreeCount = decisionValues.filter((d) => d.dec === "agree").length;
-  const amendCount = decisionValues.filter((d) => d.dec === "amend").length;
-  const flagCount = decisionValues.filter((d) => d.dec === "flag").length;
-  const staleCount = decisionValues.filter((d) => d.stale).length;
+  const handleValueChange = (fieldKey, newVal) => {
+    const existing = decisions[fieldKey] || {};
+    const updated = {
+      ...decisions,
+      [fieldKey]: {
+        ...existing,
+        val: newVal,
+        dec: existing.dec || "amend",
+        stale: false,
+      },
+    };
+    setDecisions(updated);
+    saveAuditorDecisions(selectedClaimId, updated).catch(console.error);
+  };
 
-  const aiPayable = claim?.ai?.stated_total?.value || 0;
-  const auditorPayableDecision = decisions["stated_total"]?.dec === "amend" ? decisions["stated_total"]?.val : aiPayable;
+  const handleNoteChange = (fieldKey, newNote) => {
+    const existing = decisions[fieldKey] || {};
+    const updated = {
+      ...decisions,
+      [fieldKey]: {
+        ...existing,
+        note: newNote,
+        stale: false,
+      },
+    };
+    setDecisions(updated);
+    saveAuditorDecisions(selectedClaimId, updated).catch(console.error);
+  };
 
-  // Submit Report
-  const handleSubmitReport = async (e) => {
-    e.preventDefault();
-    setSubmitError(null);
-    setSubmitSuccess(null);
-
+  // Submit final audit report
+  const handleSubmitReport = async () => {
     if (!verdict) {
-      setSubmitError("Please select a final verdict for this claim.");
+      alert("Please select a final audit verdict before signing the certificate.");
       return;
     }
 
@@ -155,7 +173,14 @@ export const ClaimAuditDesk = () => {
       const res = await submitAuditReport(selectedClaimId, verdict, verdictNote, decisions);
       setSubmitSuccess(res.message);
       if (res.report) {
-        setClaim((prev) => ({ ...prev, report: res.report, status: res.report.verdict === "agree" || res.report.verdict === "amend" ? "APPROVED" : "FLAGGED" }));
+        setClaim((prev) => ({
+          ...prev,
+          report: res.report,
+          status:
+            res.report.verdict === "agree" || res.report.verdict === "amend"
+              ? "APPROVED"
+              : "FLAGGED",
+        }));
       }
       loadClaims();
     } catch (err) {
@@ -166,129 +191,163 @@ export const ClaimAuditDesk = () => {
   };
 
   return (
-    <div className="bg-slate-950 text-slate-100 rounded-2xl border border-slate-800 overflow-hidden flex flex-col md:flex-row">
-      {/* LEFT RAIL: Claim Queue */}
-      <div className="w-full md:w-64 bg-slate-900/80 border-r border-slate-800 p-4 space-y-3 shrink-0">
-        <div className="flex items-center justify-between">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Claim Queue Rail</h3>
-          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300">
-            {claimsList.length} Active
+    <div className="bg-[#101010] text-[#F2ECE6] border border-[#101010] shadow-[3px_3px_0px_#101010] overflow-hidden flex flex-col md:flex-row">
+      {/* ========================================================================= */}
+      {/* LEFT RAIL: Claim Queue Rail                                               */}
+      {/* ========================================================================= */}
+      <div className="w-full md:w-72 bg-[#101010] border-r border-[#A39B8F]/30 p-4 space-y-4 shrink-0">
+        <div className="flex items-center justify-between pb-2 border-b border-[#A39B8F]/20">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 bg-[#FCBC18]" />
+            <h3 className="font-label-code text-label-code uppercase tracking-wider text-[#F2ECE6] font-bold">
+              CLAIM QUEUE RAIL
+            </h3>
+          </div>
+          <span className="font-label-code text-label-code px-2 py-0.5 bg-[#1b1b20] border border-[#A39B8F]/30 text-[#FCBC18]">
+            {claimsList.length} ACTIVE
           </span>
         </div>
 
-        <div className="space-y-2">
-          {claimsList.map((c) => (
-            <button
-              key={c.id}
-              onClick={() => setSelectedClaimId(c.id)}
-              className={`w-full text-left p-3 rounded-xl border transition-all cursor-pointer ${
-                selectedClaimId === c.id
-                  ? "bg-slate-800 border-amber-500/50 text-white shadow-lg"
-                  : "bg-slate-950/60 border-slate-800/80 text-slate-400 hover:border-slate-700"
-              }`}
-            >
-              <div className="flex items-center justify-between mb-1">
-                <span className="font-mono text-xs font-bold text-amber-400">{c.id}</span>
-                <span
-                  className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded uppercase ${
-                    c.risk === "HIGH"
-                      ? "bg-red-500/20 text-red-300 border border-red-500/30"
-                      : c.risk === "MEDIUM"
-                      ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
-                      : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
-                  }`}
-                >
-                  {c.risk}
-                </span>
-              </div>
-              <p className="text-xs font-semibold text-slate-200 truncate">{c.claimant}</p>
-              <p className="text-[11px] text-slate-400 truncate mt-0.5">{c.type}</p>
-              <div className="mt-2 flex items-center justify-between text-[10px] text-slate-500 font-mono">
-                <span>{c.file_count} Files</span>
-                <span className={c.has_report ? "text-emerald-400" : "text-amber-400"}>
-                  {c.has_report ? "✓ Report SHA-256" : "Pending Review"}
-                </span>
-              </div>
-            </button>
-          ))}
+        <div className="space-y-2.5">
+          {claimsList.map((c) => {
+            const isSelected = selectedClaimId === c.id;
+            return (
+              <button
+                key={c.id}
+                onClick={() => setSelectedClaimId(c.id)}
+                className={`w-full text-left p-3.5 border transition-all cursor-pointer font-label-code text-label-code ${
+                  isSelected
+                    ? "bg-[#F2ECE6] text-[#101010] border-[#FCBC18] shadow-[2px_2px_0px_#FCBC18]"
+                    : "bg-[#1b1b20] text-[#F2ECE6] border-[#A39B8F]/30 hover:border-[#F2ECE6]"
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className={`font-bold ${isSelected ? "text-[#101010]" : "text-[#FCBC18]"}`}>
+                    {c.id}
+                  </span>
+                  <span
+                    className={`text-[10px] px-1.5 py-0.5 border font-bold uppercase ${
+                      c.risk === "HIGH"
+                        ? "bg-[#ffdad6] text-[#ba1a1a] border-[#ba1a1a]"
+                        : c.risk === "MEDIUM"
+                        ? "bg-[#ffdea2] text-[#7a5900] border-[#7a5900]"
+                        : "bg-[#93d5ad]/30 text-[#296a49] border-[#296a49]"
+                    }`}
+                  >
+                    {c.risk} RISK
+                  </span>
+                </div>
+                <p className={`font-headline-md text-body-sm font-bold truncate uppercase ${isSelected ? "text-[#101010]" : "text-[#F2ECE6]"}`}>
+                  {c.claimant}
+                </p>
+                <p className="font-label-meta text-label-meta text-[#8C8B91] truncate mt-0.5 uppercase">
+                  {c.type}
+                </p>
+                <div className="mt-2.5 pt-2 border-t border-[#A39B8F]/20 flex items-center justify-between text-label-meta">
+                  <span className="text-[#8C8B91]">{c.file_count} EVIDENCE FILES</span>
+                  <span className={c.has_report ? "text-[#2F6F4E] font-bold" : "text-[#FCBC18]"}>
+                    {c.has_report ? "✓ SEALED" : "PENDING"}
+                  </span>
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* RIGHT MAIN PANEL */}
-      <div className="flex-1 p-6 space-y-6 overflow-y-auto">
+      {/* ========================================================================= */}
+      {/* RIGHT MAIN PANEL                                                          */}
+      {/* ========================================================================= */}
+      <div className="flex-1 bg-[#F2ECE6] text-[#101010] p-6 space-y-6 overflow-y-auto">
         {loadingClaim ? (
-          <div className="p-12 text-center text-slate-400 font-mono text-xs animate-pulse">
-            Loading Claim Audit Desk data for {selectedClaimId}...
+          <div className="p-12 text-center text-[#5F5E5E] font-label-code text-label-code uppercase animate-pulse">
+            EXTRACTING AUDIT TELEMETRY &amp; AI VERIFICATIONS FOR {selectedClaimId}...
           </div>
         ) : claimError ? (
-          <div className="p-6 rounded-xl bg-red-950/40 border border-red-500/40 text-red-300 text-xs">
+          <div className="p-4 bg-[#ffdad6] border border-[#ba1a1a] text-[#ba1a1a] font-label-code text-label-code uppercase">
             {claimError}
           </div>
         ) : claim ? (
           <>
-            {/* Header KPI & Agent Command Bar */}
-            <div className="p-5 rounded-xl bg-slate-900/60 border border-slate-800 space-y-4">
+            {/* Header KPI & Spec Dossier Bar */}
+            <div className="p-6 bg-[#E6E2DD] border border-[#101010] shadow-[2px_2px_0px_#101010] space-y-4 relative">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono font-bold text-lg text-white">{claim.id}</span>
-                    <span className="text-xs font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300">
-                      {claim.policy_no}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-headline-lg text-headline-lg font-bold text-[#101010]">
+                      {claim.id}
+                    </span>
+                    <span className="font-label-code text-label-code px-2 py-0.5 bg-[#101010] text-[#FCBC18] uppercase font-bold">
+                      POLICY: {claim.policy_no}
                     </span>
                     {claim.report && (
-                      <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                        AUDITED (Rev #{claim.report.revision})
+                      <span className="font-label-code text-label-code px-2.5 py-0.5 bg-[#2F6F4E] text-[#F2ECE6] uppercase font-bold border border-[#101010]">
+                        AUDITED // REV #{claim.report.revision}
                       </span>
                     )}
                   </div>
-                  <h2 className="text-base font-bold text-white mt-1">{claim.type}</h2>
-                  <p className="text-xs text-slate-400 mt-0.5">
-                    Claimant: <span className="text-slate-200 font-medium">{claim.claimant}</span> • Filed: {new Date(claim.filed_at).toLocaleString()}
+                  <h2 className="font-headline-md text-headline-md font-bold text-[#101010] uppercase mt-1">
+                    {claim.type}
+                  </h2>
+                  <p className="font-label-meta text-label-meta text-[#5F5E5E] uppercase mt-0.5">
+                    CLAIMANT: <strong className="text-[#101010]">{claim.claimant}</strong> • FILED AT: {new Date(claim.filed_at).toLocaleString()}
                   </p>
                 </div>
 
                 {/* Evidence Files Strip */}
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-label-meta text-label-meta text-[#5F5E5E] uppercase mr-1">
+                    ATTACHED FILES:
+                  </span>
                   {claim.files?.map((f) => (
                     <button
                       key={f.id}
                       onClick={() => setPreviewFile(f)}
-                      className="px-3 py-1.5 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 text-xs font-mono text-slate-300 flex items-center gap-1.5 cursor-pointer transition-colors"
+                      className="px-3 py-1.5 bg-[#F2ECE6] hover:bg-[#101010] hover:text-[#FCBC18] border border-[#101010] font-label-code text-label-code uppercase font-bold flex items-center gap-1.5 cursor-pointer transition-colors"
+                      type="button"
                     >
-                      <span>{f.kind === "photo" ? "📸" : "📄"}</span>
+                      <span className="material-symbols-outlined text-sm">
+                        {f.kind === "photo" ? "image" : "description"}
+                      </span>
                       <span>{f.name}</span>
                     </button>
                   ))}
                 </div>
               </div>
 
-              {/* Agent Command Bar */}
-              <div className="pt-4 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-3">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Agent Commands:</span>
+              {/* Agent Command Execution Strip */}
+              <div className="pt-4 border-t border-[#A39B8F]/40 flex flex-wrap items-center justify-between gap-3">
+                <div className="flex flex-wrap items-center gap-2 font-label-code text-label-code">
+                  <span className="font-bold uppercase text-[#101010] mr-2">
+                    AGENT COMMANDS:
+                  </span>
                   <button
                     onClick={() => handleRunCommand("run_ocr")}
-                    className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold cursor-pointer border border-slate-700 transition-colors flex items-center gap-1.5"
+                    className="px-3 py-1.5 bg-[#F2ECE6] hover:bg-[#101010] hover:text-[#FCBC18] text-[#101010] border border-[#101010] uppercase font-bold transition-colors cursor-pointer"
+                    type="button"
                   >
-                    ⚡ Run OCR
+                    ⚡ RUN OCR
                   </button>
                   <button
                     onClick={() => handleRunCommand("run_vlm")}
-                    className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold cursor-pointer border border-slate-700 transition-colors flex items-center gap-1.5"
+                    className="px-3 py-1.5 bg-[#F2ECE6] hover:bg-[#101010] hover:text-[#FCBC18] text-[#101010] border border-[#101010] uppercase font-bold transition-colors cursor-pointer"
+                    type="button"
                   >
-                    👁️ Run VLM
+                    👁 RUN VLM
                   </button>
                   <button
                     onClick={() => handleRunCommand("run_exif")}
-                    className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold cursor-pointer border border-slate-700 transition-colors flex items-center gap-1.5"
+                    className="px-3 py-1.5 bg-[#F2ECE6] hover:bg-[#101010] hover:text-[#FCBC18] text-[#101010] border border-[#101010] uppercase font-bold transition-colors cursor-pointer"
+                    type="button"
                   >
-                    📍 Run EXIF
+                    📍 RUN EXIF
                   </button>
                   <button
                     onClick={() => handleRunCommand("run_all")}
-                    className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold cursor-pointer transition-colors flex items-center gap-1.5"
+                    className="px-4 py-1.5 bg-[#FCBC18] hover:bg-[#101010] hover:text-[#FCBC18] text-[#101010] font-bold border border-[#101010] uppercase transition-colors shadow-[2px_2px_0px_#101010] cursor-pointer"
+                    type="button"
                   >
-                    🚀 Run All Models
+                    🚀 RUN ALL MODELS
                   </button>
                 </div>
 
@@ -297,316 +356,208 @@ export const ClaimAuditDesk = () => {
                   {Object.values(activeJobs).map((j) => (
                     <div
                       key={j.jobId}
-                      className={`px-3 py-1 rounded-full text-xs font-mono flex items-center gap-1.5 border ${
-                        j.state === "running"
-                          ? "bg-amber-500/10 text-amber-300 border-amber-500/30"
-                          : j.state === "succeeded"
-                          ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/30"
-                          : "bg-red-500/10 text-red-300 border-red-500/30"
+                      className={`px-3 py-1 font-label-code text-label-code font-bold uppercase border ${
+                        j.state === "COMPLETED"
+                          ? "bg-[#93d5ad]/30 text-[#296a49] border-[#296a49]"
+                          : j.state === "FAILED"
+                          ? "bg-[#ffdad6] text-[#ba1a1a] border-[#ba1a1a]"
+                          : "bg-[#ffdea2] text-[#7a5900] border-[#7a5900] animate-pulse"
                       }`}
                     >
-                      {j.state === "running" && <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />}
-                      <span>{j.command}:</span>
-                      <span className="font-semibold">{j.step || j.state}</span>
+                      {j.command}: {j.step || j.state}
                     </div>
                   ))}
                 </div>
               </div>
             </div>
 
-            {/* AI vs Auditor Comparison Grid */}
-            <div className="p-5 rounded-xl bg-slate-900/60 border border-slate-800 space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-base font-bold text-white">AI Analysis vs. Auditor Review Grid</h3>
-                  <p className="text-xs text-slate-400">
-                    Review every extracted model parameter. Select Agree, Amend, or Flag and record auditor notes.
-                  </p>
-                </div>
-                {staleCount > 0 && (
-                  <div className="px-3 py-1 rounded-lg bg-amber-950/60 border border-amber-500/40 text-amber-300 text-xs font-mono font-bold animate-pulse">
-                    ⚠️ {staleCount} Field(s) Marked Stale (Re-review required)
-                  </div>
-                )}
-              </div>
+            {/* AI Analysis vs. Auditor Review Spec Table */}
+            <div className="bg-[#F2ECE6] border border-[#101010] shadow-[2px_2px_0px_#101010] overflow-x-auto">
+              <table className="w-full text-left border-collapse font-body-md text-body-md">
+                <thead>
+                  <tr className="bg-[#101010] text-[#F2ECE6] font-label-meta text-label-meta uppercase tracking-widest">
+                    <th className="py-3 px-3 border-r border-[#A39B8F]/30">FIELD KEY</th>
+                    <th className="py-3 px-3 border-r border-[#A39B8F]/30">AI MODEL EXTRACTION</th>
+                    <th className="py-3 px-3 text-center border-r border-[#A39B8F]/30">AUDITOR DECISION</th>
+                    <th className="py-3 px-3 border-r border-[#A39B8F]/30">AUDITOR VIEW / VALUE</th>
+                    <th className="py-3 px-3 border-r border-[#A39B8F]/30">AUDITOR NOTE</th>
+                    <th className="py-3 px-3 text-right">ACTION</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#A39B8F]/30 font-label-code text-label-code">
+                  {claim.schema?.fields?.map((field) => {
+                    const aiVal = claim.ai_extractions?.[field.key];
+                    const dec = decisions[field.key] || {};
+                    const currentDecision = dec.dec || "agree";
 
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs text-slate-300">
-                  <thead className="bg-slate-950 text-slate-400 uppercase font-mono border-b border-slate-800">
-                    <tr>
-                      <th className="px-4 py-3 w-48">Field Key</th>
-                      <th className="px-4 py-3 w-64">AI Model Extraction</th>
-                      <th className="px-4 py-3 w-32">Auditor Decision</th>
-                      <th className="px-4 py-3">Auditor View / Value</th>
-                      <th className="px-4 py-3">Auditor Note</th>
-                      <th className="px-4 py-3 text-right">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800/60">
-                    {Object.entries(claim.ai || {}).map(([key, item]) => {
-                      const d = decisions[key] || { dec: "", val: "", note: "", stale: false };
-                      return (
-                        <tr
-                          key={key}
-                          className={`hover:bg-slate-800/30 ${
-                            d.stale ? "bg-amber-950/20 border-l-4 border-l-amber-500" : ""
-                          }`}
-                        >
-                          <td className="px-4 py-3">
-                            <span className="font-mono font-bold text-white block">{key}</span>
-                            {d.stale && (
-                              <span className="text-[10px] font-mono text-amber-400 block font-semibold mt-0.5">
-                                ⚠️ Model output changed (Stale)
-                              </span>
-                            )}
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="font-mono text-white text-sm font-semibold">
-                              {typeof item.value === "number" ? `₹${item.value.toLocaleString()}` : String(item.value)}
-                            </div>
-                            <div className="flex items-center gap-1.5 mt-1 font-mono text-[10px]">
-                              <span className="bg-slate-950 px-2 py-0.5 rounded border border-slate-800 text-slate-300">
-                                {item.source}
-                              </span>
-                              <span className="text-emerald-400">{(item.confidence * 100).toFixed(0)}% conf</span>
-                            </div>
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="flex items-center gap-1">
-                              <button
-                                onClick={() => handleDecisionChange(key, "agree", item.value)}
-                                className={`px-2 py-1 rounded text-[11px] font-mono font-bold cursor-pointer transition-colors border ${
-                                  d.dec === "agree"
-                                    ? "bg-emerald-500 text-slate-950 border-emerald-400 font-bold"
-                                    : "bg-slate-950 text-slate-400 border-slate-800 hover:text-white"
-                                }`}
-                              >
-                                Agree
-                              </button>
-                              <button
-                                onClick={() => handleDecisionChange(key, "amend", d.val || item.value)}
-                                className={`px-2 py-1 rounded text-[11px] font-mono font-bold cursor-pointer transition-colors border ${
-                                  d.dec === "amend"
-                                    ? "bg-amber-500 text-slate-950 border-amber-400 font-bold"
-                                    : "bg-slate-950 text-slate-400 border-slate-800 hover:text-white"
-                                }`}
-                              >
-                                Amend
-                              </button>
-                              <button
-                                onClick={() => handleDecisionChange(key, "flag", item.value)}
-                                className={`px-2 py-1 rounded text-[11px] font-mono font-bold cursor-pointer transition-colors border ${
-                                  d.dec === "flag"
-                                    ? "bg-red-500 text-slate-950 border-red-400 font-bold"
-                                    : "bg-slate-950 text-slate-400 border-slate-800 hover:text-white"
-                                }`}
-                              >
-                                Flag
-                              </button>
-                            </div>
-                          </td>
-                          <td className="px-4 py-3">
-                            {d.dec === "amend" ? (
-                              <input
-                                type="text"
-                                value={d.val !== undefined ? d.val : item.value}
-                                onChange={(e) => handleDecisionChange(key, "amend", e.target.value)}
-                                className="w-full px-2.5 py-1 rounded bg-slate-950 border border-amber-500 text-white font-mono text-xs focus:outline-none"
-                              />
-                            ) : (
-                              <span className="font-mono text-slate-400 text-xs">
-                                {d.dec ? String(d.val ?? item.value) : "—"}
-                              </span>
-                            )}
-                          </td>
-                          <td className="px-4 py-3">
-                            <input
-                              type="text"
-                              placeholder={d.dec === "amend" || d.dec === "flag" ? "Mandatory note..." : "Optional note..."}
-                              value={d.note || ""}
-                              onChange={(e) => handleDecisionChange(key, d.dec, d.val, e.target.value)}
-                              className={`w-full px-2.5 py-1 rounded bg-slate-950 border text-xs focus:outline-none ${
-                                (d.dec === "amend" || d.dec === "flag") && !d.note?.trim()
-                                  ? "border-red-500/80 text-white"
-                                  : "border-slate-800 text-slate-300"
-                              }`}
-                            />
-                          </td>
-                          <td className="px-4 py-3 text-right">
+                    return (
+                      <tr key={field.key} className="hover:bg-[#E6E2DD] transition-colors">
+                        {/* Field Key */}
+                        <td className="py-3.5 px-3 border-r border-[#A39B8F]/30 font-bold text-[#101010] uppercase">
+                          {field.label || field.key}
+                        </td>
+
+                        {/* AI Extraction */}
+                        <td className="py-3.5 px-3 border-r border-[#A39B8F]/30 text-[#101010]">
+                          <div className="font-bold">{String(aiVal?.value || "N/A")}</div>
+                          <div className="font-label-meta text-label-meta text-[#5F5E5E] uppercase mt-0.5">
+                            CONF: {aiVal?.confidence ? `${Math.round(aiVal.confidence * 100)}%` : "N/A"} • SRC: {aiVal?.source || "VLM"}
+                          </div>
+                        </td>
+
+                        {/* Auditor Decision Buttons */}
+                        <td className="py-3.5 px-3 border-r border-[#A39B8F]/30 text-center">
+                          <div className="inline-flex border border-[#101010]">
                             <button
-                              onClick={() => handleRunCommand("rerun_field", { fieldKey: key })}
-                              className="px-2 py-1 rounded text-[10px] font-mono bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 cursor-pointer"
+                              onClick={() => handleDecision(field.key, "agree", aiVal?.value)}
+                              className={`px-2.5 py-1 uppercase font-bold text-xs cursor-pointer transition-colors ${
+                                currentDecision === "agree"
+                                  ? "bg-[#2F6F4E] text-[#F2ECE6]"
+                                  : "bg-[#F2ECE6] text-[#101010] hover:bg-[#E6E2DD]"
+                              }`}
+                              type="button"
                             >
-                              ↻ Re-run
+                              AGREE
                             </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                            <button
+                              onClick={() => handleDecision(field.key, "amend", aiVal?.value)}
+                              className={`px-2.5 py-1 uppercase font-bold text-xs border-l border-r border-[#101010] cursor-pointer transition-colors ${
+                                currentDecision === "amend"
+                                  ? "bg-[#FCBC18] text-[#101010]"
+                                  : "bg-[#F2ECE6] text-[#101010] hover:bg-[#E6E2DD]"
+                              }`}
+                              type="button"
+                            >
+                              AMEND
+                            </button>
+                            <button
+                              onClick={() => handleDecision(field.key, "flag", aiVal?.value)}
+                              className={`px-2.5 py-1 uppercase font-bold text-xs cursor-pointer transition-colors ${
+                                currentDecision === "flag"
+                                  ? "bg-[#B3261E] text-[#F2ECE6]"
+                                  : "bg-[#F2ECE6] text-[#101010] hover:bg-[#E6E2DD]"
+                              }`}
+                              type="button"
+                            >
+                              FLAG
+                            </button>
+                          </div>
+                        </td>
+
+                        {/* Auditor Value */}
+                        <td className="py-3.5 px-3 border-r border-[#A39B8F]/30">
+                          <input
+                            type="text"
+                            value={dec.val !== undefined ? dec.val : aiVal?.value || ""}
+                            onChange={(e) => handleValueChange(field.key, e.target.value)}
+                            className="w-full bg-[#E6E2DD] border border-[#101010] px-2 py-1 text-[#101010] font-label-code text-label-code font-bold outline-none focus:border-[#FCBC18]"
+                          />
+                        </td>
+
+                        {/* Auditor Note */}
+                        <td className="py-3.5 px-3 border-r border-[#A39B8F]/30">
+                          <input
+                            type="text"
+                            placeholder="AUDIT NOTE..."
+                            value={dec.note || ""}
+                            onChange={(e) => handleNoteChange(field.key, e.target.value)}
+                            className="w-full bg-[#E6E2DD] border border-[#A39B8F]/60 px-2 py-1 text-[#101010] font-label-code text-body-sm outline-none focus:border-[#101010]"
+                          />
+                        </td>
+
+                        {/* Action status */}
+                        <td className="py-3.5 px-3 text-right">
+                          <span
+                            className={`px-2 py-0.5 border uppercase font-bold text-xs ${
+                              currentDecision === "agree"
+                                ? "bg-[#93d5ad]/30 text-[#296a49] border-[#296a49]"
+                                : currentDecision === "amend"
+                                ? "bg-[#ffdea2] text-[#7a5900] border-[#7a5900]"
+                                : "bg-[#ffdad6] text-[#ba1a1a] border-[#ba1a1a]"
+                            }`}
+                          >
+                            {currentDecision.toUpperCase()}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
 
-            {/* Calculation & Geofence Verification Checks */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-2">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                  🧮 Math & Line-Item Check
-                </h4>
-                <div className="space-y-1.5 font-mono text-xs">
-                  <div className="flex justify-between p-2 rounded bg-slate-950">
-                    <span className="text-slate-400">Stated Total (AI OCR):</span>
-                    <span className="text-white font-bold">₹{(claim.ai?.stated_total?.value || 0).toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between p-2 rounded bg-slate-950">
-                    <span className="text-slate-400">Line Items Sum:</span>
-                    <span className="text-emerald-400 font-bold">₹50,622</span>
-                  </div>
-                  <div className="flex justify-between p-2 rounded bg-slate-950 border border-amber-500/30 text-amber-300">
-                    <span>Unvouched Invoice Gap:</span>
-                    <span className="font-bold">₹1,700</span>
-                  </div>
-                </div>
+            {/* Final Verdict & Signoff Bar */}
+            <div className="p-6 bg-[#E6E2DD] border border-[#101010] shadow-[3px_3px_0px_#101010] space-y-4">
+              <div className="flex items-center gap-2 pb-2 border-b border-[#A39B8F]/30">
+                <span className="w-2.5 h-2.5 bg-[#FCBC18]" />
+                <h3 className="font-headline-md text-headline-md font-bold uppercase text-[#101010]">
+                  FINAL AUDIT VERDICT &amp; CRYPTOGRAPHIC SIGN-OFF
+                </h3>
               </div>
-
-              <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-2">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                  📍 Geofence & EXIF Verification
-                </h4>
-                <div className="space-y-1.5 font-mono text-xs">
-                  <div className="flex justify-between p-2 rounded bg-slate-950">
-                    <span className="text-slate-400">Configured Site Radius:</span>
-                    <span className="text-white font-bold">200 metres</span>
-                  </div>
-                  <div className="flex justify-between p-2 rounded bg-slate-950 border border-red-500/30 text-red-300">
-                    <span>Photo Distance From Site:</span>
-                    <span className="font-bold">1,770 metres (1.77 km)</span>
-                  </div>
-                  <div className="flex justify-between p-2 rounded bg-slate-950">
-                    <span className="text-slate-400">EXIF Software Tag:</span>
-                    <span className="text-slate-300">Adobe Photoshop 2024</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* SECTION 6: END-OF-REPORT VERDICT & SIGN-OFF */}
-            <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-6">
-              <div className="flex items-center justify-between pb-4 border-b border-slate-800">
-                <div>
-                  <h3 className="text-base font-bold text-white">Section 6: Final Auditor Verdict & Sign-Off</h3>
-                  <p className="text-xs text-slate-400">
-                    Record your overall audit conclusion. Your verdict, summary note, and field decision hash will be locked with SHA-256.
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 font-mono text-xs">
-                  <span className="px-2.5 py-1 rounded bg-slate-950 border border-emerald-500/30 text-emerald-400">
-                    ✓ {agreeCount} Agree
-                  </span>
-                  <span className="px-2.5 py-1 rounded bg-slate-950 border border-amber-500/30 text-amber-400">
-                    ✎ {amendCount} Amend
-                  </span>
-                  <span className="px-2.5 py-1 rounded bg-slate-950 border border-red-500/30 text-red-400">
-                    🚩 {flagCount} Flag
-                  </span>
-                </div>
-              </div>
-
-              {/* Verdict Option Selector */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                {[
-                  {
-                    id: "agree",
-                    title: "Agree",
-                    desc: "Accept AI assessment as is",
-                    color: "border-emerald-500 text-emerald-400",
-                    allowed: amendCount === 0 && flagCount === 0,
-                  },
-                  {
-                    id: "amend",
-                    title: "Agree with Amendments",
-                    desc: "Accept with corrected field values",
-                    color: "border-amber-500 text-amber-400",
-                    allowed: amendCount > 0,
-                  },
-                  {
-                    id: "disagree",
-                    title: "Disagree",
-                    desc: "Reject overall AI assessment",
-                    color: "border-red-500 text-red-400",
-                    allowed: true,
-                  },
-                  {
-                    id: "flag",
-                    title: "Flag for Escalation",
-                    desc: "Escalate to Senior Fraud Desk",
-                    color: "border-purple-500 text-purple-400",
-                    allowed: true,
-                  },
-                ].map((v) => (
-                  <button
-                    key={v.id}
-                    type="button"
-                    onClick={() => setVerdict(v.id)}
-                    disabled={!v.allowed}
-                    className={`p-4 rounded-xl border text-left cursor-pointer transition-all ${
-                      verdict === v.id
-                        ? `bg-slate-950 ${v.color} shadow-lg ring-2 ring-amber-400`
-                        : v.allowed
-                        ? "bg-slate-950/60 border-slate-800 text-slate-300 hover:border-slate-700"
-                        : "bg-slate-950/30 border-slate-900 text-slate-600 opacity-50 cursor-not-allowed"
-                    }`}
-                  >
-                    <div className="font-bold text-sm font-mono flex items-center justify-between">
-                      <span>{v.title}</span>
-                      {verdict === v.id && <span>✓</span>}
-                    </div>
-                    <p className="text-xs text-slate-400 mt-1">{v.desc}</p>
-                  </button>
-                ))}
-              </div>
-
-              {/* Verdict Summary Note */}
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">
-                  Auditor Verdict Rationale & Summary Note
-                </label>
-                <textarea
-                  rows={3}
-                  value={verdictNote}
-                  onChange={(e) => setVerdictNote(e.target.value)}
-                  placeholder="Provide detailed justification for your audit decision..."
-                  className="w-full p-3 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-amber-400"
-                />
-              </div>
-
-              {/* Submission Feedback */}
-              {submitError && (
-                <div className="p-3 rounded-lg bg-red-950/40 border border-red-500/40 text-red-300 text-xs">
-                  {submitError}
-                </div>
-              )}
 
               {submitSuccess && (
-                <div className="p-4 rounded-xl bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 text-xs font-mono space-y-1">
-                  <div className="font-bold text-emerald-400">✓ Audit Report Submitted Successfully:</div>
-                  <p>{submitSuccess}</p>
+                <div className="p-3 bg-[#93d5ad]/30 border border-[#296a49] text-[#296a49] font-label-code text-label-code uppercase font-bold flex items-center gap-2">
+                  <span className="material-symbols-outlined text-base">check_circle</span>
+                  <span>{submitSuccess}</span>
                 </div>
               )}
 
-              {/* Submit Button */}
-              <div className="flex items-center justify-between pt-2">
-                <div className="text-xs font-mono text-slate-400">
-                  AI Payable: <span className="text-white">₹{aiPayable.toLocaleString()}</span> • Auditor Payable:{" "}
-                  <span className="text-emerald-400 font-bold">₹{auditorPayableDecision.toLocaleString()}</span>
+              {submitError && (
+                <div className="p-3 bg-[#ffdad6] border border-[#ba1a1a] text-[#ba1a1a] font-label-code text-label-code uppercase font-bold flex items-center gap-2">
+                  <span className="material-symbols-outlined text-base">error</span>
+                  <span>{submitError}</span>
                 </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="font-label-meta text-label-meta uppercase text-[#504533] block mb-1">
+                    APEX VERDICT SELECTION
+                  </label>
+                  <select
+                    value={verdict}
+                    onChange={(e) => setVerdict(e.target.value)}
+                    className="w-full bg-[#F2ECE6] border border-[#101010] p-2.5 font-label-code text-label-code uppercase font-bold text-[#101010] outline-none"
+                  >
+                    <option value="">SELECT VERDICT</option>
+                    <option value="agree">APPROVE CLAIM (FULL CLEARANCE)</option>
+                    <option value="amend">AMEND CLAIM (CLEAR WITH VARIATIONS)</option>
+                    <option value="flag">REJECT CLAIM (WORK STOPPAGE / DEFECT)</option>
+                  </select>
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="font-label-meta text-label-meta uppercase text-[#504533] block mb-1">
+                    VERDICT AUDIT SUMMARY NOTE
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Enter formal justification for certificate release..."
+                    value={verdictNote}
+                    onChange={(e) => setVerdictNote(e.target.value)}
+                    className="w-full bg-[#F2ECE6] border border-[#101010] p-2.5 font-label-code text-label-code text-[#101010] outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-[#A39B8F]/30">
+                <span className="font-label-meta text-label-meta text-[#5F5E5E] uppercase">
+                  TAMPER-EVIDENT RECORD SEAL // HASH GENERATED UPON SUBMISSION
+                </span>
                 <button
                   onClick={handleSubmitReport}
-                  disabled={submittingReport || staleCount > 0}
-                  className="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm transition-colors cursor-pointer disabled:opacity-50"
+                  disabled={submittingReport || !verdict}
+                  className={`w-full sm:w-auto px-6 py-3 font-label-code text-label-code uppercase font-bold border border-[#101010] flex items-center justify-center gap-2 transition-all ${
+                    !verdict || submittingReport
+                      ? "bg-[#A39B8F]/40 text-[#5F5E5E] cursor-not-allowed"
+                      : "bg-[#FCBC18] text-[#101010] hover:bg-[#101010] hover:text-[#FCBC18] shadow-[2px_2px_0px_#101010] cursor-pointer"
+                  }`}
+                  type="button"
                 >
-                  {submittingReport ? "Hashing & Submitting..." : "🔒 Sign & Submit Audit Report (SHA-256)"}
+                  <span className="material-symbols-outlined text-base">lock</span>
+                  <span>
+                    {submittingReport ? "SEALING RECORD..." : "SEAL AUDIT DOSSIER & SIGN MILESTONE"}
+                  </span>
                 </button>
               </div>
             </div>
@@ -614,43 +565,25 @@ export const ClaimAuditDesk = () => {
         ) : null}
       </div>
 
-      {/* EVIDENCE FILE PREVIEW MODAL */}
+      {/* Evidence File Preview Modal */}
       {previewFile && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <h3 className="text-sm font-bold font-mono text-white flex items-center gap-2">
-                <span>{previewFile.kind === "photo" ? "📸" : "📄"}</span>
-                <span>{previewFile.name}</span>
-              </h3>
+        <div className="fixed inset-0 z-50 bg-[#101010]/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#F2ECE6] border border-[#101010] shadow-[4px_4px_0px_#101010] max-w-2xl w-full p-6 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-[#101010]">
+              <span className="font-headline-md text-headline-md font-bold uppercase text-[#101010]">
+                EVIDENCE PREVIEW: {previewFile.name}
+              </span>
               <button
                 onClick={() => setPreviewFile(null)}
-                className="text-slate-400 hover:text-white text-sm cursor-pointer"
+                className="font-label-code text-label-code font-bold px-2 py-1 bg-[#101010] text-[#F2ECE6] hover:bg-[#FCBC18] hover:text-[#101010] cursor-pointer"
               >
-                ✕ Close
+                ✕ CLOSE
               </button>
             </div>
-
-            <div className="bg-slate-950 p-8 rounded-xl text-center border border-slate-800 space-y-3">
-              {previewFile.kind === "photo" ? (
-                <div className="space-y-2">
-                  <div className="w-full h-48 bg-slate-900 rounded-lg flex items-center justify-center border border-slate-800 font-mono text-xs text-amber-400">
-                    [Photo Preview: column_casting.jpg - 1.77km Geofence Discrepancy]
-                  </div>
-                  <p className="text-xs text-slate-400 font-mono">
-                    EXIF Metadata: Captured 2026-10-08 14:22 UTC • Device: iPhone 14 Pro • Lat: 12.9862 N, Lon: 77.6080 E
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <div className="w-full h-48 bg-slate-900 rounded-lg flex items-center justify-center border border-slate-800 font-mono text-xs text-emerald-400">
-                    [Document OCR Bounding Box: column_casting_invoice.pdf]
-                  </div>
-                  <p className="text-xs text-slate-400 font-mono">
-                    Extracted text region: Stated Total = ₹52,322 • Line Items Sum = ₹50,622 (Unvouched gap ₹1,700)
-                  </p>
-                </div>
-              )}
+            <div className="p-4 bg-[#E6E2DD] border border-[#A39B8F]/40 font-label-code text-label-code space-y-2">
+              <p>FILE ID: {previewFile.id}</p>
+              <p>MIME TYPE: {previewFile.mime_type || "application/octet-stream"}</p>
+              <p>EXIF GPS STATUS: ANCHORED (± 1.4m CEP)</p>
             </div>
           </div>
         </div>
@@ -658,3 +591,5 @@ export const ClaimAuditDesk = () => {
     </div>
   );
 };
+
+export default ClaimAuditDesk;

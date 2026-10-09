@@ -5,39 +5,41 @@ export const StatusBadge = ({ status }) => {
 
   const configs = {
     confirmed: {
-      bg: "bg-emerald-500/15 border-emerald-500/30 text-emerald-400",
-      dot: "bg-emerald-400",
-      label: "Confirmed",
+      bg: "bg-[#2F6F4E] text-[#F2ECE6] border-[#101010]",
+      dot: "bg-[#F2ECE6]",
+      label: "CONFIRMED",
     },
     draft: {
-      bg: "bg-amber-500/15 border-amber-500/30 text-amber-400",
-      dot: "bg-amber-400",
-      label: "Needs Review",
+      bg: "bg-[#FCBC18] text-[#101010] border-[#101010]",
+      dot: "bg-[#101010]",
+      label: "NEEDS REVIEW",
     },
     processing: {
-      bg: "bg-blue-500/15 border-blue-500/30 text-blue-400",
-      dot: "bg-blue-400 animate-pulse",
-      label: "Processing OCR",
+      bg: "bg-[#E6E2DD] text-[#101010] border-[#101010]",
+      dot: "bg-[#FCBC18] animate-pulse",
+      label: "PROCESSING OCR",
     },
     failed: {
-      bg: "bg-rose-500/15 border-rose-500/30 text-rose-400",
-      dot: "bg-rose-400",
-      label: "Failed",
+      bg: "bg-[#B3261E] text-[#F2ECE6] border-[#101010]",
+      dot: "bg-[#F2ECE6]",
+      label: "FAILED",
     },
   };
 
   const current = configs[s] || {
-    bg: "bg-slate-800 border-slate-700 text-slate-300",
-    dot: "bg-slate-400",
-    label: status || "Unknown",
+    bg: "bg-[#E6E2DD] text-[#504533] border-[#827560]/30",
+    dot: "bg-[#504533]",
+    label: (status || "UNKNOWN").toUpperCase(),
   };
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border font-mono ${current.bg}`}
+      className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-none text-label-code font-label-code uppercase font-bold border tracking-wider select-none ${current.bg}`}
     >
-      <span className={`w-1.5 h-1.5 rounded-full ${current.dot}`} />
+      <span className={`w-1.5 h-1.5 rounded-none ${current.dot}`} />
       {current.label}
     </span>
   );
 };
+
+export default StatusBadge;

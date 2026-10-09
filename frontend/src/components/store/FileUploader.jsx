@@ -63,12 +63,18 @@ export const FileUploader = ({ onFileSelected, isUploading, error }) => {
         onDragOver={handleDrag}
         onDrop={handleDrop}
         onClick={() => !isUploading && fileInputRef.current?.click()}
-        className={`relative border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all ${
+        className={`relative border-2 border-dashed p-8 text-center cursor-pointer transition-none rounded-none ${
           dragActive
-            ? "border-amber-400 bg-amber-500/10 scale-[1.01]"
-            : "border-slate-700 hover:border-slate-600 bg-slate-900/40 hover:bg-slate-900/60"
+            ? "border-[#FCBC18] bg-[#FCBC18]/15"
+            : "border-[#101010] hover:border-[#101010] bg-[#E6E2DD]/70 hover:bg-[#E6E2DD]"
         } ${isUploading ? "opacity-60 cursor-not-allowed pointer-events-none" : ""}`}
       >
+        {/* Drafting Corner Crosshairs */}
+        <span className="absolute top-1 left-1 font-mono text-[10px] text-[#A39B8F] select-none pointer-events-none">+</span>
+        <span className="absolute top-1 right-1 font-mono text-[10px] text-[#A39B8F] select-none pointer-events-none">+</span>
+        <span className="absolute bottom-1 left-1 font-mono text-[10px] text-[#A39B8F] select-none pointer-events-none">+</span>
+        <span className="absolute bottom-1 right-1 font-mono text-[10px] text-[#A39B8F] select-none pointer-events-none">+</span>
+
         <input
           ref={fileInputRef}
           type="file"
@@ -79,31 +85,35 @@ export const FileUploader = ({ onFileSelected, isUploading, error }) => {
         />
 
         <div className="flex flex-col items-center justify-center gap-3">
-          <div className="w-14 h-14 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-2xl text-amber-400">
+          <div className="w-14 h-14 bg-[#FCBC18] border-2 border-[#101010] shadow-[2px_2px_0px_#101010] flex items-center justify-center">
             {isUploading ? (
-              <span className="animate-spin text-xl">⏳</span>
+              <span className="material-symbols-outlined text-2xl text-[#101010] animate-spin">
+                refresh
+              </span>
             ) : (
-              "📄"
+              <span className="material-symbols-outlined text-2xl text-[#101010]">
+                upload_file
+              </span>
             )}
           </div>
 
           <div>
-            <p className="text-sm font-semibold text-white">
+            <p className="font-['Space_Grotesk'] text-sm font-bold uppercase tracking-wider text-[#101010]">
               {isUploading
-                ? "Uploading & processing challan with OCR..."
+                ? "INGESTING & PARSING OCR TOKENS..."
                 : selectedFile
                 ? selectedFile.name
-                : "Drop your vendor challan here, or click to browse"}
+                : "DROP VENDOR CHALLAN OR CLICK TO SELECT FILE"}
             </p>
-            <p className="text-xs text-slate-400 mt-1">
-              Supports Scanned PDF, JPEG, PNG slips (up to 15 MB)
+            <p className="font-['Archivo_Narrow'] text-xs text-[#6E675F] mt-1 font-mono">
+              COMPLIANT FORMATS: PDF, JPEG, PNG (MAX 15.0 MB // 600 DPI COMPATIBLE)
             </p>
           </div>
 
           {selectedFile && !isUploading && (
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-xs font-mono text-emerald-400">
-              <span>✓ Ready to upload:</span>
-              <span className="text-slate-300">
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-white border border-[#101010] shadow-[1px_1px_0px_#101010] text-xs font-mono text-[#2F6F4E] font-bold">
+              <span>✓ READY FOR DISPATCH:</span>
+              <span className="text-[#101010]">
                 {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
               </span>
             </div>
@@ -112,11 +122,12 @@ export const FileUploader = ({ onFileSelected, isUploading, error }) => {
       </div>
 
       {displayedError && (
-        <div className="mt-3 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
-          <span>⚠️</span>
+        <div className="mt-3 p-3 bg-[#B3261E]/15 border-2 border-[#B3261E] text-[#B3261E] font-mono text-xs flex items-center gap-2">
+          <span className="font-bold text-sm">⚠</span>
           <span>{displayedError}</span>
         </div>
       )}
     </div>
   );
 };
+
