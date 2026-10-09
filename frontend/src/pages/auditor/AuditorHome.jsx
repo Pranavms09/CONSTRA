@@ -1,25 +1,25 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../../auth/AuthContext";
-import { pingAuditor, fetchUsers, createUser, type UserProfile } from "../../api/client";
+import { pingAuditor, fetchUsers, createUser } from "../../api/client";
 
-export const AuditorHome: React.FC = () => {
+export const AuditorHome = () => {
   const { user, logout } = useAuth();
-  const [pingResult, setPingResult] = useState<string | null>(null);
+  const [pingResult, setPingResult] = useState(null);
   const [loadingPing, setLoadingPing] = useState(false);
-  const [errorPing, setErrorPing] = useState<string | null>(null);
+  const [errorPing, setErrorPing] = useState(null);
 
   // User management state
-  const [usersList, setUsersList] = useState<UserProfile[]>([]);
+  const [usersList, setUsersList] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
-  const [usersError, setUsersError] = useState<string | null>(null);
+  const [usersError, setUsersError] = useState(null);
 
   // Add user form state
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState<"supervisor" | "store_incharge" | "auditor">("supervisor");
+  const [role, setRole] = useState("supervisor");
   const [submittingUser, setSubmittingUser] = useState(false);
-  const [formSuccess, setFormSuccess] = useState<string | null>(null);
-  const [formError, setFormError] = useState<string | null>(null);
+  const [formSuccess, setFormSuccess] = useState(null);
+  const [formError, setFormError] = useState(null);
 
   const loadUsers = async () => {
     setLoadingUsers(true);
@@ -27,8 +27,8 @@ export const AuditorHome: React.FC = () => {
     try {
       const data = await fetchUsers();
       setUsersList(data);
-    } catch (err: unknown) {
-      setUsersError((err as Error).message || "Failed to load registered users");
+    } catch (err) {
+      setUsersError(err?.message || "Failed to load registered users");
     } finally {
       setLoadingUsers(false);
     }
@@ -45,14 +45,14 @@ export const AuditorHome: React.FC = () => {
     try {
       const data = await pingAuditor();
       setPingResult(JSON.stringify(data, null, 2));
-    } catch (err: unknown) {
-      setErrorPing((err as Error).message || "Ping failed");
+    } catch (err) {
+      setErrorPing(err?.message || "Ping failed");
     } finally {
       setLoadingPing(false);
     }
   };
 
-  const handleCreateUser = async (e: React.FormEvent) => {
+  const handleCreateUser = async (e) => {
     e.preventDefault();
     setFormError(null);
     setFormSuccess(null);
@@ -74,8 +74,8 @@ export const AuditorHome: React.FC = () => {
       setEmail("");
       setRole("supervisor");
       await loadUsers();
-    } catch (err: unknown) {
-      setFormError((err as Error).message || "Failed to create user");
+    } catch (err) {
+      setFormError(err?.message || "Failed to create user");
     } finally {
       setSubmittingUser(false);
     }
@@ -102,7 +102,7 @@ export const AuditorHome: React.FC = () => {
           </span>
           <button
             onClick={() => logout()}
-            className="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors"
+            className="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors cursor-pointer"
           >
             Logout
           </button>
@@ -131,7 +131,7 @@ export const AuditorHome: React.FC = () => {
             <button
               onClick={handleTestPing}
               disabled={loadingPing}
-              className="px-4 py-2 rounded-lg text-sm font-medium bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold transition-colors disabled:opacity-50"
+              className="px-4 py-2 rounded-lg text-sm font-medium bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold transition-colors disabled:opacity-50 cursor-pointer"
             >
               {loadingPing ? "Connecting..." : "Test API Connection (/auditor/ping)"}
             </button>
@@ -208,9 +208,7 @@ export const AuditorHome: React.FC = () => {
                 </label>
                 <select
                   value={role}
-                  onChange={(e) =>
-                    setRole(e.target.value as "supervisor" | "store_incharge" | "auditor")
-                  }
+                  onChange={(e) => setRole(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-sm focus:outline-none focus:border-amber-400"
                 >
                   <option value="supervisor">Site Supervisor</option>
@@ -241,7 +239,7 @@ export const AuditorHome: React.FC = () => {
               <button
                 onClick={loadUsers}
                 disabled={loadingUsers}
-                className="px-3 py-1 rounded text-xs text-slate-300 bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-colors"
+                className="px-3 py-1 rounded text-xs text-slate-300 bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-colors cursor-pointer"
               >
                 Refresh
               </button>

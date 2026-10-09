@@ -3,17 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { getRoleHomeRoute } from "../auth/ProtectedRoute";
 
-type RoleOption = "supervisor" | "store_incharge" | "auditor";
-
-interface RoleCardInfo {
-  id: RoleOption;
-  title: string;
-  badge: string;
-  description: string;
-  icon: string;
-}
-
-const ROLES: RoleCardInfo[] = [
+const ROLES = [
   {
     id: "supervisor",
     title: "Site Supervisor",
@@ -37,10 +27,10 @@ const ROLES: RoleCardInfo[] = [
   },
 ];
 
-export const LoginPage: React.FC = () => {
-  const [selectedRole, setSelectedRole] = useState<RoleOption | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+export const LoginPage = () => {
+  const [selectedRole, setSelectedRole] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(null);
 
   const { user, login } = useAuth();
   const navigate = useNavigate();
@@ -52,8 +42,8 @@ export const LoginPage: React.FC = () => {
     }
   }, [user, navigate]);
 
-  const handleRoleSelect = (role: RoleOption) => {
-    setSelectedRole(role);
+  const handleRoleSelect = (roleId) => {
+    setSelectedRole(roleId);
     setErrorMessage(null);
   };
 
@@ -66,16 +56,15 @@ export const LoginPage: React.FC = () => {
     try {
       const loggedInUser = await login(selectedRole);
       navigate(getRoleHomeRoute(loggedInUser.role), { replace: true });
-    } catch (err: unknown) {
-      const error = err as { code?: string; message?: string };
+    } catch (err) {
       if (
-        error.code === "auth/popup-closed-by-user" ||
-        error.message?.includes("popup-closed-by-user")
+        err?.code === "auth/popup-closed-by-user" ||
+        err?.message?.includes("popup-closed-by-user")
       ) {
         setErrorMessage("Sign-in cancelled. Please try again when ready.");
       } else {
         setErrorMessage(
-          error.message ||
+          err?.message ||
             "Authentication failed. Please ensure your Google account is registered with this role."
         );
       }

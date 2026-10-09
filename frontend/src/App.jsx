@@ -8,7 +8,7 @@ import { StoreHome } from "./pages/store/StoreHome";
 import { AuditorHome } from "./pages/auditor/AuditorHome";
 import { NotFound } from "./pages/NotFound";
 
-const RootRedirect: React.FC = () => {
+const RootRedirect = () => {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -26,7 +26,7 @@ const RootRedirect: React.FC = () => {
   return <Navigate to={getRoleHomeRoute(user.role)} replace />;
 };
 
-export const App: React.FC = () => {
+export const App = () => {
   return (
     <AuthProvider>
       <BrowserRouter>

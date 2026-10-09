@@ -2,7 +2,7 @@ import React from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "./AuthContext";
 
-export function getRoleHomeRoute(role: string): string {
+export function getRoleHomeRoute(role) {
   switch (role) {
     case "supervisor":
       return "/supervisor";
@@ -15,20 +15,12 @@ export function getRoleHomeRoute(role: string): string {
   }
 }
 
-interface ProtectedRouteProps {
-  allowedRole: "supervisor" | "store_incharge" | "auditor";
-  children: React.ReactNode;
-}
-
-export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
-  allowedRole,
-  children,
-}) => {
+export const ProtectedRoute = ({ allowedRole, children }) => {
   const { user, loading } = useAuth();
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
         <div className="flex flex-col items-center gap-3">
           <div className="w-8 h-8 border-3 border-amber-500 border-t-transparent rounded-full animate-spin" />
           <p className="text-slate-400 text-sm font-medium">Verifying authorization...</p>

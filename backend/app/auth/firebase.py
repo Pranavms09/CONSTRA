@@ -23,16 +23,18 @@ def init_firebase_admin():
             firebase_admin.initialize_app(cred)
             _firebase_initialized = True
             logger.info(f"Firebase Admin initialized with certificate: {cert_path}")
+            return
         except Exception as e:
             logger.warning(f"Failed to initialize Firebase Admin with {cert_path}: {e}")
-    else:
-        # Default initialization or delayed until real cert is provided
-        try:
-            firebase_admin.initialize_app()
-            _firebase_initialized = True
-            logger.info("Firebase Admin initialized with default credentials")
-        except Exception as e:
-            logger.warning(f"Firebase Admin default init failed (service account path not found): {e}")
+
+    # Fallback initialization using project ID for public JWT verification
+    project_id = getattr(settings, "FIREBASE_PROJECT_ID", None) or "constra-b561b"
+    try:
+        firebase_admin.initialize_app(options={"projectId": project_id})
+        _firebase_initialized = True
+        logger.info(f"Firebase Admin initialized with projectId: {project_id}")
+    except Exception as e:
+        logger.warning(f"Firebase Admin init with projectId failed: {e}")
 
 
 # Attempt initialisation on import
@@ -51,11 +53,18 @@ def verify_firebase_token(id_token: str) -> dict:
         )
 
     try:
+        # First attempt with check_revoked=True (requires service account)
         decoded_token = auth.verify_id_token(id_token, check_revoked=True)
         return decoded_token
     except Exception as exc:
-        logger.warning(f"Firebase token verification failed: {exc}")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired login"
-        )
+        logger.info(f"Standard verification with check_revoked failed ({exc}), attempting public key verification...")
+        try:
+            # Fallback for setups using projectId public keys verification
+            decoded_token = auth.verify_id_token(id_token, check_revoked=False)
+            return decoded_token
+        except Exception as inner_exc:
+            logger.warning(f"Firebase token verification failed: {inner_exc}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid or expired login"
+            )
