@@ -150,20 +150,28 @@ export async function fetchClaimById(claimId) {
 }
 
 export async function submitClaimVerdict(claimId, verdict, verdictNote, decisions) {
+  // 1. Enforce real backend verification and blocker checks first
+  const apiRes = await apiSubmitReport(claimId, verdict, verdictNote, decisions);
+
+  const finalStatus =
+    verdict === "agree" || verdict === "amend" || verdict === "approve"
+      ? "CLEARED"
+      : "FLAGGED";
+
   const updatePayload = {
-    status: verdict === "agree" || verdict === "amend" ? "APPROVED" : "FLAGGED",
+    status: finalStatus,
     decisions: decisions || {},
-    report: {
+    report: apiRes?.report || {
       claim_id: claimId,
       verdict,
       verdict_note: verdictNote,
       submitted_at: new Date().toISOString(),
-      sha256: `sha256_verdict_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+      certificate: apiRes?.certificate,
     },
     updatedAt: new Date().toISOString(),
   };
 
-  // 1. Firestore update
+  // 2. Firestore update if configured
   if (db) {
     try {
       const claimRef = doc(db, "claims", claimId);
@@ -173,19 +181,12 @@ export async function submitClaimVerdict(claimId, verdict, verdictNote, decision
     }
   }
 
-  // 2. Backend API update
-  try {
-    await apiSubmitReport(claimId, verdict, verdictNote, decisions);
-  } catch (err) {
-    console.warn("[API] Backend report update note:", err.message);
-  }
-
-  // 3. Local update
+  // 3. Local state synchronization
   const localList = getLocal(LOCAL_STORAGE_CLAIMS_KEY);
   const updated = localList.map((c) => (c.id === claimId ? { ...c, ...updatePayload } : c));
   setLocal(LOCAL_STORAGE_CLAIMS_KEY, updated);
 
-  return updatePayload;
+  return apiRes;
 }
 
 /* =========================================================================

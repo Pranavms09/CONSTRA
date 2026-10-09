@@ -9,6 +9,10 @@ class ImageAnalysisResponse(BaseModel):
     id: Optional[int] = None
     file_size: Optional[int] = None
     file_hash: Optional[str] = None
+    file_url: Optional[str] = None
+    is_duplicate: bool = False
+    duplicate_of_id: Optional[int] = None
+    exif_gps: Optional[dict] = None
     model: str
     source: str
     created_at: Optional[str] = None

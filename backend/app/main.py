@@ -1,4 +1,5 @@
 import logging
+from typing import Any, cast
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -60,11 +61,19 @@ def bootstrap_admin():
         db.close()
 
 
+import os
+from fastapi.staticfiles import StaticFiles
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Ensure database schema is initialized
     Base.metadata.create_all(bind=engine)
     bootstrap_admin()
+    try:
+        from scripts.seed_store_demo import seed_store_demo
+        seed_store_demo()
+    except Exception as exc:
+        logger.warning(f"Demo store seeding note: {exc}")
     yield
 
 
@@ -75,9 +84,13 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+# Ensure upload directory exists and mount for cross-laptop static access
+os.makedirs("uploads", exist_ok=True)
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
 # SlowAPI rate limiting configuration
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_exception_handler(RateLimitExceeded, cast(Any, _rate_limit_exceeded_handler))
 
 # CORS Middleware: allow configured origin and all local dev origins including preflight OPTIONS
 allowed_origins = [

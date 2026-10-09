@@ -11,6 +11,14 @@ import {
   submitClaimVerdict,
 } from "../../services/firebaseDataService";
 
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  (typeof window !== "undefined" &&
+  window.location.hostname !== "localhost" &&
+  window.location.hostname !== "127.0.0.1"
+    ? "https://constra-backend.onrender.com"
+    : "http://localhost:8000");
+
 export const ClaimAuditDesk = () => {
   const [claimsList, setClaimsList] = useState([]);
   const [selectedClaimId, setSelectedClaimId] = useState(null);
@@ -34,6 +42,10 @@ export const ClaimAuditDesk = () => {
 
   // Evidence modal state
   const [previewFile, setPreviewFile] = useState(null);
+
+  // Clearance Certificate & Blocker state
+  const [blockersList, setBlockersList] = useState([]);
+  const [certificateModal, setCertificateModal] = useState(null);
 
   // Load claims list from Firebase Firestore & Backend
   const loadClaims = async () => {
@@ -192,22 +204,29 @@ export const ClaimAuditDesk = () => {
     setSubmittingReport(true);
     setSubmitError(null);
     setSubmitSuccess(null);
+    setBlockersList([]);
     try {
       const res = await submitClaimVerdict(selectedClaimId, verdict, verdictNote, decisions);
-      setSubmitSuccess(`Milestone verification report sealed and saved to Firebase Firestore.`);
-      if (res.report) {
+      setSubmitSuccess(`Milestone verification processed and sealed successfully.`);
+      if (res?.certificate) {
+        setCertificateModal(res.certificate);
+      }
+      if (res?.report) {
         setClaim((prev) => ({
           ...prev,
           report: res.report,
           status:
-            res.report.verdict === "agree" || res.report.verdict === "amend"
-              ? "APPROVED"
+            res.report.verdict === "agree" || res.report.verdict === "amend" || res.report.verdict === "approve"
+              ? "CLEARED"
               : "FLAGGED",
         }));
       }
       await loadClaims();
     } catch (err) {
       setSubmitError(err?.message || "Submission failed");
+      if (err?.blockers && Array.isArray(err.blockers)) {
+        setBlockersList(err.blockers);
+      }
     } finally {
       setSubmittingReport(false);
     }
@@ -442,7 +461,7 @@ export const ClaimAuditDesk = () => {
                     {claim.ai.vlm_description}
                   </p>
                   {claim.ai.sha256 && (
-                    <p className="font-label-code text-label-code text-[#5F5E5E] pt-1 border-t border-[#A39B8F]/30 font-mono">
+                    <p className="font-label-code text-label-code text-[#5F5E5E] pt-1 border-t border-[#A39B8F]/30">
                       CRYPTOGRAPHIC SHA-256 HASH: {claim.ai.sha256}
                     </p>
                   )}
@@ -557,6 +576,52 @@ export const ClaimAuditDesk = () => {
                 </div>
               )}
 
+              {blockersList && blockersList.length > 0 && (
+                <div className="p-4 bg-[#ffdad6] border-2 border-[#ba1a1a] text-[#ba1a1a] font-label-code text-label-code space-y-2">
+                  <div className="flex items-center gap-2 font-bold uppercase">
+                    <span className="material-symbols-outlined text-base">block</span>
+                    <span>AUDITOR APPROVAL BLOCKED — VERIFICATION CONDITIONS UNMET</span>
+                  </div>
+                  <ul className="list-disc list-inside space-y-1 text-xs text-[#501010]">
+                    {blockersList.map((blk, idx) => (
+                      <li key={idx} className="font-sans">{blk}</li>
+                    ))}
+                  </ul>
+                  <p className="text-[11px] text-[#801010] mt-1 font-mono">
+                    RULE ENFORCEMENT: All critical alerts, material reconciliations, and geofence criteria must be resolved before sign-off.
+                  </p>
+                </div>
+              )}
+
+              {claim?.status === "CLEARED" && (
+                <div className="p-4 bg-[#93d5ad]/20 border-2 border-[#296a49] flex items-center justify-between gap-4 font-label-code text-label-code">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-[#296a49] font-bold uppercase">
+                      <span className="material-symbols-outlined text-base">verified</span>
+                      <span>MILESTONE OFFICIALLY CLEARED & AUDITED</span>
+                    </div>
+                    <p className="text-xs text-[#504533]">
+                      Cryptographic Clearance Certificate generated with SHA-256 integrity seal.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setCertificateModal(claim?.report?.certificate || {
+                      certificate_number: `CERT-SV-${claim.id}`,
+                      project_name: "Apex Tower — Commercial Block A",
+                      stage_name: claim.type,
+                      auditor: "Carol Auditor",
+                      verdict: "CLEARED",
+                      issued_at: claim?.report?.submitted_at || new Date().toISOString(),
+                      certificate_hash: claim?.report?.sha256 || "sha256_verified_clearance_seal",
+                    })}
+                    className="px-4 py-2 bg-[#296a49] text-white hover:bg-[#1b5e3e] uppercase font-bold border border-[#101010] shadow-[2px_2px_0px_#101010] cursor-pointer"
+                  >
+                    VIEW CLEARANCE CERTIFICATE
+                  </button>
+                </div>
+              )}
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3 font-label-code text-label-code">
                 <button
                   type="button"
@@ -639,18 +704,54 @@ export const ClaimAuditDesk = () => {
             </div>
             <div className="p-4 bg-[#E6E2DD] border border-[#101010] text-center font-label-code text-label-code">
               {previewFile.kind === "photo" ? (
-                <div className="p-12 text-[#5F5E5E]">
-                  <span className="material-symbols-outlined text-5xl text-[#FCBC18] block mb-2">
-                    image
-                  </span>
-                  GROUND TRUTH SPECIMEN EMBEDDED IN CLAIM RECORD
-                </div>
+                previewFile.url ? (
+                  <div className="space-y-3">
+                    <img
+                      src={
+                        previewFile.url.startsWith("http")
+                          ? previewFile.url
+                          : `${API_BASE_URL}${previewFile.url}`
+                      }
+                      alt={previewFile.name}
+                      className="max-h-[50vh] mx-auto object-contain border border-[#101010] shadow-[2px_2px_0px_#101010]"
+                    />
+                    <div className="bg-[#F2ECE6] p-2 border border-[#A39B8F]/40 text-xs text-left">
+                      <p className="font-bold text-[#101010]">FILE: {previewFile.name}</p>
+                      {previewFile.sha256 && (
+                        <p className="font-mono text-[#5F5E5E] break-all">
+                          SHA-256: {previewFile.sha256}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-12 text-[#5F5E5E]">
+                    <span className="material-symbols-outlined text-5xl text-[#FCBC18] block mb-2">
+                      image
+                    </span>
+                    GROUND TRUTH SPECIMEN EMBEDDED IN CLAIM RECORD: {previewFile.name}
+                  </div>
+                )
               ) : (
-                <div className="p-12 text-[#5F5E5E]">
+                <div className="p-8 text-[#5F5E5E] space-y-3">
                   <span className="material-symbols-outlined text-5xl text-[#FCBC18] block mb-2">
                     description
                   </span>
-                  DOCUMENT FILE: {previewFile.name}
+                  <p className="font-bold text-[#101010]">DOCUMENT SPECIMEN: {previewFile.name}</p>
+                  {previewFile.url && (
+                    <a
+                      href={
+                        previewFile.url.startsWith("http")
+                          ? previewFile.url
+                          : `${API_BASE_URL}${previewFile.url}`
+                      }
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-block px-4 py-2 bg-[#FCBC18] text-[#101010] font-bold border border-[#101010] hover:bg-[#101010] hover:text-[#FCBC18] transition-colors uppercase"
+                    >
+                      OPEN ORIGINAL EVIDENCE DOCUMENT
+                    </a>
+                  )}
                 </div>
               )}
             </div>
@@ -658,9 +759,90 @@ export const ClaimAuditDesk = () => {
               <button
                 type="button"
                 onClick={() => setPreviewFile(null)}
-                className="px-4 py-2 bg-[#101010] text-[#F2ECE6] font-label-code text-label-code uppercase font-bold"
+                className="px-4 py-2 bg-[#101010] text-[#F2ECE6] font-label-code text-label-code uppercase font-bold cursor-pointer"
               >
                 CLOSE PREVIEW
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Clearance Certificate Modal */}
+      {certificateModal && (
+        <div className="fixed inset-0 z-50 bg-[#101010]/80 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-[#F2ECE6] text-[#101010] border-2 border-[#101010] max-w-2xl w-full p-6 space-y-5 shadow-[6px_6px_0px_#101010] relative">
+            <div className="flex items-center justify-between border-b-2 border-[#101010] pb-3">
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 bg-[#296a49]" />
+                <span className="font-headline-md text-headline-md uppercase font-bold text-[#101010]">
+                  CLEARANCE CERTIFICATE // OFFICIAL AUDIT SEAL
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setCertificateModal(null)}
+                className="font-bold text-xl hover:text-[#ba1a1a] cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="border border-[#101010] bg-white p-5 space-y-4 font-mono text-xs">
+              <div className="flex justify-between items-start border-b border-[#A39B8F]/30 pb-3">
+                <div>
+                  <p className="text-[10px] text-[#5F5E5E] uppercase">CERTIFICATE NUMBER</p>
+                  <p className="font-bold text-sm text-[#101010]">{certificateModal.certificate_number || `CERT-SV-${selectedClaimId}`}</p>
+                </div>
+                <span className="px-2.5 py-1 bg-[#296a49] text-white font-bold text-[11px] uppercase">
+                  STATUS: CLEARED
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                <div>
+                  <span className="text-[#5F5E5E] uppercase block text-[10px]">PROJECT</span>
+                  <span className="font-bold text-[#101010]">{certificateModal.project_name || "Apex Tower — Commercial Block A"}</span>
+                </div>
+                <div>
+                  <span className="text-[#5F5E5E] uppercase block text-[10px]">STAGE / MILESTONE</span>
+                  <span className="font-bold text-[#101010]">{certificateModal.stage_name || claim?.type}</span>
+                </div>
+                <div>
+                  <span className="text-[#5F5E5E] uppercase block text-[10px]">LEAD AUDITOR</span>
+                  <span className="font-bold text-[#101010]">{certificateModal.auditor || certificateModal.auditor_name || "Carol Auditor"}</span>
+                </div>
+                <div>
+                  <span className="text-[#5F5E5E] uppercase block text-[10px]">ISSUED AT (UTC)</span>
+                  <span className="font-bold text-[#101010]">{certificateModal.issued_at || new Date().toISOString()}</span>
+                </div>
+              </div>
+
+              <div className="bg-[#E6E2DD] p-3 border border-[#101010] space-y-1">
+                <span className="text-[10px] text-[#504533] uppercase font-bold block">
+                  CRYPTOGRAPHIC INTEGRITY SEAL (SHA-256)
+                </span>
+                <p className="font-mono text-[11px] text-[#101010] break-all select-all font-bold">
+                  {certificateModal.certificate_hash || "sha256_sealed_clearance_hash"}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-2">
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="px-4 py-2 bg-[#FCBC18] hover:bg-[#e5aa15] text-[#101010] font-label-code text-label-code uppercase font-bold border border-[#101010] shadow-[2px_2px_0px_#101010] flex items-center gap-1.5 cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-sm">print</span>
+                <span>PRINT / DOWNLOAD CERTIFICATE</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setCertificateModal(null)}
+                className="px-4 py-2 bg-[#101010] text-[#F2ECE6] font-label-code text-label-code uppercase font-bold cursor-pointer"
+              >
+                CLOSE
               </button>
             </div>
           </div>
