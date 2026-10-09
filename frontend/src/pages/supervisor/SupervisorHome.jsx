@@ -791,7 +791,7 @@ export const SupervisorHome = () => {
                         id="run-analysis-btn"
                         onClick={handleAnalyze}
                         disabled={isAnalyzing || !selectedFile}
-                        className="w-full h-11 bg-[#fcbc18] hover:bg-[#101010] text-[#261900] hover:text-[#fcbc18] border border-[#1b1b20] font-headline-md text-headline-md font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-[2px_2px_0px_#101010] disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full h-11 bg-[#fcbc18] hover:bg-[#101010] text-[#261900] hover:text-[#fcbc18] border border-[#1b1b20] font-headline-md text-headline-md font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors enabled:cursor-pointer shadow-[2px_2px_0px_#101010] disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {isAnalyzing ? (
                           <>
@@ -968,7 +968,7 @@ export const SupervisorHome = () => {
                         type="button"
                         onClick={handleTransmitEvidence}
                         disabled={isSubmittingClaim || !aiDescription}
-                        className="px-4 py-2 bg-[#fcbc18] hover:bg-[#101010] text-[#261900] hover:text-[#fcbc18] border border-[#1b1b20] font-label-code text-label-code font-bold uppercase tracking-wider flex items-center gap-2 transition-colors cursor-pointer shadow-[2px_2px_0px_#101010] disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-4 py-2 bg-[#fcbc18] hover:bg-[#101010] text-[#261900] hover:text-[#fcbc18] border border-[#1b1b20] font-label-code text-label-code font-bold uppercase tracking-wider flex items-center gap-2 transition-colors enabled:cursor-pointer shadow-[2px_2px_0px_#101010] disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <span>
                           {isSubmittingClaim ? "TRANSMITTING TO FIREBASE..." : "TRANSMIT EVIDENCE TO CLAIM QUEUE"}

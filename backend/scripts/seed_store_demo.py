@@ -157,9 +157,9 @@ def seed_store_demo():
                 db.flush()
                 print(f"Created stage: {name} (progress={progress})")
             else:
-                stg.order = order
-                stg.status = status
-                stg.verified_progress = progress
+                setattr(stg, "order", order)
+                setattr(stg, "status", status)
+                setattr(stg, "verified_progress", progress)
                 db.flush()
             stage_objs[order] = stg
 
@@ -277,7 +277,7 @@ def seed_store_demo():
                 db.flush()
                 print(f"Added vendor: {vname} (approved={approved})")
             else:
-                vend.is_approved = approved
+                setattr(vend, "is_approved", approved)
                 db.flush()
 
         # 9. Demo Alert on Stage 3 for approval blocker demonstration

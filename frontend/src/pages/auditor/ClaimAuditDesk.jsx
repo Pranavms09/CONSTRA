@@ -461,7 +461,7 @@ export const ClaimAuditDesk = () => {
                     {claim.ai.vlm_description}
                   </p>
                   {claim.ai.sha256 && (
-                    <p className="font-label-code text-label-code text-[#5F5E5E] pt-1 border-t border-[#A39B8F]/30 font-mono">
+                    <p className="font-label-code text-label-code text-[#5F5E5E] pt-1 border-t border-[#A39B8F]/30">
                       CRYPTOGRAPHIC SHA-256 HASH: {claim.ai.sha256}
                     </p>
                   )}

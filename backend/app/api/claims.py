@@ -141,7 +141,7 @@ def create_claim(
         "submitter_id": sub_id,
         "submitter_email": sub_email,
         "policy_no": payload.policy_no or "POL-INSP-LOT81",
-        "project_id": str(payload.project_id or "1"),
+        "project_id": payload.project_id or "1",
         "stage_id": payload.stage_id,
         "type": payload.type or "Stage #02: Structural Slab Concrete Casting & Rebar Binding",
         "filed_at": now_iso,
@@ -167,9 +167,9 @@ def create_claim(
             if not stage:
                 stage = db.query(Stage).filter(Stage.project_id == proj.id, Stage.order == 3).first()
             if stage:
-                stage.status = "UNDER_REVIEW"
+                setattr(stage, "status", "UNDER_REVIEW")
                 if sub_id:
-                    stage.submitter_id = sub_id
+                    setattr(stage, "submitter_id", sub_id)
                 db.commit()
 
             audit_entry = AuditLog(
@@ -464,7 +464,7 @@ def submit_report(
         save_cached_claims()
 
         if stage:
-            stage.status = "FLAGGED"
+            setattr(stage, "status", "FLAGGED")
             db.commit()
 
         log_entry = AuditLog(
@@ -545,8 +545,8 @@ def submit_report(
 
     # All checks passed! Proceed to approve and generate clearance certificate
     if stage:
-        stage.status = "CLEARED"
-        stage.verified_progress = 1.0
+        setattr(stage, "status", "CLEARED")
+        setattr(stage, "verified_progress", 1.0)
 
     now_utc = datetime.now(timezone.utc)
     cert_number = f"CERT-SV-{proj_id}-{stage.id if stage else 1}-{int(time.time())}"

@@ -5,7 +5,7 @@ import hashlib
 import json
 from decimal import Decimal
 from datetime import datetime, date, timezone
-from typing import Optional, List
+from typing import Optional, List, Any, Dict
 from PIL import Image
 
 from fastapi import (
@@ -50,7 +50,7 @@ from app.services.alerts import raise_alert
 router = APIRouter(prefix="/store", tags=["store"])
 
 
-def log_audit(db: Session, actor_id: int, action: str, entity: str, entity_id: str, detail: dict = None):
+def log_audit(db: Session, actor_id: int, action: str, entity: str, entity_id: str, detail: Optional[Dict[str, Any]] = None):
     try:
         entry = AuditLog(
             actor_id=actor_id,
@@ -76,38 +76,39 @@ def run_ocr_background(challan_id: int):
         ocr_svc = OcrService()
         result = ocr_svc.process(challan.file_path)
 
-        challan.ocr_raw_text = result.get("raw_text", "")
+        setattr(challan, "ocr_raw_text", result.get("raw_text", ""))
         fields = result.get("fields", {})
         confidences = result.get("confidence_per_field", {})
 
         # Compute average confidence
         conf_values = [v for v in confidences.values() if isinstance(v, (int, float))]
-        challan.ocr_confidence = Decimal(str(sum(conf_values) / len(conf_values))) if conf_values else Decimal("70.0")
+        setattr(challan, "ocr_confidence", Decimal(str(sum(conf_values) / len(conf_values))) if conf_values else Decimal("70.0"))
 
         # Fill fields if detected
         if fields.get("challan_no"):
-            challan.challan_no = fields["challan_no"]
+            setattr(challan, "challan_no", fields["challan_no"])
         if fields.get("vendor"):
-            challan.vendor_name_raw = fields["vendor"]
+            setattr(challan, "vendor_name_raw", fields["vendor"])
             # Check direct or fuzzy vendor match
             vendor = db.query(Vendor).filter(func.lower(Vendor.name) == fields["vendor"].lower().strip()).first()
             if vendor:
-                challan.vendor_id = vendor.id
+                setattr(challan, "vendor_id", vendor.id)
             else:
                 from rapidfuzz import process, fuzz
                 all_vendors = db.query(Vendor).all()
                 if all_vendors:
+                    vendor_names: list[str] = [str(getattr(v, "name", "") or "") for v in all_vendors]
                     v_match = process.extractOne(
-                        fields["vendor"],
-                        [v.name for v in all_vendors],
+                        str(fields["vendor"]),
+                        vendor_names,
                         scorer=fuzz.token_set_ratio
                     )
                     if v_match and v_match[1] >= 75:
-                        challan.vendor_id = next(v.id for v in all_vendors if v.name == v_match[0])
+                        setattr(challan, "vendor_id", next(v.id for v in all_vendors if v.name == v_match[0]))
 
         if fields.get("date"):
             try:
-                challan.challan_date = datetime.strptime(fields["date"], "%Y-%m-%d").date()
+                setattr(challan, "challan_date", datetime.strptime(fields["date"], "%Y-%m-%d").date())
             except Exception:
                 pass
 
@@ -130,9 +131,10 @@ def run_ocr_background(challan_id: int):
                         norm = re.sub(r"\bcmt\b", "cement", norm, flags=re.IGNORECASE)
                         norm = re.sub(r"\brbr\b", "rebar", norm, flags=re.IGNORECASE)
                         norm = re.sub(r"\bbars?\b", "rebar", norm, flags=re.IGNORECASE)
+                        mat_names: list[str] = [str(getattr(m, "name", "") or "") for m in all_materials]
                         best = process.extractOne(
-                            norm,
-                            [m.name for m in all_materials],
+                            str(norm),
+                            mat_names,
                             scorer=fuzz.token_set_ratio
                         )
                         if best and best[1] >= 65:
@@ -161,17 +163,17 @@ def run_ocr_background(challan_id: int):
             )
             db.add(c_item)
 
-        challan.status = "draft"
-        challan.failure_reason = None
-        challan.version += 1
+        setattr(challan, "status", "draft")
+        setattr(challan, "failure_reason", None)
+        setattr(challan, "version", (getattr(challan, "version", 1) or 1) + 1)
         db.commit()
     except Exception as e:
         db.rollback()
         fail_challan = db.query(Challan).filter(Challan.id == challan_id).first()
         if fail_challan:
-            fail_challan.status = "failed"
-            fail_challan.failure_reason = f"OCR engine could not read document: {str(e)}"
-            fail_challan.version += 1
+            setattr(fail_challan, "status", "failed")
+            setattr(fail_challan, "failure_reason", f"OCR engine could not read document: {str(e)}")
+            setattr(fail_challan, "version", (getattr(fail_challan, "version", 1) or 1) + 1)
             db.commit()
     finally:
         db.close()
@@ -439,10 +441,10 @@ def update_challan_draft(
             detail="Conflict: Challan was modified by another request. Please refresh to continue."
         )
 
-    challan.challan_no = body.challan_no.strip()
-    challan.vendor_id = body.vendor_id
-    challan.vendor_name_raw = body.vendor_name_raw
-    challan.challan_date = body.challan_date
+    setattr(challan, "challan_no", body.challan_no.strip())
+    setattr(challan, "vendor_id", body.vendor_id)
+    setattr(challan, "vendor_name_raw", body.vendor_name_raw)
+    setattr(challan, "challan_date", body.challan_date)
 
     # Replace items
     db.query(ChallanItem).filter(ChallanItem.challan_id == challan.id).delete()
@@ -467,7 +469,7 @@ def update_challan_draft(
         )
         db.add(c_item)
 
-    challan.version += 1
+    setattr(challan, "version", (getattr(challan, "version", 1) or 1) + 1)
     db.commit()
     db.refresh(challan)
 
@@ -500,17 +502,18 @@ def confirm_challan(
     if not challan.challan_no or challan.challan_no.startswith("PENDING-"):
         errors.append("Challan number is required.")
 
-    if not challan.items:
+    challan_items: list[ChallanItem] = list(getattr(challan, "items", []) or [])
+    if not challan_items:
         errors.append("At least one delivery line item is required.")
 
-    for idx, item in enumerate(challan.items, start=1):
+    for idx, item in enumerate(challan_items, start=1):
         if not item.material_id:
             errors.append(f"Line item {idx} must be matched to a registered material.")
         if item.qty <= Decimal("0"):
             errors.append(f"Line item {idx} quantity must be greater than 0.")
         if item.material_id:
             try:
-                item.qty_base = to_base(db, item.material_id, item.unit, item.qty)
+                setattr(item, "qty_base", to_base(db, item.material_id, item.unit, item.qty))
             except HTTPException as e:
                 errors.append(f"Line item {idx}: {e.detail}")
 
@@ -528,7 +531,7 @@ def confirm_challan(
             db.add(new_v)
             db.commit()
             db.refresh(new_v)
-            challan.vendor_id = new_v.id
+            setattr(challan, "vendor_id", new_v.id)
 
     # Check for duplicate challan number constraint
     if challan.vendor_id:
@@ -548,9 +551,9 @@ def confirm_challan(
                 detail=f"Challan #{challan.challan_no} has already been confirmed for this vendor (ID: {existing_dup.id})."
             )
 
-    challan.status = "confirmed"
-    challan.reviewed = True
-    challan.version += 1
+    setattr(challan, "status", "confirmed")
+    setattr(challan, "reviewed", True)
+    setattr(challan, "version", (getattr(challan, "version", 1) or 1) + 1)
     db.commit()
     db.refresh(challan)
 
@@ -577,7 +580,7 @@ def confirm_challan(
         for a in alerts
     ]
 
-    log_audit(db, user.id, "confirm_challan", "challan", str(challan.id), {"items_count": len(challan.items)})
+    log_audit(db, user.id, "confirm_challan", "challan", str(challan.id), {"items_count": len(challan_items)})
 
     return ChallanConfirmResponse(
         challan=challan_to_detail_response(challan),
@@ -890,8 +893,8 @@ def update_alert_action(
     ensure_project_access(db, user.id, alert.project_id, user.role)
 
     prev_status = alert.status
-    alert.status = payload.status
-    alert.auditor_comment = f"[{user.full_name or user.email} ({user.role})] {payload.justification.strip()}"
+    setattr(alert, "status", payload.status)
+    setattr(alert, "auditor_comment", f"[{user.full_name or user.email} ({user.role})] {payload.justification.strip()}")
     db.commit()
     db.refresh(alert)
 
