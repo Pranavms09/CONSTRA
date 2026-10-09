@@ -7,46 +7,76 @@ export const ImageAnalysisPage = () => {
   const { user } = useAuth();
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-amber-500 selection:text-slate-950">
+    <div className="min-h-screen bg-[#fbf8ff] text-[#1b1b20] font-body-md flex flex-col selection:bg-[#fcbc18] selection:text-[#101010]">
       {/* Top Bar */}
-      <header className="border-b border-slate-800 bg-slate-900/60 backdrop-blur px-6 py-4 flex items-center justify-between">
+      <header className="border-b border-[#d4c5ac]/30 bg-[#101010] text-[#f2f0f6] px-6 py-3 flex items-center justify-between sticky top-0 z-40">
         <div className="flex items-center gap-3">
-          <Link to="/" className="flex items-center gap-2.5 text-white hover:text-amber-400 transition-colors">
-            <span className="text-xl">🏗️</span>
-            <div>
-              <h1 className="text-sm font-semibold">SiteVerify</h1>
-              <p className="text-xs text-slate-400">AI Image Analysis Portal</p>
-            </div>
+          <Link to="/" className="flex items-center gap-2 group">
+            <div className="w-3.5 h-3.5 bg-[#fcbc18] shrink-0 group-hover:scale-110 transition-transform"></div>
+            <span className="font-headline-md text-headline-md tracking-wider font-bold text-[#f2f0f6]">
+              CONSTRA
+            </span>
           </Link>
+          <div className="h-4 w-px bg-[#d4c5ac]/40 hidden sm:block"></div>
+          <span className="hidden sm:inline font-label-code text-label-code bg-[#e4e1e8]/20 px-2 py-0.5 border border-[#d4c5ac]/30 text-[#f2f0f6] uppercase tracking-widest">
+            AI VISION VERIFIER // STANDALONE TERMINAL
+          </span>
         </div>
 
         <div className="flex items-center gap-4">
           {user ? (
             <Link
-              to={user.role === "supervisor" ? "/supervisor" : user.role === "store_incharge" ? "/store" : "/auditor"}
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors"
+              to={
+                user.role === "supervisor"
+                  ? "/supervisor"
+                  : user.role === "store_incharge"
+                  ? "/store"
+                  : "/auditor"
+              }
+              className="px-3 py-1 font-label-code text-label-code uppercase border border-[#d4c5ac]/40 text-[#f2f0f6] bg-[#e4e1e8]/20 hover:bg-[#fcbc18] hover:text-[#101010] transition-colors"
             >
-              ← Back to {user.role.toUpperCase()} Workspace
+              ← RETURN TO {user.role.toUpperCase()} PORTAL
             </Link>
           ) : (
             <Link
               to="/login"
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500 hover:bg-amber-400 text-slate-950 transition-colors"
+              className="px-4 py-1.5 font-label-code text-label-code font-bold uppercase bg-[#fcbc18] text-[#101010] border border-[#101010] hover:bg-white transition-colors shadow-[2px_2px_0px_#101010]"
             >
-              Sign In
+              SIGN IN
             </Link>
           )}
         </div>
       </header>
 
+      {/* Subheader */}
+      <div className="w-full bg-[#e9e7ee] border-b border-[#d4c5ac]/40 px-6 py-2">
+        <div className="max-w-7xl mx-auto flex items-center justify-between font-label-code text-label-code text-[#504533]">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 bg-[#fcbc18] inline-block"></span>
+            <span className="font-bold text-[#1b1b20]">MODULE 01.B // REBAR &amp; CASTING AUDIT</span>
+          </div>
+          <div className="flex items-center gap-1 text-[#296a49]">
+            <span className="w-1.5 h-1.5 bg-[#296a49] inline-block animate-pulse"></span>
+            <span>GEMINI VISION ENGINE NOMINAL</span>
+          </div>
+        </div>
+      </div>
+
       {/* Main Container */}
-      <main className="flex-1 max-w-5xl w-full mx-auto p-6 md:p-8 space-y-6">
-        <div>
-          <h2 className="text-2xl font-bold text-white tracking-tight">
-            AI Vision Milestone Verifier
-          </h2>
-          <p className="text-sm text-slate-400 mt-1">
-            Automated image analysis using Google Gemini vision model. Verified descriptions are immutable and tamper-proof.
+      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 space-y-4">
+        {/* Page Hero */}
+        <div className="relative bg-white border border-[#d4c5ac]/40 p-4">
+          <div className="absolute -top-[2px] -left-[2px] w-2 h-2 border-t-2 border-l-2 border-[#fcbc18]"></div>
+          <div className="absolute -top-[2px] -right-[2px] w-2 h-2 border-t-2 border-r-2 border-[#fcbc18]"></div>
+          <div className="absolute -bottom-[2px] -left-[2px] w-2 h-2 border-b-2 border-l-2 border-[#fcbc18]"></div>
+          <div className="absolute -bottom-[2px] -right-[2px] w-2 h-2 border-b-2 border-r-2 border-[#fcbc18]"></div>
+
+          <h1 className="font-headline-lg text-headline-lg uppercase font-bold text-[#1b1b20]">
+            AI SITE IMAGE VERIFICATION // STANDALONE SUITE
+          </h1>
+          <p className="font-body-md text-body-md text-[#504533] mt-1 max-w-3xl">
+            Automated image analysis using Google Gemini vision model and CONSTRA-VLM. Verified
+            descriptions are immutable, cryptographically pinned, and synced with the field audit queue.
           </p>
         </div>
 
@@ -54,8 +84,8 @@ export const ImageAnalysisPage = () => {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-900 bg-slate-950 px-6 py-4 text-center text-xs text-slate-600 font-mono">
-        SiteVerify &copy; 2026 • AI Vision Analysis Module • Powered by Google Gemini
+      <footer className="w-full bg-[#e9e7ee] border-t border-[#d4c5ac]/40 py-3 px-6 text-center font-label-code text-label-code text-[#504533]">
+        CONSTRA &copy; 2026 // AI VISION ANALYSIS ENGINE // POWERED BY GEMINI 1.5 PRO &amp; 2.5 FLASH
       </footer>
     </div>
   );
