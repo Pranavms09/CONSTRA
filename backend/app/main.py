@@ -82,6 +82,7 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 # CORS Middleware: allow configured origin and all local dev origins including preflight OPTIONS
 allowed_origins = [
     settings.FRONTEND_ORIGIN,
+    "https://constra.pranavms09.workers.dev",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     "http://localhost:5174",
@@ -93,7 +94,7 @@ allowed_origins = [
 app.add_middleware(
     CORSMiddleware,
     allow_origins=list(set(allowed_origins)),
-    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1|.*\.vercel\.app|.*\.pages\.dev)(:\d+)?$",
+    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1|.*\.vercel\.app|.*\.pages\.dev|.*\.workers\.dev)(:\d+)?$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

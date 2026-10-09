@@ -137,7 +137,7 @@ export async function loginWithBackend(claimedRole, idToken, isSignup = false, f
     });
   } catch (networkError) {
     throw new Error(
-      `Cannot connect to backend server at ${API_BASE_URL}. Please ensure the FastAPI backend is running on port 8000.`
+      `Cannot connect to backend server at ${API_BASE_URL}. Please ensure the backend is running and reachable.`
     );
   }
 
