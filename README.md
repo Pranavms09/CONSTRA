@@ -340,9 +340,76 @@ limits:
    ```
 
 4. **Access the applications:**
-   - **Frontend UI:** `http://localhost:3000`
+   - **Frontend UI:** `http://localhost:5173`
    - **Backend API & Swagger Docs:** `http://localhost:8000/docs`
    - **PostgreSQL Database:** `localhost:5432`
+
+---
+
+## 🔐 Feature 1: Role-Segregated Portal with Firebase Authentication
+
+Feature 1 implements zero-trust role segregation with Google login powered by Firebase Authentication and the Firebase Admin SDK.
+
+### Architecture & Security Guarantees
+1. **Zero Frontend Trust**: Frontend never decides user permissions. Roles are loaded and verified strictly from the database using the verified Firebase token.
+2. **Claimed Role Validation**: On login, the backend matches the requested operational role against `users.role`. Discrepancies immediately return `403 Forbidden` and cancel authentication.
+3. **Allowlist Gating**: Unregistered Google accounts cannot access any system endpoint (`403: Your account is not registered. Contact your Auditor.`).
+4. **Verified Emails Only**: Tokens with `email_verified=False` are rejected with `403`.
+5. **Audit Logging**: Successful and rejected logins are recorded with timestamps, actions (`login`, `login_denied`), and reasons without storing sensitive tokens.
+
+### Step 1: Firebase Project Setup
+1. In the [Firebase Console](https://console.firebase.google.com/):
+   - Create a Firebase Project.
+   - Under **Authentication** -> **Sign-in method**, enable **Google**.
+2. Under **Project Settings** -> **General**:
+   - Register a Web App and copy the web configuration keys.
+3. Under **Project Settings** -> **Service accounts**:
+   - Click **Generate new private key** and save the JSON file as `backend/secrets/firebase-service-account.json`.
+
+### Step 2: Environment Configuration
+
+1. **Backend (`backend/.env`)**:
+   ```env
+   DATABASE_URL=sqlite:///./siteverify.db # Or postgresql://user:password@localhost:5432/siteverify
+   FIREBASE_SERVICE_ACCOUNT_PATH=./secrets/firebase-service-account.json
+   FRONTEND_ORIGIN=http://localhost:5173
+   BOOTSTRAP_ADMIN_EMAIL=your-auditor-google-account@gmail.com
+   ```
+
+2. **Frontend (`frontend/.env`)**:
+   ```env
+   VITE_API_BASE_URL=http://localhost:8000
+   VITE_FIREBASE_API_KEY=AIzaSy...
+   VITE_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+   VITE_FIREBASE_PROJECT_ID=your-project
+   VITE_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
+   VITE_FIREBASE_MESSAGING_SENDER_ID=1234567890
+   VITE_FIREBASE_APP_ID=1:1234567890:web:...
+   ```
+
+### Step 3: Running Backend & Frontend
+
+**Backend:**
+```bash
+cd backend
+# Run Alembic migrations to head
+./.venv/bin/alembic upgrade head
+
+# Start FastAPI server with live reload
+./.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+```
+
+**Run Backend Tests:**
+```bash
+cd backend
+./.venv/bin/pytest -v
+```
+
+**Frontend:**
+```bash
+cd frontend
+npm run dev
+```
 
 ---
 
