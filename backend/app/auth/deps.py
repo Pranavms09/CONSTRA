@@ -59,7 +59,10 @@ def get_current_user(
     # Standard Firebase Token Verification
     decoded_token = verify_firebase_token(token)
 
-    if not decoded_token.get("email_verified", False):
+    firebase_info = decoded_token.get("firebase", {})
+    sign_in_provider = firebase_info.get("sign_in_provider")
+
+    if sign_in_provider == "google.com" and not decoded_token.get("email_verified", False):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Email is not verified"

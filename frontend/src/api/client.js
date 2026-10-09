@@ -175,6 +175,19 @@ export async function createUser(data) {
   });
 }
 
+export async function updateUserRole(userId, data) {
+  return apiFetch(`/users/${userId}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteUser(userId) {
+  return apiFetch(`/users/${userId}`, {
+    method: "DELETE",
+  });
+}
+
 export async function analyzeImage(file) {
   const formData = new FormData();
   formData.append("file", file);
@@ -277,5 +290,12 @@ export async function submitAuditReport(claimId, verdict, verdictNote, decisions
   return apiFetch(`/api/v1/claims/${claimId}/submit`, {
     method: "POST",
     body: JSON.stringify({ verdict, verdictNote, decisions }),
+  });
+}
+
+export async function createClaimApi(claimPayload) {
+  return apiFetch("/api/v1/claims", {
+    method: "POST",
+    body: JSON.stringify(claimPayload),
   });
 }

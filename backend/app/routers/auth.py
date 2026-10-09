@@ -11,6 +11,7 @@ from app.schemas.auth import LoginRequest, UserResponse
 from app.auth.firebase import verify_firebase_token
 from app.auth.deps import get_current_user, parse_bearer_token
 from app.limiter import limiter
+from app.config import settings
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -54,8 +55,11 @@ async def login(
     email = raw_email.lower().strip()
     email_verified = decoded_token.get("email_verified", False)
 
-    # 1. Reject if email_verified is false
-    if not email_verified:
+    firebase_info = decoded_token.get("firebase", {})
+    sign_in_provider = firebase_info.get("sign_in_provider")
+
+    # 1. Require verified email unless password provider
+    if not email_verified and sign_in_provider != "password":
         record_audit(
             db,
             action="login_denied",
@@ -70,18 +74,31 @@ async def login(
     # 2. Lowercase email and load user from database
     user = db.query(User).filter(func.lower(User.email) == email).first()
 
-    # 3. Allowlist check: If user does not exist or is inactive
+    # 3. Allowlist check: If user does not exist
     if not user:
-        record_audit(
-            db,
-            action="login_denied",
-            detail={"email": email, "reason": "Account not registered"},
-            ip_address=ip_addr
-        )
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Your account is not registered. Contact your Auditor."
-        )
+        if settings.BOOTSTRAP_ADMIN_EMAIL and email == settings.BOOTSTRAP_ADMIN_EMAIL.lower():
+            user = User(
+                email=email,
+                full_name=decoded_token.get("name") or "Bootstrap Project Auditor",
+                role="auditor",
+                is_active=True,
+                firebase_uid=uid,
+                auth_provider=sign_in_provider or "google"
+            )
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+        else:
+            record_audit(
+                db,
+                action="login_denied",
+                detail={"email": email, "reason": "Account not registered"},
+                ip_address=ip_addr
+            )
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Your account is not registered. Contact your Auditor."
+            )
 
     if not user.is_active:
         record_audit(
@@ -96,8 +113,8 @@ async def login(
             detail="Your account is not registered or is disabled."
         )
 
-    # 4. Compare user.role with claimed_role
-    if user.role != body.claimed_role:
+    # 4. Role verification: If claimed_role is provided, enforce strict match
+    if body.claimed_role and user.role != body.claimed_role:
         record_audit(
             db,
             action="login_denied",
@@ -115,31 +132,20 @@ async def login(
             detail=f"This Google account is not registered as {body.claimed_role}."
         )
 
-    # 5. UID binding: If empty, save. If exists and differs, return 403
-    if not user.firebase_uid:
-        user.firebase_uid = uid
-    elif user.firebase_uid != uid:
-        record_audit(
-            db,
-            action="login_denied",
-            actor_id=user.id,
-            detail={"email": email, "reason": "Firebase UID mismatch"},
-            ip_address=ip_addr
-        )
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Security error: Google account identity mismatch."
-        )
+    # 5. UID binding: bind or update on successful sign-in
+    user.firebase_uid = uid
+    if sign_in_provider:
+        user.auth_provider = sign_in_provider
 
     # 6. Update last_login_at
     user.last_login_at = datetime.now(timezone.utc)
 
-    # 7. Write audit log entry for successful login (no tokens stored)
+    # 7. Write audit log entry for successful login
     record_audit(
         db,
         action="login",
         actor_id=user.id,
-        detail={"role": user.role, "claimed_role": body.claimed_role},
+        detail={"role": user.role, "claimed_role": body.claimed_role, "provider": sign_in_provider},
         ip_address=ip_addr
     )
 
@@ -151,7 +157,8 @@ async def login(
         id=user.id,
         full_name=user.full_name,
         email=user.email,
-        role=user.role
+        role=user.role,
+        is_active=user.is_active
     )
 
 

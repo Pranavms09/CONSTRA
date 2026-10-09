@@ -9,6 +9,7 @@ import {
 } from "../../api/store";
 import { AnomalyBanner } from "../../components/store/AnomalyBanner";
 import { Toast } from "../../components/store/Toast";
+import { saveIssueToFirestore, saveAlertToFirestore } from "../../services/firebaseDataService";
 
 export const IssueMaterial = () => {
   const { selectedProjectId, selectedProject } = useStoreProject();
@@ -110,7 +111,26 @@ export const IssueMaterial = () => {
         note: note.trim() || undefined,
       });
 
-      setToastMsg(`Material issue recorded successfully. Ref: ISS-${res.id}`);
+      // Sync issue to Firebase Firestore
+      await saveIssueToFirestore({
+        ...res,
+        project_id: selectedProjectId,
+        stage_name: selectedStageObj?.name,
+        issued_to: issuedTo.trim(),
+      });
+
+      // If anomaly detected, sync alert to Firebase Firestore
+      if (previewResult?.anomaly) {
+        await saveAlertToFirestore({
+          project_id: selectedProjectId,
+          type: "MATERIAL_OVER_ISSUANCE",
+          severity: "HIGH",
+          message: previewResult.message || `Anomalous drawdown of ${qty} ${unit} issued to ${issuedTo}.`,
+          status: "open",
+        });
+      }
+
+      setToastMsg(`Material issue recorded & synced to Firebase. Ref: ISS-${res.id}`);
       setTimeout(() => {
         navigate("/store/issues");
       }, 1000);

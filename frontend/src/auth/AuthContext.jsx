@@ -1,7 +1,13 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { onAuthStateChanged, signOut } from "firebase/auth";
-import { auth } from "./firebase";
-import { demoLoginApi, fetchMe } from "../api/client";
+import {
+  onAuthStateChanged,
+  signOut,
+  signInWithPopup,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+} from "firebase/auth";
+import { auth, googleProvider } from "./firebase";
+import { fetchMe, loginWithBackend } from "../api/client";
 
 const AuthContext = createContext(undefined);
 
@@ -12,20 +18,7 @@ export const AuthProvider = ({ children }) => {
   // Initialize and restore session
   useEffect(() => {
     const initAuth = async () => {
-      const demoToken = localStorage.getItem("siteverify_token");
-      if (demoToken) {
-        try {
-          const profile = await fetchMe();
-          setUser(profile);
-          setLoading(false);
-          return;
-        } catch (err) {
-          console.warn("Demo session restore failed, clearing token:", err);
-          localStorage.removeItem("siteverify_token");
-        }
-      }
-
-      // Check Firebase state if no active demo token and Firebase auth is initialized
+      // Check Firebase state
       if (auth) {
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
           if (firebaseUser) {
@@ -53,13 +46,52 @@ export const AuthProvider = ({ children }) => {
     initAuth();
   }, []);
 
-  const loginDemo = async (role) => {
+  const loginWithGoogle = async (claimedRole) => {
+    if (!auth || !googleProvider) {
+      throw new Error("Firebase Authentication is not initialized. Please check configuration.");
+    }
+    const result = await signInWithPopup(auth, googleProvider);
     try {
-      const loggedUser = await demoLoginApi(role);
-      setUser(loggedUser);
-      return loggedUser;
+      const idToken = await result.user.getIdToken(true);
+      const userProfile = await loginWithBackend(claimedRole, idToken);
+      setUser(userProfile);
+      return userProfile;
     } catch (err) {
-      localStorage.removeItem("siteverify_token");
+      await signOut(auth);
+      setUser(null);
+      throw err;
+    }
+  };
+
+  const loginWithEmail = async (email, password, claimedRole) => {
+    if (!auth) {
+      throw new Error("Firebase Authentication is not initialized. Please check configuration.");
+    }
+    const result = await signInWithEmailAndPassword(auth, email.trim(), password);
+    try {
+      const idToken = await result.user.getIdToken(true);
+      const userProfile = await loginWithBackend(claimedRole, idToken);
+      setUser(userProfile);
+      return userProfile;
+    } catch (err) {
+      await signOut(auth);
+      setUser(null);
+      throw err;
+    }
+  };
+
+  const registerWithEmail = async (email, password, claimedRole) => {
+    if (!auth) {
+      throw new Error("Firebase Authentication is not initialized. Please check configuration.");
+    }
+    const result = await createUserWithEmailAndPassword(auth, email.trim(), password);
+    try {
+      const idToken = await result.user.getIdToken(true);
+      const userProfile = await loginWithBackend(claimedRole, idToken);
+      setUser(userProfile);
+      return userProfile;
+    } catch (err) {
+      await signOut(auth);
       setUser(null);
       throw err;
     }
@@ -78,7 +110,16 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, loginDemo, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        loginWithGoogle,
+        loginWithEmail,
+        registerWithEmail,
+        logout,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

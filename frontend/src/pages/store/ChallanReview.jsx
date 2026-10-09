@@ -16,6 +16,7 @@ import { ReconcileTable } from "../../components/store/ReconcileTable";
 import { ConfirmDialog } from "../../components/store/ConfirmDialog";
 import { Toast } from "../../components/store/Toast";
 import { SkeletonLoader } from "../../components/store/SkeletonLoader";
+import { saveChallanToFirestore } from "../../services/firebaseDataService";
 
 export const ChallanReview = () => {
   const { id } = useParams();
@@ -162,8 +163,9 @@ export const ChallanReview = () => {
 
       const updated = await updateChallanDraft(challan.id, payload);
       setChallan(updated);
+      await saveChallanToFirestore(updated);
       setToastType("success");
-      setToastMsg("CHALLAN DRAFT MUTATION COMMITTED.");
+      setToastMsg("CHALLAN DRAFT MUTATION COMMITTED & SAVED TO FIREBASE.");
     } catch (err) {
       if (err.status === 409) {
         setErrorMessage("CONFLICT: Concurrently updated by another session. Please reload to sync.");
@@ -186,10 +188,11 @@ export const ChallanReview = () => {
       });
 
       setChallan(confirmData.challan);
+      await saveChallanToFirestore(confirmData.challan);
       setReconcileResult(confirmData);
       setConfirmModalOpen(true);
       setToastType("success");
-      setToastMsg("CHALLAN RECONCILED AGAINST BOQ BASELINE.");
+      setToastMsg("CHALLAN RECONCILED AGAINST BOQ BASELINE & SYNCED TO FIREBASE.");
     } catch (err) {
       setErrorMessage(err.message || "Confirmation failed.");
     } finally {

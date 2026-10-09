@@ -1,5 +1,6 @@
 import { initializeApp, getApps } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 
 const rawApiKey = import.meta.env.VITE_FIREBASE_API_KEY;
 
@@ -22,23 +23,25 @@ const firebaseConfig = {
 
 let app = null;
 let auth = null;
+let db = null;
 let googleProvider = null;
 
 if (isFirebaseConfigured) {
   try {
     app = getApps().length > 0 ? getApps()[0] : initializeApp(firebaseConfig);
     auth = getAuth(app);
+    db = getFirestore(app);
     googleProvider = new GoogleAuthProvider();
     googleProvider.setCustomParameters({ prompt: "select_account" });
   } catch (error) {
-    console.warn("Failed to initialize Firebase Auth:", error);
+    console.warn("Failed to initialize Firebase Auth/Firestore:", error);
     app = null;
     auth = null;
+    db = null;
     googleProvider = null;
   }
 } else {
   console.info("Firebase API key not set or invalid. Running frontend in Demo / Test mode.");
 }
 
-export { app, auth, googleProvider };
-
+export { app, auth, db, googleProvider };

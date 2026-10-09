@@ -1,8 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { useAuth } from "../../auth/AuthContext";
-import { pingAuditor, fetchUsers, createUser, fetchExifGpsReport } from "../../api/client";
+import {
+  pingAuditor,
+  fetchUsers,
+  createUser,
+  updateUserRole,
+  deleteUser,
+  fetchExifGpsReport,
+} from "../../api/client";
 import { ClaimAuditDesk } from "./ClaimAuditDesk";
+import { saveUserToFirestore } from "../../services/firebaseDataService";
+import { useAuth } from "../../auth/AuthContext";
 
 export const AuditorHome = () => {
   const { user, logout } = useAuth();
@@ -96,7 +104,8 @@ export const AuditorHome = () => {
         email: email.trim(),
         role,
       });
-      setFormSuccess(`User ${newUser.email} added successfully with role ${newUser.role}!`);
+      await saveUserToFirestore(newUser);
+      setFormSuccess(`User ${newUser.email} added successfully to database & Firebase Firestore!`);
       setFullName("");
       setEmail("");
       loadUsers();
@@ -104,6 +113,27 @@ export const AuditorHome = () => {
       setFormError(err?.message || "Failed to register new user");
     } finally {
       setSubmittingUser(false);
+    }
+  };
+
+  const handleUpdateRole = async (userId, newRole) => {
+    try {
+      await updateUserRole(userId, { role: newRole });
+      loadUsers();
+    } catch (err) {
+      alert(err?.message || "Failed to update role");
+    }
+  };
+
+  const handleDeleteUser = async (userId, userEmail) => {
+    if (!window.confirm(`Are you sure you want to remove ${userEmail} from authorized users?`)) {
+      return;
+    }
+    try {
+      await deleteUser(userId);
+      loadUsers();
+    } catch (err) {
+      alert(err?.message || "Failed to remove user");
     }
   };
 
@@ -553,8 +583,9 @@ export const AuditorHome = () => {
                         <tr className="bg-[#101010] text-[#F2ECE6] font-label-meta text-label-meta uppercase tracking-widest">
                           <th className="py-2.5 px-3 border-r border-[#A39B8F]/30">USER DETAILS</th>
                           <th className="py-2.5 px-3 border-r border-[#A39B8F]/30">EMAIL ADDRESS</th>
-                          <th className="py-2.5 px-3 text-center border-r border-[#A39B8F]/30">ROLE TIER</th>
-                          <th className="py-2.5 px-3 text-right">STATUS</th>
+                          <th className="py-2.5 px-3 text-center border-r border-[#A39B8F]/30">ASSIGNED ROLE</th>
+                          <th className="py-2.5 px-3 text-center border-r border-[#A39B8F]/30">STATUS</th>
+                          <th className="py-2.5 px-3 text-right">ACTION</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-[#A39B8F]/30 text-[#101010]">
@@ -567,18 +598,35 @@ export const AuditorHome = () => {
                               {u.email}
                             </td>
                             <td className="py-3 px-3 border-r border-[#A39B8F]/30 text-center">
-                              <span
-                                className={`px-2 py-0.5 border font-bold uppercase text-xs ${getRoleBadge(
+                              <select
+                                value={u.role}
+                                onChange={(e) => handleUpdateRole(u.id, e.target.value)}
+                                className={`px-2 py-1 border font-bold uppercase text-xs bg-[#F2ECE6] outline-none cursor-pointer ${getRoleBadge(
                                   u.role
                                 )}`}
+                                title="Change user's authorized role"
                               >
-                                {u.role?.toUpperCase()}
-                              </span>
+                                <option value="supervisor">SITE SUPERVISOR (LEVEL-01)</option>
+                                <option value="store_incharge">STORE IN-CHARGE (LEVEL-02)</option>
+                                <option value="auditor">PROJECT AUDITOR (CLEARANCE-A)</option>
+                              </select>
                             </td>
-                            <td className="py-3 px-3 text-right">
+                            <td className="py-3 px-3 text-center border-r border-[#A39B8F]/30">
                               <span className="text-[#2F6F4E] font-bold uppercase text-xs">
                                 ✓ ACTIVE
                               </span>
+                            </td>
+                            <td className="py-3 px-3 text-right">
+                              {user?.email?.toLowerCase() !== u.email?.toLowerCase() && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteUser(u.id, u.email)}
+                                  className="text-[#ba1a1a] hover:bg-[#ffdad6] px-2 py-1 border border-transparent hover:border-[#ba1a1a] font-label-code text-xs uppercase font-bold cursor-pointer transition-colors"
+                                  title="Revoke user authorization"
+                                >
+                                  REMOVE
+                                </button>
+                              )}
                             </td>
                           </tr>
                         ))}
