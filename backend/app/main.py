@@ -9,8 +9,7 @@ from sqlalchemy import func
 from app.config import settings
 from app.database import SessionLocal, engine, Base
 from app.models.user import User, UserRole
-from app.limiter import limiter
-from app.routers import auth, users, pings, analysis
+from app.routers import auth, users, pings, store, analysis
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("siteverify")
@@ -100,7 +99,13 @@ app.add_middleware(
 )
 
 # Include API Routers
+from app.api.analysis import router as analysis_router
+from app.api.claims import router as claims_router
+
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(pings.router)
+app.include_router(store.router)
+app.include_router(analysis_router)
+app.include_router(claims_router)
 app.include_router(analysis.router)

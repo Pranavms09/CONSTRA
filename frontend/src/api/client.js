@@ -224,3 +224,40 @@ export async function checkBackendHealth() {
     throw new Error(`Cannot connect to backend server at ${API_BASE_URL}.`);
   }
 }
+
+export async function fetchExifGpsReport(projectId = "project-001", fileName = "column_casting.jpg") {
+  return apiFetch(`/api/v1/projects/${projectId}/evidence/${fileName}/exif-gps`);
+}
+
+export async function fetchClaims() {
+  return apiFetch("/api/v1/claims");
+}
+
+export async function fetchClaim(claimId) {
+  return apiFetch(`/api/v1/claims/${claimId}`);
+}
+
+export async function sendAgentCommand(claimId, command, params = null) {
+  return apiFetch(`/api/v1/claims/${claimId}/commands`, {
+    method: "POST",
+    body: JSON.stringify({ command, params }),
+  });
+}
+
+export async function fetchJobStatus(jobId) {
+  return apiFetch(`/api/v1/jobs/${jobId}`);
+}
+
+export async function saveAuditorDecisions(claimId, decisions) {
+  return apiFetch(`/api/v1/claims/${claimId}/decisions`, {
+    method: "POST",
+    body: JSON.stringify({ decisions }),
+  });
+}
+
+export async function submitAuditReport(claimId, verdict, verdictNote, decisions) {
+  return apiFetch(`/api/v1/claims/${claimId}/submit`, {
+    method: "POST",
+    body: JSON.stringify({ verdict, verdictNote, decisions }),
+  });
+}

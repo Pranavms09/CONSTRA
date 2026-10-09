@@ -5,6 +5,15 @@ import { ProtectedRoute, getRoleHomeRoute } from "./auth/ProtectedRoute";
 import { LoginPage } from "./pages/LoginPage";
 import { SupervisorHome } from "./pages/supervisor/SupervisorHome";
 import { StoreHome } from "./pages/store/StoreHome";
+import { StoreLayout } from "./pages/store/StoreLayout";
+import { StoreDashboard } from "./pages/store/StoreDashboard";
+import { DeliveriesList } from "./pages/store/DeliveriesList";
+import { NewDelivery } from "./pages/store/NewDelivery";
+import { ChallanReview } from "./pages/store/ChallanReview";
+import { IssueMaterial } from "./pages/store/IssueMaterial";
+import { IssueHistory } from "./pages/store/IssueHistory";
+import { StockSummary } from "./pages/store/StockSummary";
+import { StoreAlerts } from "./pages/store/StoreAlerts";
 import { AuditorHome } from "./pages/auditor/AuditorHome";
 import { ImageAnalysisPage } from "./pages/ImageAnalysisPage";
 import { NotFound } from "./pages/NotFound";
@@ -48,10 +57,19 @@ export const App = () => {
             path="/store"
             element={
               <ProtectedRoute allowedRole="store_incharge">
-                <StoreHome />
+                <StoreLayout />
               </ProtectedRoute>
             }
-          />
+          >
+            <Route index element={<StoreDashboard />} />
+            <Route path="deliveries" element={<DeliveriesList />} />
+            <Route path="deliveries/new" element={<NewDelivery />} />
+            <Route path="deliveries/:id" element={<ChallanReview />} />
+            <Route path="issue" element={<IssueMaterial />} />
+            <Route path="issues" element={<IssueHistory />} />
+            <Route path="stock" element={<StockSummary />} />
+            <Route path="alerts" element={<StoreAlerts />} />
+          </Route>
 
           <Route
             path="/auditor"
