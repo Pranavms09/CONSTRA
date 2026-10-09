@@ -27,11 +27,20 @@ export async function apiFetch(endpoint, options = {}) {
 
   let res;
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), options.timeout || 10000);
     res = await fetch(url, {
       ...options,
       headers,
+      signal: options.signal || controller.signal,
     });
+    clearTimeout(timeoutId);
   } catch (networkError) {
+    if (networkError.name === "AbortError") {
+      throw new Error(
+        `Backend server at ${API_BASE_URL} timed out after 10s. Please ensure FastAPI is running and responsive.`
+      );
+    }
     throw new Error(
       `Cannot connect to backend server at ${API_BASE_URL}. Please ensure the FastAPI backend is running.`
     );
@@ -59,14 +68,23 @@ export async function demoLoginApi(role) {
   const url = `${API_BASE_URL}/auth/demo-login`;
   let res;
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
     res = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ role }),
+      signal: controller.signal,
     });
+    clearTimeout(timeoutId);
   } catch (networkError) {
+    if (networkError.name === "AbortError") {
+      throw new Error(
+        `Backend server at ${API_BASE_URL} timed out after 10s. Please ensure FastAPI is running and responsive.`
+      );
+    }
     throw new Error(
       `Cannot connect to backend server at ${API_BASE_URL}. Please ensure the FastAPI backend is running.`
     );
