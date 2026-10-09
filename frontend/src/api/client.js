@@ -112,7 +112,7 @@ export async function demoLoginApi(role) {
   return data;
 }
 
-export async function loginWithBackend(claimedRole, idToken) {
+export async function loginWithBackend(claimedRole, idToken, isSignup = false, fullName = null) {
   const url = `${API_BASE_URL}/auth/login`;
   let res;
   try {
@@ -122,7 +122,11 @@ export async function loginWithBackend(claimedRole, idToken) {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${idToken}`,
       },
-      body: JSON.stringify({ claimed_role: claimedRole }),
+      body: JSON.stringify({
+        claimed_role: claimedRole,
+        is_signup: isSignup,
+        full_name: fullName,
+      }),
     });
   } catch (networkError) {
     throw new Error(

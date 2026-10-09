@@ -8,8 +8,8 @@ export const isFirebaseConfigured = Boolean(
   rawApiKey &&
   typeof rawApiKey === "string" &&
   rawApiKey.trim() !== "" &&
-  rawApiKey !== "AIzaSy..." &&
-  rawApiKey !== "your-api-key"
+  !rawApiKey.includes("your_firebase_api_key") &&
+  rawApiKey !== "AIzaSy..."
 );
 
 const firebaseConfig = {

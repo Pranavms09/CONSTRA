@@ -37,7 +37,8 @@ frontend/node_modules/
 node_modules/
 frontend/dist/
 dist/
-.DS_Store
-# Uploads
-uploads/
-backend/uploads/
+# IDE and editor settings
+.vscode/
+.idea/
+pyrefly.toml
+
