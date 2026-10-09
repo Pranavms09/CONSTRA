@@ -247,8 +247,24 @@ export const LandingPage = () => {
           id="how-it-works"
           className="relative w-full bg-[#101010] text-[#F2ECE6] overflow-hidden select-none"
         >
+          {/* Continuous Looping Background Video */}
+          <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+            <video
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="w-full h-full object-cover object-center grayscale contrast-125 brightness-75"
+            >
+              <source src="/gemini_generated_video_cc806917.mp4" type="video/mp4" />
+            </video>
+            {/* Scrim gradient layers for text legibility & technical grading */}
+            <div className="absolute inset-0 bg-gradient-to-r from-[#101010] via-[#101010]/85 to-transparent w-full md:w-3/5" />
+            <div className="absolute inset-0 bg-[#101010]/25 mix-blend-multiply" />
+          </div>
+
           {/* Coordinate Datum Grid Lines */}
-          <div className="pointer-events-none absolute inset-0 grid grid-cols-12 opacity-15">
+          <div className="pointer-events-none absolute inset-0 grid grid-cols-12 opacity-15 z-10">
             {[...Array(12)].map((_, i) => (
               <div key={i} className="h-full border-r border-[#A39B8F]" />
             ))}
@@ -308,18 +324,6 @@ export const LandingPage = () => {
                   }`}
                 >
                   <div className="relative w-full h-full flex items-stretch">
-                    {/* Background image layer with progressive scrim */}
-                    <div className="absolute inset-0 z-0">
-                      <img
-                        className="w-full h-full object-cover object-center grayscale contrast-125 brightness-75"
-                        src={chapter.image}
-                        alt={chapter.alt}
-                        loading={idx === 0 ? "eager" : "lazy"}
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-r from-[#101010] via-[#101010]/85 to-transparent w-full md:w-3/5" />
-                      <div className="absolute inset-0 bg-[#101010]/20 mix-blend-multiply" />
-                    </div>
-
                     {/* Technical Drafting Overlays & Corner Registration Ticks */}
                     <div className="absolute top-6 left-6 z-20 flex items-center space-x-3 pointer-events-none">
                       <div className="w-3 h-3 border-t-2 border-l-2 border-[#FCBC18]" />
