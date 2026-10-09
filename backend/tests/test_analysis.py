@@ -13,14 +13,32 @@ from app.models.image_analysis import ImageAnalysis
 from app.models.audit_log import AuditLog
 from app.main import app
 
-from tests.test_auth import engine, TestingSessionLocal, client
+# Setup isolated in-memory SQLite database for analysis testing
+ANALYSIS_DATABASE_URL = "sqlite:///:memory:"
+
+analysis_engine = create_engine(
+    ANALYSIS_DATABASE_URL,
+    connect_args={"check_same_thread": False},
+    poolclass=StaticPool,
+)
+TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=analysis_engine)
+client = TestClient(app)
 
 
 @pytest.fixture(autouse=True)
-def setup_database():
-    Base.metadata.create_all(bind=engine)
+def setup_analysis_database():
+    Base.metadata.create_all(bind=analysis_engine)
+    def override_get_db():
+        db = TestingSessionLocal()
+        try:
+            yield db
+        finally:
+            db.close()
+
+    app.dependency_overrides[get_db] = override_get_db
     yield
-    Base.metadata.drop_all(bind=engine)
+    Base.metadata.drop_all(bind=analysis_engine)
+    app.dependency_overrides.pop(get_db, None)
 
 
 def create_test_image(format="JPEG", color="blue", size=(100, 100)) -> bytes:

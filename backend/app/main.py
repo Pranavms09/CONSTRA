@@ -9,6 +9,7 @@ from sqlalchemy import func
 from app.config import settings
 from app.database import SessionLocal, engine, Base
 from app.models.user import User, UserRole
+from app.limiter import limiter
 from app.routers import auth, users, pings, store, analysis
 
 logging.basicConfig(level=logging.INFO)
