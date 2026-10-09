@@ -32,6 +32,22 @@ def get_current_user(
     """
     token = parse_bearer_token(authorization)
 
+    # Session token for Email & Password authentication
+    if token.startswith("sv-"):
+        from app.auth.security import verify_session_token
+        user = verify_session_token(token, db)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid or expired session token"
+            )
+        if not user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Your account is not registered or is disabled."
+            )
+        return user
+
     # Demo mode bypass for local testing
     if token.startswith("demo-"):
         if token in DEMO_USERS_MAP:

@@ -31,13 +31,31 @@ class DemoLoginResponse(BaseModel):
     token: str
 
 
+class PasswordLoginRequest(BaseModel):
+    email: str
+    password: str
+    claimed_role: Optional[ClaimedRole] = None
+
+
+class PasswordLoginResponse(BaseModel):
+    id: int
+    full_name: str
+    email: str
+    role: str
+    is_active: bool = True
+    token: str
+
+
 class UserCreateRequest(BaseModel):
     full_name: str
     email: str
     role: ClaimedRole
+    password: Optional[str] = None
 
 
 class UserUpdateRequest(BaseModel):
     role: Optional[ClaimedRole] = None
     full_name: Optional[str] = None
     is_active: Optional[bool] = None
+    password: Optional[str] = None
+
