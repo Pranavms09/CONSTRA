@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { getRoleHomeRoute } from "../auth/ProtectedRoute";
+import ConstraLogo from "../components/common/ConstraLogo";
 
 const ROLES = [
   {
@@ -76,8 +77,8 @@ export const LoginPage = () => {
       setErrorMessage("Please enter your email address.");
       return;
     }
-    if (!passwordInput || passwordInput.length < 6) {
-      setErrorMessage("Password must be at least 6 characters.");
+    if (!passwordInput) {
+      setErrorMessage("Please enter your password.");
       return;
     }
 
@@ -146,11 +147,11 @@ export const LoginPage = () => {
 
             {/* Top Technical Wordmark Header */}
             <div className="relative z-10 flex flex-col gap-y-2">
-              <Link to="/" className="flex items-center gap-x-3 w-max group">
+              <Link to="/" className="flex items-center gap-x-3 w-max group" title="Return to CONSTRA Home">
+                <ConstraLogo className="w-9 h-9 object-contain group-hover:scale-105 transition-transform" />
                 <span className="font-display-lg text-headline-lg tracking-[0.2em] font-bold text-white uppercase select-none group-hover:text-[#FCBC18] transition-colors">
                   CONSTRA
                 </span>
-                <div className="w-[10px] h-[10px] bg-[#FCBC18] shrink-0" />
               </Link>
               <div className="h-[1px] w-16 bg-[#FCBC18]/80" />
               <span className="font-label-code text-label-code uppercase text-[#FCBC18] tracking-[0.25em]">
@@ -219,7 +220,7 @@ export const LoginPage = () => {
               {/* Portal Subheader & Title */}
               <div className="flex flex-col gap-1 pb-4 border-b border-[#101010]/15">
                 <span className="font-label-code text-label-code text-[#504533] uppercase tracking-[0.2em] flex items-center gap-2">
-                  <span className="w-2 h-2 bg-[#101010]" />
+                  <ConstraLogo className="w-4 h-4 object-contain" />
                   SIGN IN // SELECT ROLE PORTAL
                 </span>
                 <h2 className="font-headline-lg text-headline-lg text-[#101010] uppercase font-bold tracking-tight">
@@ -383,7 +384,7 @@ export const LoginPage = () => {
                     <input
                       type="email"
                       required
-                      placeholder="engineer@gmail.com"
+                      placeholder="pranavms09@gmail.com"
                       value={emailInput}
                       onChange={(e) => setEmailInput(e.target.value)}
                       className="w-full h-[44px] bg-[#F2ECE6] border border-[#101010]/40 text-[#101010] px-3 font-label-code text-body-md outline-none focus:border-[#101010] transition-colors rounded-none placeholder:text-[#827560]/50"

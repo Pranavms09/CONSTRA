@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { getRoleHomeRoute } from "../auth/ProtectedRoute";
 import TechText from "../components/TechText";
+import ConstraLogo from "../components/common/ConstraLogo";
 
 const CHAPTERS = [
   {
@@ -144,16 +145,19 @@ export const LandingPage = () => {
       <header className="fixed top-0 left-0 right-0 z-50 bg-[#101010] text-[#F2ECE6] border-b border-[#101010] shadow-[0_3px_0px_#101010]">
         <div className="h-18 w-full px-6 md:px-10 flex items-center justify-between">
           {/* Brand Mark */}
-          <div className="flex items-center space-x-4">
-            <div className="w-2.5 h-2.5 bg-[#FCBC18] shrink-0" />
-            <span className="font-label-code text-label-code tracking-[0.2em] text-[#A39B8F] border border-[#A39B8F]/30 px-2 py-0.5">
-              SYS // 01
-            </span>
+          <div className="flex items-center space-x-3.5">
             <button
               onClick={() => scrollToSection("overview")}
-              className="font-headline-md text-headline-md tracking-wider text-[#F2ECE6] uppercase font-bold hover:text-[#FCBC18] transition-colors cursor-pointer"
+              className="flex items-center gap-3 group cursor-pointer focus:outline-none"
+              title="CONSTRA Home"
             >
-              CONSTRA
+              <ConstraLogo className="w-8 h-8 object-contain group-hover:scale-105 transition-transform" />
+              <span className="font-label-code text-label-code tracking-[0.2em] text-[#A39B8F] border border-[#A39B8F]/30 px-2 py-0.5">
+                SYS // 01
+              </span>
+              <span className="font-headline-md text-headline-md tracking-wider text-[#F2ECE6] uppercase font-bold group-hover:text-[#FCBC18] transition-colors">
+                CONSTRA
+              </span>
             </button>
             <div className="hidden lg:block h-4 w-px bg-[#A39B8F]/30" />
             <span className="hidden lg:inline-block font-label-meta text-label-meta text-[#A39B8F] uppercase tracking-[0.14em]">
@@ -1239,6 +1243,7 @@ export const LandingPage = () => {
       <footer className="relative z-10 w-full bg-[#101010] text-[#F2ECE6] border-t border-[#101010]">
         <div className="w-full px-6 md:px-10 py-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="flex items-center space-x-3">
+            <ConstraLogo className="w-6 h-6 object-contain" />
             <span className="font-label-code text-label-code text-[#FCBC18] uppercase tracking-[0.14em]">
               CONSTRA AUDIT REGISTRY
             </span>

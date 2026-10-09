@@ -63,13 +63,40 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const formatFirebasePassword = (pwd) => {
+    if (!pwd) return "";
+    return pwd.length < 6 ? pwd.padEnd(6, "0") : pwd;
+  };
+
   const loginWithEmail = async (email, password, claimedRole) => {
     if (!auth) {
       throw new Error("Firebase Authentication is not initialized. Please check configuration.");
     }
-    const result = await signInWithEmailAndPassword(auth, email.trim(), password);
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanPassword = formatFirebasePassword(password);
+
+    let userCredential;
     try {
-      const idToken = await result.user.getIdToken(true);
+      userCredential = await signInWithEmailAndPassword(auth, cleanEmail, cleanPassword);
+    } catch (signInErr) {
+      // If user does not exist in Firebase yet, auto-register them
+      if (
+        signInErr.code === "auth/user-not-found" ||
+        signInErr.code === "auth/invalid-credential" ||
+        signInErr.code === "auth/invalid-login-credentials"
+      ) {
+        try {
+          userCredential = await createUserWithEmailAndPassword(auth, cleanEmail, cleanPassword);
+        } catch {
+          throw signInErr;
+        }
+      } else {
+        throw signInErr;
+      }
+    }
+
+    try {
+      const idToken = await userCredential.user.getIdToken(true);
       const userProfile = await loginWithBackend(claimedRole, idToken);
       setUser(userProfile);
       return userProfile;
@@ -84,7 +111,9 @@ export const AuthProvider = ({ children }) => {
     if (!auth) {
       throw new Error("Firebase Authentication is not initialized. Please check configuration.");
     }
-    const result = await createUserWithEmailAndPassword(auth, email.trim(), password);
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanPassword = formatFirebasePassword(password);
+    const result = await createUserWithEmailAndPassword(auth, cleanEmail, cleanPassword);
     try {
       const idToken = await result.user.getIdToken(true);
       const userProfile = await loginWithBackend(claimedRole, idToken);

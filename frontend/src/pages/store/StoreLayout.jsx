@@ -2,6 +2,7 @@ import React, { useState, useEffect, createContext, useContext } from "react";
 import { Link, useLocation, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../../auth/AuthContext";
 import { fetchProjects } from "../../api/store";
+import ConstraLogo from "../../components/common/ConstraLogo";
 
 export const StoreProjectContext = createContext(null);
 
@@ -80,11 +81,11 @@ export const StoreLayout = () => {
         {/* Top Header Bar */}
         <header className="border-b border-[#101010] bg-[#101010] text-[#F2ECE6] sticky top-0 z-40 px-4 sm:px-6 py-3 flex items-center justify-between gap-4 shadow-[0_2px_0px_#101010]">
           <div className="flex items-center gap-3">
-            <Link to="/" className="flex items-center gap-2 group">
+            <Link to="/" className="flex items-center gap-2.5 group" title="Return to Home">
+              <ConstraLogo className="w-7 h-7 object-contain group-hover:scale-105 transition-transform" />
               <span className="font-headline-md text-headline-md tracking-wider uppercase font-bold text-[#F2ECE6] group-hover:text-[#FCBC18] transition-colors">
                 CONSTRA
               </span>
-              <div className="w-2.5 h-2.5 bg-[#FCBC18] shrink-0" />
             </Link>
             <div className="h-4 w-[1px] bg-[#A39B8F]/30 hidden sm:block" />
             <div className="hidden sm:flex items-center gap-2">

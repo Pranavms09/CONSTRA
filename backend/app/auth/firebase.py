@@ -52,14 +52,14 @@ def verify_firebase_token(id_token: str) -> dict:
             detail="Invalid or expired login"
         )
 
+    has_cert = os.path.exists(settings.FIREBASE_SERVICE_ACCOUNT_PATH)
     try:
-        # First attempt with check_revoked=True (requires service account)
-        decoded_token = auth.verify_id_token(id_token, check_revoked=True)
+        # Only check_revoked if service account credentials are available
+        decoded_token = auth.verify_id_token(id_token, check_revoked=has_cert)
         return decoded_token
     except Exception as exc:
-        logger.info(f"Standard verification with check_revoked failed ({exc}), attempting public key verification...")
+        logger.info(f"Verification failed ({exc}), attempting standard public key verification...")
         try:
-            # Fallback for setups using projectId public keys verification
             decoded_token = auth.verify_id_token(id_token, check_revoked=False)
             return decoded_token
         except Exception as inner_exc:
