@@ -9,30 +9,25 @@ const CHAPTERS = [
     tag: "CHAPTER 00 // INITIAL STATE",
     ref: "REF: SECTOR-00 // FOUNDATION AUDIT",
     coordinates: "LAT 40.7128°N / LONG 74.0060°W // ELEV 14.2M",
-    title: "Every claim proves itself.",
-    quote: "“Civil infrastructure cannot run on verbal trust.”",
+    title: "CONSTRA",
+    quote: "“Every claim proves itself.”",
     description:
-      "Site imagery, vendor delivery slips, and yard dispatches reconciled continuously against the engineering plan before any milestone is cleared.",
+      "Site photos, delivery challans and material issues, checked against the plan before a milestone is cleared.",
     image:
       "https://lh3.googleusercontent.com/aida-public/AB6AXuDw-IYTv19maw4jyLXRfSz6L3NN88vDTeb9amS7BMKCIedvujHg4CF5LfHipkjGLvvKYzaMwoBapF7R3iJ0I0BUZD0MgF5tJmQ9z6yAy9CEOwYtOYmcp1xHslhPzY8IitiCBwlnQIXZVfeur8Menlm0thuAV17dPQKB7rgt7ZG9LCCWxOBSmRUNK1Q-6nrn-1IGdARRNq2hlrKZWM68mXMBK6NKYlKrBt7kUXY6zgMsncrIkFJCF9se",
     alt: "Raw concrete skeleton and yellow tower crane against dawn overcast sky",
-    telemetry: {
-      leftLabel: "INTEGRITY PROTOCOL",
-      leftValue: "ACTIVE TELEMETRY",
-      rightLabel: "TOLERANCE THRESHOLD",
-      rightValue: "± 0.00% VARIANCE",
-    },
-    nextLabel: "NEXT: FIELD CAPTURE →",
+    telemetry: null,
+    nextLabel: "NEXT: CAPTURE →",
   },
   {
     id: 1,
     tag: "CHAPTER 01 // CAPTURE",
-    ref: "STAGE // HARDWARE TELEMETRY",
-    coordinates: "EXIF GPS LOCK // RTK PRECISION ±1.4M",
-    title: "Capture ground truth live.",
+    ref: "STAGE // TELEMETRY LINKED",
+    coordinates: "EXIF GPS LOCK // RTK PRECISION",
+    title: "Capture it live.",
     quote: null,
     description:
-      "Photos taken on site with location, timestamp, and compass bearing locked at the moment of shutter release. No retrospective gallery uploads. No spoofed coordinates.",
+      "Photos are taken on site, with location and time recorded at the moment of capture. No retrospective gallery uploads. No spoofed coordinates.",
     image:
       "https://lh3.googleusercontent.com/aida-public/AB6AXuCSOPH9RMbvNjAjCYxJIDGtXOz8-5IB9Zm-wXVMpVR_wzjeySmyctPSCy8V0C5VnBarlyYQ2yETPNfM4y7rJQKNDzaSMbqtfXegnOxXhpyFhGgc1WFd-WxGGOYZMubgjP0Hw1e1NSCZd47ifRr3mTnqxO4Fj5-Qhmohawriod46MpABjZWicbvYV772V1iBAD8JSJIFnscrmH1FpqgYtJC_y7iK-LtSVL__qsPaygPBR15RJvuPL4fL",
     alt: "Field engineer phone photographing cast-in-place concrete wall",
@@ -42,17 +37,17 @@ const CHAPTERS = [
       rightLabel: "GEOLOCATION RADIUS",
       rightValue: "± 1.4 METERS CEP",
     },
-    nextLabel: "NEXT: CHALLAN MATCH →",
+    nextLabel: "NEXT: MATCH →",
   },
   {
     id: 2,
     tag: "CHAPTER 02 // MATCH",
-    ref: "BILL OF QUANTITIES // AUTOMATED DELTA",
+    ref: "BILL OF QUANTITIES // CROSS-CHECK",
     coordinates: "OCR CHALLAN INTAKE // 0.00% VARIANCE",
-    title: "Reconcile every delivery slip.",
+    title: "Match every delivery.",
     quote: null,
     description:
-      "Delivery challans digitized instantly via multimodal OCR and matched against the Bill of Quantities schedule. Material issued from the store is bound directly to verified stage progress.",
+      "Delivery challans are read automatically and compared with the Bill of Quantities. Material issued is checked against verified work.",
     image:
       "https://lh3.googleusercontent.com/aida-public/AB6AXuC3dYa2PliG7TfDMt8SU77M_Nn-jR7S0qpynTj1mg1Ku8e3ZwwLTbymC5SFlWnhb0TFWTZW8RM0PKhLGoaOL6ufIrALyTDgHDV-aneuP0-wbDzN4WpdOrv0EWxiMKlnbcgVIGOpDRv7LQgkOg8Ts94SKIZO5pd3xzi4smJdLm773cZSkOCILfqoAnj0HmBSE2cHR4F99_SB8BP_ONnwnIEnxn0Vik4MJchflSGCEsTJiT0855waVZ5f",
     alt: "Pallets of Portland cement bags, steel rebar bundles and receipt clipboard",
@@ -62,17 +57,17 @@ const CHAPTERS = [
       rightLabel: "BOQ SCHEDULE DELTA",
       rightValue: "0.00% VARIANCE",
     },
-    nextLabel: "NEXT: AUDIT APPROVE →",
+    nextLabel: "NEXT: APPROVE →",
   },
   {
     id: 3,
     tag: "CHAPTER 03 // APPROVE",
     ref: "AUDIT CONVERGENCE GATE",
     coordinates: "EVIDENCE TRIAGE // MULTI-SIG CLEARANCE",
-    title: "Approve only with proof.",
+    title: "Approve with proof.",
     quote: null,
     description:
-      "Flags arrive with their full evidence chain: raw photo, OCR receipt, and variance log. A milestone clears only when every check passes. Zero verbal handshakes.",
+      "Flags arrive with their evidence. A milestone clears only when every check agrees. No informal sign-offs or verbal assumptions.",
     image:
       "https://lh3.googleusercontent.com/aida-public/AB6AXuAjv0HUu3DK1vCs8biTraWx8_JyzGL0sr_u6hr8FOSY-638kmA5nf7I8esvk_xspKN3HwYjsNpG4EhpWNXJKjMwVgchCCxAOSayMnnmT1nVetEVTcninfo38c-JdcM2uUc0pp0UoeefTZMqq9OYhNS5nfCbiKqNYZZS6QHC6i-BUPnKDciAMSRqIcSd3wz0OJCluw-mIoNLlZfK3Bz8_RY71Qa4FKJOkP7W_YoUzlYjyAw8wiMeCy2b",
     alt: "Civil engineer audit desk overlooking construction floor with blueprints",
@@ -80,187 +75,34 @@ const CHAPTERS = [
       leftLabel: "AUDIT CONSENSUS",
       leftValue: "ZERO UNRESOLVED FLAGS",
       rightLabel: "GATE STATUS",
-      rightValue: "CONSENSUS CLEARED",
+      rightValue: "STRUCTURAL CONSENSUS OK",
     },
-    nextLabel: "NEXT: CRYPTO SEAL →",
+    nextLabel: "NEXT: SEAL →",
   },
   {
     id: 4,
     tag: "CHAPTER 04 // SEAL",
     ref: "TAMPER-EVIDENT RECORD SEAL",
     coordinates: "CRYPTOGRAPHIC LEDGER // IMMUTABLE",
-    title: "Verified once. Sealed forever.",
+    title: "Verified once. Locked.",
     quote: null,
     description:
-      "Every cleared milestone is sealed in a tamper-evident audit ledger that cannot be retroactively modified. An unbroken cryptographic chain of physical construction execution.",
+      "Every cleared milestone is sealed in a tamper-evident record that cannot be edited later. An immutable digital chain of physical execution.",
     image:
       "https://lh3.googleusercontent.com/aida-public/AB6AXuAeLindz1DdFCB2MQu6_CFeBiX2oTTA546IysHglQ5ubrcz-C0IUyr-8zxSxvfbYQFXzXrpwamQRD9hS2LAZbVK8ej5w--WTU6cTDbnWUr7oxO39G30rsWu65HJJtmZQVVzSu94M9SGKFOnlLjq3jDiwWzYyTqFrTlUV3lW0kU3Aw3O66b4JFpKvxQSh2cVD3geX35yMb0jkjtC8TMJCOunin5lIAWFd_Zmr5NxwY_thvr8HPK5R43P",
     alt: "Industrial steel padlock clamped to structural rebar with yellow inspection tag",
-    telemetry: {
-      leftLabel: "HASH DIGEST",
-      leftValue: "SHA-256 // SEALED",
-      rightLabel: "RECORD STATUS",
-      rightValue: "IMMUTABLE LEDGER",
-    },
+    telemetry: null,
     nextLabel: "← REPLAY SEQUENCE",
-  },
-];
-
-const LEAKAGE_VECTORS = [
-  {
-    code: "VEC-01",
-    title: "Fabricated Progress",
-    headline: "Recycled photo submissions across adjacent bays",
-    description:
-      "Subcontractors photograph the same completed column or beam from alternate angles, billing adjacent unfinished sectors before formwork has even commenced.",
-    consequence: "Unearned capital drawdown and phantom progress on schedule charts.",
-    defense: "Hardware-enforced EXIF GPS lock (±1.4m CEP), microsecond timestamp bounds, and optical angle hashing.",
-    metric: "4.8% avg. budget inflation",
-  },
-  {
-    code: "VEC-02",
-    title: "Inflated Paperwork",
-    headline: "Photocopied and manipulated delivery challans",
-    description:
-      "Vendors submit altered weight-bridge slips or duplicated challan numbers, billing 32 MT of TMT rebar when only 20 MT arrived on site.",
-    consequence: "Procurement leaks where unsupplied materials are fully paid.",
-    defense: "Automated OCR extraction with fuzzy vendor catalog matching, unique Challan No deduplication, and BOQ quantity caps.",
-    metric: "6.3% procurement leakage",
-  },
-  {
-    code: "VEC-03",
-    title: "Material Diversion",
-    headline: "Over-issuing stock to completed phases",
-    description:
-      "Yard materials are checked out for structural stages that have already been cast and cured, disguising off-site theft or diversion to unapproved commercial jobs.",
-    consequence: "Physical inventory disappears while cost centres show fictitious absorption.",
-    defense: "Strict mathematical ceiling: material issues cannot exceed the maximum theoretical consumption of verified progress.",
-    metric: "9.1% bulk material loss",
-  },
-];
-
-const PROTOCOL_NODES = [
-  {
-    step: "01",
-    name: "CAPTURE",
-    sub: "Live Hardware Lock",
-    icon: "photo_camera",
-    tag: "EDGE DEVICE",
-    input: "In-situ camera sensor",
-    output: "RTK EXIF metadata (lat/long/time)",
-    desc: "Supervisor captures real-time evidence directly through the web terminal. Gallery uploads and camera roll submissions are cryptographically rejected.",
-  },
-  {
-    step: "02",
-    name: "INGEST",
-    sub: "Multimodal Document OCR",
-    icon: "document_scanner",
-    tag: "VISION PARSER",
-    input: "Physical vendor challan slip",
-    output: "Structured line items & confidence scores",
-    desc: "Store In-Charge uploads scanned slips. The vision engine digitizes vendor name, vehicle number, dispatch weight, and material grades with character-level confidence scores.",
-  },
-  {
-    step: "03",
-    name: "RECONCILE",
-    sub: "Algorithmic BOQ Delta",
-    icon: "balance",
-    tag: "MATH ENGINE",
-    input: "Challan quantity vs. BOQ allocation",
-    output: "Over-delivery / Under-delivery delta",
-    desc: "Delivered stock is mapped against the structural schedule. If cumulative delivery exceeds the BOQ cap by more than the tolerance, the delivery triggers an alert.",
-  },
-  {
-    step: "04",
-    name: "TRIAGE",
-    sub: "Independent Auditor Desk",
-    icon: "fact_check",
-    tag: "CONSENSUS GATE",
-    input: "Evidence dossier with flags",
-    output: "Resolved / Rejected signoff",
-    desc: "Project auditor inspects side-by-side photographic evidence, delivery receipts, and tolerance calculations. No payment certificate can clear with open anomalies.",
-  },
-  {
-    step: "05",
-    name: "SEAL",
-    sub: "Cryptographic Certificate",
-    icon: "lock",
-    tag: "IMMUTABLE LEDGER",
-    input: "Approved milestone state",
-    output: "SHA-256 seal & exportable audit sheet",
-    desc: "Once cleared, the milestone is permanently locked. Evidence, timestamps, and auditor signatures are combined into an unalterable verification certificate.",
-  },
-];
-
-const ROLES_DATA = [
-  {
-    id: "supervisor",
-    title: "Site Supervisor",
-    badge: "TIER 01 // FIELD OPERATIONS",
-    accent: "text-amber-400 border-amber-500/30 bg-amber-500/10",
-    roleKey: "supervisor",
-    scope: "Field Ground Truth",
-    summary:
-      "Stationed on the deck. Captures live milestone progress photos, verifies stage completion, and attaches physical proof.",
-    permissions: [
-      { name: "Live Camera Capture", allowed: true },
-      { name: "Milestone Progress Log", allowed: true },
-      { name: "Upload Delivery Challans", allowed: false },
-      { name: "Issue Warehouse Material", allowed: false },
-      { name: "Resolve Audit Flags", allowed: false },
-      { name: "Signoff & Seal Milestone", allowed: false },
-    ],
-    demoAccount: "Demo Supervisor",
-  },
-  {
-    id: "store_incharge",
-    title: "Store In-Charge",
-    badge: "TIER 02 // INVENTORY & LOGISTICS",
-    accent: "text-cyan-400 border-cyan-500/30 bg-cyan-500/10",
-    roleKey: "store_incharge",
-    scope: "Material Custody & Yard Dispatches",
-    summary:
-      "Controls the site perimeter. Digitizes vendor delivery challans via OCR, compares line items with the BOQ, and logs outbound material issued.",
-    permissions: [
-      { name: "Live Camera Capture", allowed: false },
-      { name: "Milestone Progress Log", allowed: false },
-      { name: "Upload Delivery Challans", allowed: true },
-      { name: "Issue Warehouse Material", allowed: true },
-      { name: "Review Material Alerts", allowed: true },
-      { name: "Signoff & Seal Milestone", allowed: false },
-    ],
-    demoAccount: "Demo Store In-Charge",
-  },
-  {
-    id: "auditor",
-    title: "Project Auditor",
-    badge: "TIER 03 // APEX GOVERNANCE",
-    accent: "text-emerald-400 border-emerald-500/30 bg-emerald-500/10",
-    roleKey: "auditor",
-    scope: "Financial & Structural Consensus",
-    summary:
-      "The single gatekeeper between physical site execution and financial payment release. Inspects photographic evidence dossiers and grants final seals.",
-    permissions: [
-      { name: "Live Camera Capture", allowed: false },
-      { name: "Milestone Progress Log", allowed: false },
-      { name: "Upload Delivery Challans", allowed: false },
-      { name: "Issue Warehouse Material", allowed: false },
-      { name: "Resolve Audit Flags", allowed: true },
-      { name: "Signoff & Seal Milestone", allowed: true },
-    ],
-    demoAccount: "Demo Auditor",
   },
 ];
 
 export const LandingPage = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [selectedRole, setSelectedRole] = useState(0);
   const [demoFlagResolved, setDemoFlagResolved] = useState(false);
-  const [activeVector, setActiveVector] = useState(0);
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // Keyboard navigation for chapter carousel
+  // Keyboard navigation for carousel
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === "ArrowRight" || e.key === "ArrowDown") {
@@ -286,672 +128,779 @@ export const LandingPage = () => {
     }
   };
 
-  const activeChap = CHAPTERS[currentSlide];
-
   return (
-    <div className="bg-[#0b0d11] text-[#e2e8f0] min-h-screen relative font-sans selection:bg-amber-400 selection:text-black">
-      {/* Precision Drafting Grid Pattern Overlay */}
-      <div
-        className="pointer-events-none fixed inset-0 z-0 opacity-[0.035]"
-        style={{
-          backgroundImage:
-            "linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)",
-          backgroundSize: "40px 40px",
-        }}
-      />
-
-      {/* Subtle Ambient Radial Lighting */}
-      <div className="pointer-events-none fixed -top-40 left-1/2 -translate-x-1/2 w-[900px] h-[500px] bg-amber-500/5 blur-[160px] rounded-full z-0" />
+    <div className="bg-[#E6E2DD] text-[#1b1b20] min-h-screen relative font-body-md text-body-md selection:bg-[#FCBC18] selection:text-[#101010]">
+      {/* Blueprint Hairline Coordinate Grid Lines */}
+      <div className="pointer-events-none fixed inset-0 z-0 grid grid-cols-12 gap-4 px-6 opacity-[0.06]">
+        {[...Array(12)].map((_, i) => (
+          <div key={i} className="h-full border-r border-[#101010]" />
+        ))}
+      </div>
 
       {/* ========================================================================= */}
-      {/* 1. ARCHITECTURAL MISSION HEADER                                           */}
+      {/* 1. PERSISTENT ARCHITECTURAL HEADER                                        */}
       {/* ========================================================================= */}
-      <header className="sticky top-0 z-50 bg-[#0c0e13]/90 backdrop-blur-md border-b border-white/10 shadow-[0_4px_24px_rgba(0,0,0,0.6)]">
-        <div className="max-w-7xl mx-auto h-[68px] px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-[#101010] text-[#F2ECE6] border-b border-[#101010] shadow-[0_3px_0px_#101010]">
+        <div className="h-[72px] w-full px-6 md:px-10 flex items-center justify-between">
           {/* Brand Mark */}
-          <div className="flex items-center space-x-3 sm:space-x-4">
+          <div className="flex items-center space-x-4">
+            <div className="w-[10px] h-[10px] bg-[#FCBC18] flex-shrink-0" />
+            <span className="font-label-code text-label-code tracking-[0.2em] text-[#A39B8F] border border-[#A39B8F]/30 px-2 py-[2px]">
+              SYS // 01
+            </span>
             <button
               onClick={() => scrollToSection("overview")}
-              className="flex items-center space-x-3 text-left group cursor-pointer"
+              className="font-headline-md text-headline-md tracking-wider text-[#F2ECE6] uppercase font-bold hover:text-[#FCBC18] transition-colors cursor-pointer"
             >
-              <div className="w-8 h-8 rounded-sm bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-[0_0_12px_rgba(245,158,11,0.35)] group-hover:scale-105 transition-transform">
-                <span className="material-symbols-outlined text-[#0b0d11] text-lg font-bold">
-                  verified
-                </span>
-              </div>
-              <div className="flex flex-col">
-                <div className="flex items-center space-x-2">
-                  <span className="text-lg font-bold tracking-tight text-white group-hover:text-amber-400 transition-colors font-mono">
-                    CONSTRA
-                  </span>
-                  <span className="hidden sm:inline-block text-[10px] uppercase font-mono tracking-widest text-amber-400/90 bg-amber-500/10 border border-amber-500/30 px-1.5 py-0.5 rounded">
-                    V1.4
-                  </span>
-                </div>
-                <span className="text-[10px] uppercase font-mono tracking-widest text-slate-400 hidden sm:block">
-                  Site Audit &amp; Reconciliation Engine
-                </span>
-              </div>
+              CONSTRA
             </button>
+            <div className="hidden lg:block h-4 w-[1px] bg-[#A39B8F]/30" />
+            <span className="hidden lg:inline-block font-label-meta text-label-meta text-[#A39B8F] uppercase tracking-[0.14em]">
+              CIVIL AUDIT PLATFORM
+            </span>
           </div>
 
-          {/* Navigation Links */}
+          {/* Navigation Items */}
           <nav className="hidden md:flex items-center space-x-1">
-            {[
-              { label: "Overview", id: "how-it-works" },
-              { label: "Vectors", id: "leakage-vectors" },
-              { label: "Protocol", id: "protocol" },
-              { label: "Inspection", id: "evidence-check" },
-              { label: "Roles", id: "roles" },
-              { label: "Compliance", id: "spec-2025" },
-            ].map((item) => (
-              <button
-                key={item.id}
-                onClick={() => scrollToSection(item.id)}
-                className="px-3 py-1.5 text-xs font-mono tracking-wider uppercase text-slate-300 hover:text-white hover:bg-white/5 rounded transition-all cursor-pointer"
-              >
-                {item.label}
-              </button>
-            ))}
+            <button
+              onClick={() => scrollToSection("how-it-works")}
+              className="px-3.5 py-1.5 font-label-code text-label-code uppercase tracking-[0.14em] text-[#F2ECE6] hover:bg-[#F2ECE6] hover:text-[#101010] transition-colors border border-transparent hover:border-[#101010] cursor-pointer"
+            >
+              How it works
+            </button>
+            <button
+              onClick={() => scrollToSection("leakage-vectors")}
+              className="px-3.5 py-1.5 font-label-code text-label-code uppercase tracking-[0.14em] text-[#F2ECE6] hover:bg-[#F2ECE6] hover:text-[#101010] transition-colors border border-transparent hover:border-[#101010] cursor-pointer"
+            >
+              Vectors
+            </button>
+            <button
+              onClick={() => scrollToSection("protocol")}
+              className="px-3.5 py-1.5 font-label-code text-label-code uppercase tracking-[0.14em] text-[#F2ECE6] hover:bg-[#F2ECE6] hover:text-[#101010] transition-colors border border-transparent hover:border-[#101010] cursor-pointer"
+            >
+              Protocol
+            </button>
+            <button
+              onClick={() => scrollToSection("evidence-check")}
+              className="px-3.5 py-1.5 font-label-code text-label-code uppercase tracking-[0.14em] text-[#F2ECE6] hover:bg-[#F2ECE6] hover:text-[#101010] transition-colors border border-transparent hover:border-[#101010] cursor-pointer"
+            >
+              Inspection
+            </button>
+            <button
+              onClick={() => scrollToSection("roles")}
+              className="px-3.5 py-1.5 font-label-code text-label-code uppercase tracking-[0.14em] text-[#F2ECE6] hover:bg-[#F2ECE6] hover:text-[#101010] transition-colors border border-transparent hover:border-[#101010] cursor-pointer"
+            >
+              Roles
+            </button>
+            <button
+              onClick={() => scrollToSection("spec-2025")}
+              className="px-3.5 py-1.5 font-label-code text-label-code uppercase tracking-[0.14em] text-[#F2ECE6] hover:bg-[#F2ECE6] hover:text-[#101010] transition-colors border border-transparent hover:border-[#101010] cursor-pointer"
+            >
+              Spec // 2025
+            </button>
           </nav>
 
-          {/* Right Action Terminal */}
-          <div className="flex items-center space-x-3">
-            <div className="hidden lg:flex items-center space-x-2 border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 rounded text-[11px] font-mono text-emerald-400">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span>CONSENSUS GATE: LIVE</span>
+          {/* Operational State & Authentication Action */}
+          <div className="flex items-center space-x-4">
+            <div className="hidden xl:flex items-center space-x-2 border border-[#A39B8F]/30 px-2.5 py-1">
+              <div className="w-2 h-2 bg-[#93d5ad] animate-pulse" />
+              <span className="font-label-code text-label-code text-[#F2ECE6] uppercase">
+                GATE: OPERATIONAL
+              </span>
+            </div>
+
+            <div className="hidden sm:inline-block border border-[#A39B8F]/40 px-2.5 py-1 font-label-code text-label-code uppercase text-[#FCBC18]">
+              SPEC V1.04
             </div>
 
             {user ? (
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-3">
                 <button
                   onClick={() => navigate(getRoleHomeRoute(user.role))}
-                  className="bg-amber-400 hover:bg-amber-300 active:scale-[0.98] text-[#0b0d11] font-mono font-bold text-xs uppercase px-3.5 py-2 rounded shadow-sm hover:shadow-amber-400/20 flex items-center space-x-1.5 transition-all cursor-pointer"
+                  className="bg-[#FCBC18] text-[#101010] px-3.5 py-1.5 font-label-code text-label-code uppercase font-bold tracking-wider hover:bg-[#F2ECE6] transition-colors shadow-[2px_2px_0px_#101010] flex items-center space-x-1 cursor-pointer"
                 >
                   <span>PORTAL CONSOLE</span>
                   <span className="material-symbols-outlined text-sm">arrow_forward</span>
                 </button>
-                <div
-                  title={`Role: ${user.role}`}
-                  className="w-8 h-8 rounded border border-white/10 bg-slate-800/80 flex items-center justify-center text-xs font-mono font-bold text-amber-400"
-                >
+                <div className="w-8 h-8 rounded-none border border-[#FCBC18] bg-[#101010] flex items-center justify-center font-label-code text-xs text-[#FCBC18] font-bold">
                   {user.role ? user.role.slice(0, 2).toUpperCase() : "US"}
                 </div>
               </div>
             ) : (
               <Link
                 to="/login"
-                className="inline-flex items-center space-x-1.5 border border-white/20 hover:border-amber-400 text-white hover:text-amber-400 active:scale-[0.98] font-mono text-xs uppercase tracking-wider px-3.5 py-1.5 rounded transition-all"
+                className="border border-[#F2ECE6] px-4 py-1.5 font-label-code text-label-code uppercase text-[#F2ECE6] hover:bg-[#F2ECE6] hover:text-[#101010] transition-colors shadow-[2px_2px_0px_#FCBC18] font-bold"
               >
-                <span>SIGN IN</span>
-                <span className="material-symbols-outlined text-xs">login</span>
+                Sign in
               </Link>
             )}
           </div>
         </div>
       </header>
 
-      {/* Main Content Area */}
-      <main className="relative z-10 w-full" id="overview">
+      {/* Main Container */}
+      <main className="relative z-10 w-full pt-[72px]" id="overview">
         {/* ========================================================================= */}
-        {/* 2. ELEVATED HERO & TECHNICAL NARRATIVE CAROUSEL                           */}
+        {/* 2. PINNED CHAPTER SEQUENCE / TECHNICAL VISUAL NARRATIVE                   */}
         {/* ========================================================================= */}
         <section
           id="how-it-works"
-          className="relative w-full border-b border-white/10 bg-[#0e1117] overflow-hidden"
+          className="relative w-full bg-[#101010] text-[#F2ECE6] overflow-hidden select-none"
         >
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-16">
-            {/* Top Stage Telemetry Ribbon */}
-            <div className="flex flex-wrap items-center justify-between gap-4 pb-6 mb-8 border-b border-white/10 font-mono text-xs text-slate-400">
-              <div className="flex items-center space-x-3">
-                <span className="inline-flex items-center space-x-1.5 px-2 py-0.5 rounded bg-amber-400/10 border border-amber-400/30 text-amber-400 font-semibold">
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                  <span>CHAPTER SEQUENCE</span>
-                </span>
-                <span className="text-slate-300 font-medium">
-                  STAGE 0{currentSlide} // {CHAPTERS[currentSlide].tag.split("//")[1]?.trim()}
-                </span>
-              </div>
-              <div className="flex items-center space-x-6">
-                <span className="hidden sm:inline-block text-slate-400 tabular-nums">
-                  LAT 40.7128° N, LONG 74.0060° W
-                </span>
-                <div className="flex items-center space-x-1">
-                  {CHAPTERS.map((c, i) => (
-                    <button
-                      key={c.id}
-                      onClick={() => goToSlide(i)}
-                      className={`h-1.5 transition-all duration-300 rounded-full cursor-pointer ${
-                        i === currentSlide
-                          ? "w-8 bg-amber-400"
-                          : "w-2 bg-slate-700 hover:bg-slate-500"
-                      }`}
-                      aria-label={`Jump to stage 0${i}`}
-                    />
-                  ))}
-                </div>
-              </div>
+          {/* Coordinate Datum Grid Lines */}
+          <div className="pointer-events-none absolute inset-0 grid grid-cols-12 opacity-15">
+            {[...Array(12)].map((_, i) => (
+              <div key={i} className="h-full border-r border-[#A39B8F]" />
+            ))}
+          </div>
+
+          {/* Right-Edge Vertical Progress Rail */}
+          <aside
+            aria-label="Sequence progression"
+            className="absolute right-0 top-0 bottom-0 z-30 w-12 md:w-16 border-l border-[#A39B8F]/30 bg-[#101010]/90 flex flex-col justify-between py-8 items-center font-label-code text-label-code"
+          >
+            <div className="text-[#FCBC18] tracking-widest [writing-mode:vertical-rl] uppercase text-[10px]">
+              SEQ // RUNTIME
             </div>
-
-            {/* Split Narrative Presentation Deck */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-              {/* Left Column: Mission Narrative & Direct Actions */}
-              <div className="lg:col-span-6 flex flex-col justify-center">
-                <div className="inline-flex items-center space-x-2 text-xs font-mono text-amber-400 uppercase tracking-widest mb-4">
-                  <span className="w-2 h-2 bg-amber-400 rounded-xs" />
-                  <span>{activeChap.tag}</span>
-                </div>
-
-                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white mb-6 leading-[1.1] text-balance">
-                  {activeChap.title}
-                </h1>
-
-                {activeChap.quote && (
-                  <div className="border-l-2 border-amber-400 pl-4 py-1 mb-6 bg-amber-400/5 rounded-r">
-                    <p className="text-base sm:text-lg text-amber-300/90 font-medium italic">
-                      {activeChap.quote}
-                    </p>
-                  </div>
-                )}
-
-                <p className="text-slate-300 text-base sm:text-lg leading-relaxed max-w-xl mb-8">
-                  {activeChap.description}
-                </p>
-
-                {/* Telemetry Indicator Panel */}
-                {activeChap.telemetry && (
-                  <div className="grid grid-cols-2 gap-4 p-4 rounded-lg bg-[#141822] border border-white/10 mb-8 font-mono text-xs">
-                    <div className="space-y-1">
-                      <span className="text-slate-400 uppercase block tracking-wider text-[11px]">
-                        {activeChap.telemetry.leftLabel}
-                      </span>
-                      <span className="text-white font-semibold text-sm tabular-nums">
-                        {activeChap.telemetry.leftValue}
-                      </span>
-                    </div>
-                    <div className="space-y-1 border-l border-white/10 pl-4">
-                      <span className="text-slate-400 uppercase block tracking-wider text-[11px]">
-                        {activeChap.telemetry.rightLabel}
-                      </span>
-                      <span className="text-amber-400 font-semibold text-sm tabular-nums">
-                        {activeChap.telemetry.rightValue}
-                      </span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Carousel Controls and Action Buttons */}
-                <div className="flex flex-wrap items-center gap-3 pt-2">
-                  <Link
-                    to="/login"
-                    className="bg-amber-400 hover:bg-amber-300 active:scale-[0.98] text-[#0b0d11] font-mono font-bold text-xs uppercase px-5 py-3 rounded shadow-md hover:shadow-amber-400/20 flex items-center space-x-2 transition-all"
-                  >
-                    <span>INITIALIZE VERIFICATION</span>
-                    <span className="material-symbols-outlined text-sm font-bold">arrow_forward</span>
-                  </Link>
-
+            <div className="flex flex-col items-center space-y-6 w-full px-2" id="rail-markers">
+              {CHAPTERS.map((chap, idx) => {
+                const isActive = idx === currentSlide;
+                return (
                   <button
-                    onClick={() => goToSlide((currentSlide + 1) % CHAPTERS.length)}
-                    className="border border-white/20 hover:border-white/50 active:scale-[0.98] text-white hover:text-amber-300 font-mono text-xs uppercase px-4 py-3 rounded transition-all cursor-pointer flex items-center space-x-1.5"
+                    key={chap.id}
+                    onClick={() => goToSlide(idx)}
+                    className="w-full flex items-center justify-between group cursor-pointer focus:outline-none"
                     type="button"
+                    title={`Go to ${chap.tag}`}
                   >
-                    <span>{activeChap.nextLabel}</span>
-                  </button>
-
-                  <div className="flex items-center space-x-1 ml-auto">
-                    <button
-                      onClick={() =>
-                        goToSlide((currentSlide - 1 + CHAPTERS.length) % CHAPTERS.length)
-                      }
-                      className="w-10 h-10 rounded border border-white/10 bg-white/5 hover:bg-white/10 text-white flex items-center justify-center transition-colors cursor-pointer"
-                      title="Previous chapter"
-                      aria-label="Previous chapter"
-                    >
-                      <span className="material-symbols-outlined text-base">chevron_left</span>
-                    </button>
-                    <button
-                      onClick={() => goToSlide((currentSlide + 1) % CHAPTERS.length)}
-                      className="w-10 h-10 rounded border border-white/10 bg-white/5 hover:bg-white/10 text-white flex items-center justify-center transition-colors cursor-pointer"
-                      title="Next chapter"
-                      aria-label="Next chapter"
-                    >
-                      <span className="material-symbols-outlined text-base">chevron_right</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Right Column: Architectural Photography Frame & Crosshairs */}
-              <div className="lg:col-span-6 relative">
-                <div className="relative rounded-xl overflow-hidden border border-white/15 bg-black/60 shadow-[0_20px_60px_rgba(0,0,0,0.8)] aspect-[4/3] sm:aspect-[16/11]">
-                  {/* Image with contrast enhancement */}
-                  <img
-                    src={activeChap.image}
-                    alt={activeChap.alt}
-                    className="w-full h-full object-cover object-center transition-all duration-700 brightness-90 contrast-115"
-                  />
-
-                  {/* Gradient Scrim Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0e1117] via-transparent to-black/30" />
-
-                  {/* Drafting Crosshairs & Optical Frame Markers */}
-                  <div className="absolute top-4 left-4 z-10 flex items-center space-x-2">
-                    <span className="w-2.5 h-2.5 border-t-2 border-l-2 border-amber-400" />
-                    <span className="font-mono text-[11px] text-amber-400 tracking-wider font-semibold">
-                      {activeChap.ref}
-                    </span>
-                  </div>
-                  <div className="absolute top-4 right-4 z-10">
-                    <span className="w-2.5 h-2.5 border-t-2 border-r-2 border-amber-400 block" />
-                  </div>
-                  <div className="absolute bottom-4 left-4 z-10 flex items-center space-x-2">
-                    <span className="w-2.5 h-2.5 border-b-2 border-l-2 border-amber-400" />
-                    <span className="font-mono text-[10px] text-slate-300 tracking-wider">
-                      {activeChap.coordinates}
-                    </span>
-                  </div>
-                  <div className="absolute bottom-4 right-4 z-10 flex items-center space-x-1.5 font-mono text-[10px] text-amber-400 bg-black/80 px-2 py-0.5 rounded border border-amber-500/30">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    <span>FEED // LIVE LOCK</span>
-                  </div>
-
-                  {/* Center HUD Reticle */}
-                  <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                    <div className="w-16 h-16 border border-white/20 rounded-full flex items-center justify-center">
-                      <div className="w-1 h-1 bg-amber-400 rounded-full" />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Chapter Quick Jump Selector Ribbon */}
-                <div className="grid grid-cols-5 gap-2 mt-3 font-mono text-[11px]">
-                  {CHAPTERS.map((chap, idx) => (
-                    <button
-                      key={chap.id}
-                      onClick={() => goToSlide(idx)}
-                      className={`py-2 px-1 text-center rounded border transition-all cursor-pointer ${
-                        idx === currentSlide
-                          ? "bg-amber-400/10 border-amber-400 text-amber-400 font-bold"
-                          : "bg-white/5 border-white/5 text-slate-400 hover:text-white hover:border-white/20"
+                    <span
+                      className={`text-[11px] font-bold transition-colors ${
+                        isActive ? "text-[#FCBC18]" : "text-[#A39B8F] group-hover:text-[#FCBC18]"
                       }`}
                     >
-                      <span className="block text-[10px] opacity-75">CH 0{idx}</span>
-                      <span className="truncate block font-semibold">
-                        {chap.tag.split("//")[1]?.trim() || "INIT"}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
+                      0{idx}
+                    </span>
+                    <span
+                      className={`w-2.5 h-2.5 transition-all ${
+                        isActive
+                          ? "bg-[#FCBC18]"
+                          : "bg-[#A39B8F]/30 group-hover:bg-[#FCBC18]"
+                      }`}
+                    />
+                  </button>
+                );
+              })}
             </div>
+            <div className="text-[#A39B8F] text-[10px] [writing-mode:vertical-rl]">
+              CAL. 2025 // SEC
+            </div>
+          </aside>
+
+          {/* Slide Viewport Container */}
+          <div className="relative w-full h-[640px] md:h-[720px] pr-12 md:pr-16" id="slides-wrapper">
+            {CHAPTERS.map((chapter, idx) => {
+              const isActive = idx === currentSlide;
+              return (
+                <article
+                  key={chapter.id}
+                  className={`slide-panel absolute inset-0 w-full h-full transition-opacity duration-500 ease-in-out ${
+                    isActive ? "opacity-100 z-20" : "opacity-0 pointer-events-none z-10"
+                  }`}
+                >
+                  <div className="relative w-full h-full flex items-stretch">
+                    {/* Background image layer with progressive scrim */}
+                    <div className="absolute inset-0 z-0">
+                      <img
+                        className="w-full h-full object-cover object-center grayscale contrast-125 brightness-75"
+                        src={chapter.image}
+                        alt={chapter.alt}
+                        loading={idx === 0 ? "eager" : "lazy"}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-r from-[#101010] via-[#101010]/85 to-transparent w-full md:w-3/5" />
+                      <div className="absolute inset-0 bg-[#101010]/20 mix-blend-multiply" />
+                    </div>
+
+                    {/* Technical Drafting Overlays & Corner Registration Ticks */}
+                    <div className="absolute top-6 left-6 z-20 flex items-center space-x-3 pointer-events-none">
+                      <div className="w-3 h-3 border-t-2 border-l-2 border-[#FCBC18]" />
+                      <span className="font-label-code text-label-code tracking-widest text-[#FCBC18] uppercase">
+                        {chapter.ref}
+                      </span>
+                    </div>
+                    <div className="absolute bottom-6 left-6 z-20 flex items-center space-x-3 pointer-events-none">
+                      <div className="w-3 h-3 border-b-2 border-l-2 border-[#FCBC18]" />
+                      <span className="font-label-meta text-label-meta text-[#A39B8F] tracking-widest uppercase">
+                        {chapter.coordinates}
+                      </span>
+                    </div>
+
+                    {/* Content Block */}
+                    <div className="relative z-10 flex flex-col justify-center px-6 md:px-16 lg:px-24 max-w-3xl">
+                      <div className="inline-flex items-center space-x-2 border border-[#FCBC18] px-2.5 py-1 mb-6 bg-[#101010] w-max">
+                        <span className="w-2 h-2 bg-[#FCBC18]" />
+                        <span className="font-label-code text-label-code uppercase tracking-widest text-[#FCBC18]">
+                          {chapter.tag}
+                        </span>
+                      </div>
+
+                      <h1 className="font-display-lg text-display-lg-mobile md:text-display-lg text-[#F2ECE6] tracking-tight uppercase leading-none font-bold mb-4">
+                        {chapter.title}
+                      </h1>
+
+                      {chapter.quote && (
+                        <div className="border-l-4 border-[#FCBC18] pl-4 mb-6">
+                          <p className="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-[#FCBC18] font-bold tracking-wide uppercase">
+                            {chapter.quote}
+                          </p>
+                        </div>
+                      )}
+
+                      <p className="font-body-lg text-body-lg text-[#E6E2DD] max-w-xl font-normal leading-relaxed mb-8">
+                        {chapter.description}
+                      </p>
+
+                      {/* Optional Chapter Telemetry Box */}
+                      {chapter.telemetry && (
+                        <div className="grid grid-cols-2 gap-4 max-w-md border border-[#A39B8F]/30 p-4 bg-[#101010]/80 mb-8 font-label-code">
+                          <div>
+                            <span className="font-label-meta text-label-meta text-[#A39B8F] uppercase block mb-1">
+                              {chapter.telemetry.leftLabel}
+                            </span>
+                            <span className="font-label-code text-label-code text-[#F2ECE6] font-bold">
+                              {chapter.telemetry.leftValue}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="font-label-meta text-label-meta text-[#A39B8F] uppercase block mb-1">
+                              {chapter.telemetry.rightLabel}
+                            </span>
+                            <span className="font-label-code text-label-code text-[#FCBC18] font-bold">
+                              {chapter.telemetry.rightValue}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Interactive Buttons */}
+                      <div className="flex flex-wrap items-center gap-4">
+                        {idx === 0 ? (
+                          <>
+                            <Link
+                              to="/login"
+                              className="bg-[#FCBC18] text-[#101010] font-label-code text-label-code uppercase tracking-wider px-6 py-3 border border-[#101010] hover:bg-[#F2ECE6] transition-all font-bold shadow-[3px_3px_0px_#101010]"
+                            >
+                              INITIALIZE VERIFICATION
+                            </Link>
+                            <button
+                              onClick={() => goToSlide(1)}
+                              className="bg-transparent text-[#F2ECE6] border border-[#F2ECE6] font-label-code text-label-code uppercase tracking-wider px-6 py-3 hover:bg-[#F2ECE6] hover:text-[#101010] transition-colors cursor-pointer"
+                              type="button"
+                            >
+                              NEXT: CAPTURE →
+                            </button>
+                          </>
+                        ) : idx === CHAPTERS.length - 1 ? (
+                          <>
+                            <button
+                              onClick={() => goToSlide(0)}
+                              className="bg-[#FCBC18] text-[#101010] font-label-code text-label-code uppercase tracking-wider px-6 py-3 border border-[#101010] hover:bg-[#F2ECE6] transition-all font-bold shadow-[3px_3px_0px_#101010] cursor-pointer"
+                              type="button"
+                            >
+                              ← REPLAY SEQUENCE
+                            </button>
+                            <button
+                              onClick={() => scrollToSection("protocol")}
+                              className="border border-[#F2ECE6] text-[#F2ECE6] font-label-code text-label-code uppercase tracking-wider px-6 py-3 hover:bg-[#F2ECE6] hover:text-[#101010] transition-colors cursor-pointer"
+                              type="button"
+                            >
+                              VIEW ARCHITECTURE ↓
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            onClick={() => goToSlide((idx + 1) % CHAPTERS.length)}
+                            className="bg-[#FCBC18] text-[#101010] font-label-code text-label-code uppercase tracking-wider px-6 py-3 border border-[#101010] hover:bg-[#101010] hover:text-[#FCBC18] hover:border-[#FCBC18] transition-all font-bold shadow-[3px_3px_0px_#101010] cursor-pointer"
+                            type="button"
+                          >
+                            {chapter.nextLabel}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
           </div>
         </section>
 
         {/* ========================================================================= */}
-        {/* 3. SECTION: SYSTEMIC LEAKAGE VECTORS                                      */}
+        {/* 3. SECTION 5.3: WHERE CLAIMS LEAK (Paper Ground #E6E2DD)                   */}
         {/* ========================================================================= */}
         <section
           id="leakage-vectors"
-          className="w-full py-20 px-4 sm:px-6 lg:px-8 border-b border-white/10 bg-[#0b0d11]"
+          className="w-full bg-[#E6E2DD] text-[#101010] px-6 md:px-12 lg:px-20 py-20 border-t border-[#A39B8F]/30"
         >
-          <div className="max-w-7xl mx-auto">
+          <div className="w-full max-w-7xl mx-auto">
             {/* Section Header */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-8 border-b border-white/10">
-              <div>
-                <div className="inline-flex items-center space-x-2 text-xs font-mono text-amber-400 uppercase tracking-widest mb-2">
-                  <span className="w-2 h-2 bg-amber-400 rounded-xs" />
-                  <span>01 // SYSTEMIC CAPITAL EROSION ANALYSIS</span>
-                </div>
-                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-white text-balance">
-                  Where civil construction leaks capital.
-                </h2>
+            <div className="w-full pb-8 border-b border-[#A39B8F]/40 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div className="flex items-center space-x-4">
+                <span className="font-label-code text-label-code text-[#101010] bg-[#FCBC18] px-2 py-0.5 font-bold uppercase tracking-widest border border-[#101010]">
+                  01 / LEAKAGE VECTORS
+                </span>
+                <span className="font-label-meta text-label-meta text-[#8C8B91] uppercase tracking-[0.18em]">
+                  SYSTEMIC CAPITAL EROSION ANALYSIS
+                </span>
               </div>
-              <div className="font-mono text-xs text-slate-400 flex items-center space-x-2">
-                <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
-                <span>UNAUDITED SITE VARIANCE: 7.4% – 11.2% MARGIN LOSS</span>
+              <div className="font-label-code text-label-code text-[#8C8B91]">
+                SPEC REF: CS-VEC-09
               </div>
             </div>
 
-            {/* Asymmetric Dossier Layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-10">
-              {/* Left Column: High-Impact Risk Summary Card */}
-              <div className="lg:col-span-4 flex flex-col justify-between p-6 rounded-xl bg-gradient-to-b from-[#141822] to-[#0f131a] border border-white/10">
-                <div>
-                  <div className="flex items-center space-x-2 text-rose-400 font-mono text-xs font-semibold mb-4">
-                    <span className="material-symbols-outlined text-base">warning</span>
-                    <span>STRUCTURAL RECONCILIATION GAP</span>
-                  </div>
-                  <h3 className="text-xl font-bold text-white mb-3 leading-snug">
-                    Unverified paperwork drains reserves silently.
-                  </h3>
-                  <p className="text-slate-300 text-sm leading-relaxed mb-6">
-                    When site execution relies on honor-system approvals, paper delivery slips, and delayed monthly billing cycles, contractors absorb compound losses across concrete, rebar, and stage certification.
+            {/* 12-Column Blueprint Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 mt-12 items-start">
+              {/* Sticky Left Block (5 columns) */}
+              <div className="lg:col-span-5 lg:sticky lg:top-28">
+                <div className="relative pl-6 border-l-2 border-[#101010]">
+                  <span className="font-label-code text-label-code text-[#8C8B91] uppercase tracking-widest block mb-2">
+                    FINANCIAL INTEGRITY HAZARDS
+                  </span>
+                  <h2 className="font-headline-lg text-headline-lg-mobile md:text-headline-lg uppercase font-bold text-[#101010] tracking-tight leading-tight mb-4">
+                    Three ways a site loses money.
+                  </h2>
+                  <p className="font-body-lg text-body-lg text-[#5F5E5E] leading-relaxed">
+                    Discrepancies in civil works compound silently. By decoupling billing events from verifiable physical stage completions, owners absorb structural margin bleed that remains undetected until final reconciliations.
                   </p>
-                </div>
-
-                {/* Macro Metric Bar */}
-                <div className="space-y-4 pt-4 border-t border-white/10 font-mono text-xs">
-                  <div className="flex justify-between items-center text-slate-400">
-                    <span>CUMULATIVE SITE LOSS</span>
-                    <span className="text-rose-400 font-bold tabular-nums">11.2% MAX TIER</span>
-                  </div>
-                  <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
-                    <div className="w-4/5 h-full bg-gradient-to-r from-amber-400 to-rose-500 rounded-full" />
-                  </div>
-                  <div className="flex justify-between items-center text-[11px] text-slate-400">
-                    <span>CONSTRA INTERCEPT TIME</span>
-                    <span className="text-emerald-400 font-semibold">&lt; 4.0 SECONDS</span>
+                  <div className="mt-8 border border-[#A39B8F]/40 p-4 bg-[#F2ECE6]">
+                    <div className="flex items-center space-x-3 mb-2">
+                      <span className="material-symbols-outlined text-[#B3261E]">warning</span>
+                      <span className="font-label-code text-label-code uppercase tracking-wider font-bold">
+                        UNVERIFIED RISK MULTIPLIER
+                      </span>
+                    </div>
+                    <p className="font-body-sm text-body-sm text-[#5F5E5E]">
+                      Average unvetted subcontractor claims generate 7.4% to 11.2% in phantom overhead per structural tier.
+                    </p>
                   </div>
                 </div>
               </div>
 
-              {/* Right Column: Interactive Vector Explanations */}
-              <div className="lg:col-span-8 space-y-4">
-                {LEAKAGE_VECTORS.map((vec, idx) => {
-                  const isSelected = activeVector === idx;
-                  return (
-                    <div
-                      key={vec.code}
-                      onClick={() => setActiveVector(idx)}
-                      className={`p-6 rounded-xl border transition-all cursor-pointer ${
-                        isSelected
-                          ? "bg-[#141824] border-amber-500/50 shadow-lg shadow-amber-500/5"
-                          : "bg-[#10131b] border-white/10 hover:border-white/20"
-                      }`}
-                    >
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
-                        <div className="flex items-center space-x-3">
-                          <span
-                            className={`font-mono text-xs font-bold px-2 py-0.5 rounded border ${
-                              isSelected
-                                ? "bg-amber-400 text-black border-amber-400"
-                                : "bg-white/5 text-slate-300 border-white/10"
-                            }`}
-                          >
-                            {vec.code}
-                          </span>
-                          <h4 className="text-lg font-bold text-white">{vec.title}</h4>
-                        </div>
-                        <span className="font-mono text-xs text-rose-400 font-medium">
-                          {vec.metric}
-                        </span>
-                      </div>
+              {/* Spec Table Right Block (7 columns) */}
+              <div className="lg:col-span-7 bg-[#F2ECE6] border border-[#A39B8F]/40 relative">
+                {/* Drafting Corner Ticks */}
+                <div className="absolute -top-1 -left-1 w-2.5 h-2.5 border-t-2 border-l-2 border-[#101010]" />
+                <div className="absolute -top-1 -right-1 w-2.5 h-2.5 border-t-2 border-r-2 border-[#101010]" />
+                <div className="absolute -bottom-1 -left-1 w-2.5 h-2.5 border-b-2 border-l-2 border-[#101010]" />
+                <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 border-b-2 border-r-2 border-[#101010]" />
 
-                      <p className="text-sm font-medium text-slate-200 mb-2">{vec.headline}</p>
-                      <p className="text-sm text-slate-400 leading-relaxed mb-4">
-                        {vec.description}
-                      </p>
+                {/* Table Header */}
+                <div className="grid grid-cols-12 bg-[#101010] text-[#F2ECE6] px-4 py-3 font-label-meta text-label-meta uppercase tracking-widest">
+                  <div className="col-span-3">VECTOR // LEAK</div>
+                  <div className="col-span-5 pl-2 border-l border-[#A39B8F]/30">HOW IT HAPPENS</div>
+                  <div className="col-span-4 pl-2 border-l border-[#A39B8F]/30">CONSTRA INTERCEPT</div>
+                </div>
 
-                      {/* Tactical Intercept Defense Box */}
-                      <div className="flex items-start space-x-2.5 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 font-mono text-xs text-emerald-300">
-                        <span className="material-symbols-outlined text-base flex-shrink-0 text-emerald-400">
-                          check_circle
-                        </span>
-                        <div>
-                          <strong className="text-emerald-200 font-semibold">CONSTRA INTERCEPT: </strong>
-                          <span>{vec.defense}</span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+                {/* Row 1 */}
+                <div className="grid grid-cols-12 px-4 py-6 border-b border-[#A39B8F]/30 hover:bg-[#E6E2DD]/50 transition-colors">
+                  <div className="col-span-12 md:col-span-3 mb-2 md:mb-0">
+                    <span className="font-label-code text-label-code text-[#B3261E] bg-[#FFDAD6] px-1.5 py-0.5 inline-block font-bold mb-1 border border-[#B3261E]/30">
+                      VEC-01
+                    </span>
+                    <h3 className="font-headline-md text-headline-md font-bold text-[#101010] uppercase">
+                      Fake progress
+                    </h3>
+                  </div>
+                  <div className="col-span-12 md:col-span-5 md:pl-2 md:border-l border-[#A39B8F]/30 mb-2 md:mb-0 font-body-md text-body-md text-[#5F5E5E]">
+                    Old or borrowed photos billed as new work across adjacent structural units or repeated floors.
+                  </div>
+                  <div className="col-span-12 md:col-span-4 md:pl-2 md:border-l border-[#A39B8F]/30 font-label-code text-label-code text-[#101010]">
+                    <span className="text-[#2F6F4E] font-bold">✓</span> Location coordinates, capture timestamp, and visual stage match.
+                  </div>
+                </div>
+
+                {/* Row 2 */}
+                <div className="grid grid-cols-12 px-4 py-6 border-b border-[#A39B8F]/30 hover:bg-[#E6E2DD]/50 transition-colors">
+                  <div className="col-span-12 md:col-span-3 mb-2 md:mb-0">
+                    <span className="font-label-code text-label-code text-[#B3261E] bg-[#FFDAD6] px-1.5 py-0.5 inline-block font-bold mb-1 border border-[#B3261E]/30">
+                      VEC-02
+                    </span>
+                    <h3 className="font-headline-md text-headline-md font-bold text-[#101010] uppercase">
+                      Inflated paperwork
+                    </h3>
+                  </div>
+                  <div className="col-span-12 md:col-span-5 md:pl-2 md:border-l border-[#A39B8F]/30 mb-2 md:mb-0 font-body-md text-body-md text-[#5F5E5E]">
+                    Delivery slips and dispatch notes that do not match the engineered plan or physical bills of quantities.
+                  </div>
+                  <div className="col-span-12 md:col-span-4 md:pl-2 md:border-l border-[#A39B8F]/30 font-label-code text-label-code text-[#101010]">
+                    <span className="text-[#2F6F4E] font-bold">✓</span> Automated OCR challan delta against approved Bill of Quantities.
+                  </div>
+                </div>
+
+                {/* Row 3 */}
+                <div className="grid grid-cols-12 px-4 py-6 hover:bg-[#E6E2DD]/50 transition-colors">
+                  <div className="col-span-12 md:col-span-3 mb-2 md:mb-0">
+                    <span className="font-label-code text-label-code text-[#B3261E] bg-[#FFDAD6] px-1.5 py-0.5 inline-block font-bold mb-1 border border-[#B3261E]/30">
+                      VEC-03
+                    </span>
+                    <h3 className="font-headline-md text-headline-md font-bold text-[#101010] uppercase">
+                      Diverted material
+                    </h3>
+                  </div>
+                  <div className="col-span-12 md:col-span-5 md:pl-2 md:border-l border-[#A39B8F]/30 mb-2 md:mb-0 font-body-md text-body-md text-[#5F5E5E]">
+                    More raw bulk material issued from storage yards than the verified structural element physically requires.
+                  </div>
+                  <div className="col-span-12 md:col-span-4 md:pl-2 md:border-l border-[#A39B8F]/30 font-label-code text-label-code text-[#101010]">
+                    <span className="text-[#2F6F4E] font-bold">✓</span> Store issue reconciliation mapped directly to proven progress.
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </section>
 
         {/* ========================================================================= */}
-        {/* 4. SECTION: HOW VERIFICATION WORKS (PROTOCOL PIPELINE)                    */}
+        {/* 4. SECTION 5.4: HOW VERIFICATION WORKS (Dark Ink Section #101010)         */}
         {/* ========================================================================= */}
         <section
           id="protocol"
-          className="w-full py-20 px-4 sm:px-6 lg:px-8 border-b border-white/10 bg-[#0d0f15]"
+          className="w-full bg-[#101010] text-[#F2ECE6] px-6 md:px-12 lg:px-20 py-20 border-t border-[#A39B8F]/20 relative"
         >
-          <div className="max-w-7xl mx-auto">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-8 border-b border-white/10">
-              <div>
-                <div className="inline-flex items-center space-x-2 text-xs font-mono text-amber-400 uppercase tracking-widest mb-2">
-                  <span className="w-2 h-2 bg-amber-400 rounded-xs" />
-                  <span>02 // VERIFICATION PROTOCOL PIPELINE</span>
-                </div>
-                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-white">
-                  5-Stage Continuous Verification Protocol
-                </h2>
-              </div>
-              <div className="flex items-center space-x-2 font-mono text-xs text-amber-400">
-                <span className="w-2 h-2 rounded-full bg-amber-400" />
-                <span>UNIDIRECTIONAL EVIDENCE PIPELINE</span>
-              </div>
+          {/* Section Header Block */}
+          <div className="w-full max-w-7xl mx-auto pb-8 border-b border-[#A39B8F]/30 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="flex items-center space-x-4">
+              <span className="font-label-code text-label-code text-[#101010] bg-[#FCBC18] px-2 py-0.5 font-bold uppercase tracking-widest border border-[#101010]">
+                02 / PROTOCOL
+              </span>
+              <h2 className="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-[#F2ECE6] uppercase font-bold tracking-tight">
+                How verification works
+              </h2>
             </div>
+            <div className="flex items-center space-x-2 font-label-code text-label-code text-[#FCBC18]">
+              <span className="w-2 h-2 bg-[#FCBC18]" />
+              <span>5-STAGE ASYNC PIPELINE</span>
+            </div>
+          </div>
 
-            {/* Connected Node Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 lg:gap-6 mt-12">
-              {PROTOCOL_NODES.map((node) => (
-                <div
-                  key={node.step}
-                  className="flex flex-col justify-between p-5 rounded-xl bg-[#131620] border border-white/10 hover:border-amber-400/40 transition-all group relative"
-                >
-                  {/* Step Sequence Marker */}
-                  <div>
-                    <div className="flex items-center justify-between mb-4">
-                      <span className="font-mono text-xs font-bold text-amber-400">
-                        NODE {node.step}
-                      </span>
-                      <span className="font-mono text-[10px] text-slate-400 px-1.5 py-0.5 rounded bg-white/5 border border-white/10">
-                        {node.tag}
-                      </span>
-                    </div>
-
-                    <div className="w-10 h-10 rounded-lg bg-amber-400/10 border border-amber-400/30 flex items-center justify-center text-amber-400 mb-4 group-hover:scale-105 transition-transform">
-                      <span className="material-symbols-outlined text-xl">{node.icon}</span>
-                    </div>
-
-                    <h3 className="text-base font-bold text-white mb-1 tracking-tight">
-                      {node.name}
-                    </h3>
-                    <p className="font-mono text-[11px] text-slate-400 mb-3">{node.sub}</p>
-
-                    <p className="text-xs text-slate-300 leading-relaxed mb-4">{node.desc}</p>
-                  </div>
-
-                  {/* Input / Output Telemetry Tags */}
-                  <div className="pt-3 border-t border-white/10 space-y-1.5 font-mono text-[10px]">
-                    <div className="truncate text-slate-400">
-                      <span className="text-slate-500 uppercase">IN: </span>
-                      {node.input}
-                    </div>
-                    <div className="truncate text-amber-300">
-                      <span className="text-slate-500 uppercase">OUT: </span>
-                      {node.output}
-                    </div>
+          {/* Five-Step Horizontal Pipeline */}
+          <div className="w-full max-w-7xl mx-auto mt-16">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-6 relative">
+              {/* Step 1: CAPTURE */}
+              <div className="relative flex flex-col border border-[#A39B8F]/30 p-5 bg-[#101010] group hover:border-[#FCBC18] transition-colors">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="font-label-code text-label-code text-[#FCBC18] font-bold">
+                    NODE 01
+                  </span>
+                  <div className="w-4 h-4 bg-[#FCBC18] flex items-center justify-center text-[#101010] font-bold text-[10px]">
+                    1
                   </div>
                 </div>
-              ))}
+                <div className="h-10 flex items-center mb-2">
+                  <span className="material-symbols-outlined text-[#FCBC18] text-3xl">
+                    photo_camera
+                  </span>
+                </div>
+                <h3 className="font-headline-md text-headline-md uppercase font-bold text-[#F2ECE6] mb-2 tracking-wide">
+                  CAPTURE
+                </h3>
+                <p className="font-body-md text-body-md text-[#A39B8F] leading-relaxed">
+                  Geo-tagged photo timestamped at upload. Physical coordinates anchored to site polygon.
+                </p>
+                <div className="mt-6 pt-3 border-t border-[#A39B8F]/20 font-label-meta text-label-meta text-[#8C8B91] uppercase">
+                  INPUT: RAW SITE EXIF
+                </div>
+              </div>
+
+              {/* Step 2: READ */}
+              <div className="relative flex flex-col border border-[#A39B8F]/30 p-5 bg-[#101010] group hover:border-[#FCBC18] transition-colors">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="font-label-code text-label-code text-[#FCBC18] font-bold">
+                    NODE 02
+                  </span>
+                  <div className="w-4 h-4 bg-[#FCBC18] flex items-center justify-center text-[#101010] font-bold text-[10px]">
+                    2
+                  </div>
+                </div>
+                <div className="h-10 flex items-center mb-2">
+                  <span className="material-symbols-outlined text-[#FCBC18] text-3xl">
+                    document_scanner
+                  </span>
+                </div>
+                <h3 className="font-headline-md text-headline-md uppercase font-bold text-[#F2ECE6] mb-2 tracking-wide">
+                  READ
+                </h3>
+                <p className="font-body-md text-body-md text-[#A39B8F] leading-relaxed">
+                  OCR extracts item, grade and quantity from physical delivery challan paper slips.
+                </p>
+                <div className="mt-6 pt-3 border-t border-[#A39B8F]/20 font-label-meta text-label-meta text-[#8C8B91] uppercase">
+                  PARSER: TABULAR OCR
+                </div>
+              </div>
+
+              {/* Step 3: RECONCILE */}
+              <div className="relative flex flex-col border border-[#A39B8F]/30 p-5 bg-[#101010] group hover:border-[#FCBC18] transition-colors">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="font-label-code text-label-code text-[#FCBC18] font-bold">
+                    NODE 03
+                  </span>
+                  <div className="w-4 h-4 bg-[#FCBC18] flex items-center justify-center text-[#101010] font-bold text-[10px]">
+                    3
+                  </div>
+                </div>
+                <div className="h-10 flex items-center mb-2">
+                  <span className="material-symbols-outlined text-[#FCBC18] text-3xl">
+                    balance
+                  </span>
+                </div>
+                <h3 className="font-headline-md text-headline-md uppercase font-bold text-[#F2ECE6] mb-2 tracking-wide">
+                  RECONCILE
+                </h3>
+                <p className="font-body-md text-body-md text-[#A39B8F] leading-relaxed">
+                  Automated delta check against engineering plan and structural Bill of Quantities.
+                </p>
+                <div className="mt-6 pt-3 border-t border-[#A39B8F]/20 font-label-meta text-label-meta text-[#8C8B91] uppercase">
+                  MATCH: SCHEDULE BOQ
+                </div>
+              </div>
+
+              {/* Step 4: FLAG */}
+              <div className="relative flex flex-col border border-[#A39B8F]/30 p-5 bg-[#101010] group hover:border-[#FCBC18] transition-colors">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="font-label-code text-label-code text-[#FCBC18] font-bold">
+                    NODE 04
+                  </span>
+                  <div className="w-4 h-4 bg-[#FCBC18] flex items-center justify-center text-[#101010] font-bold text-[10px]">
+                    4
+                  </div>
+                </div>
+                <div className="h-10 flex items-center mb-2">
+                  <span className="material-symbols-outlined text-[#FCBC18] text-3xl">
+                    report
+                  </span>
+                </div>
+                <h3 className="font-headline-md text-headline-md uppercase font-bold text-[#F2ECE6] mb-2 tracking-wide">
+                  FLAG
+                </h3>
+                <p className="font-body-md text-body-md text-[#A39B8F] leading-relaxed">
+                  Anomalies routed directly to site auditor with physical evidence dossiers.
+                </p>
+                <div className="mt-6 pt-3 border-t border-[#A39B8F]/20 font-label-meta text-label-meta text-[#8C8B91] uppercase">
+                  ROUTING: AUDIT CHAIR
+                </div>
+              </div>
+
+              {/* Step 5: CLEAR */}
+              <div className="relative flex flex-col border border-[#A39B8F]/30 p-5 bg-[#101010] group hover:border-[#FCBC18] transition-colors">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="font-label-code text-label-code text-[#FCBC18] font-bold">
+                    NODE 05
+                  </span>
+                  <div className="w-4 h-4 bg-[#FCBC18] flex items-center justify-center text-[#101010] font-bold text-[10px]">
+                    5
+                  </div>
+                </div>
+                <div className="h-10 flex items-center mb-2">
+                  <span className="material-symbols-outlined text-[#FCBC18] text-3xl">
+                    lock
+                  </span>
+                </div>
+                <h3 className="font-headline-md text-headline-md uppercase font-bold text-[#F2ECE6] mb-2 tracking-wide">
+                  CLEAR
+                </h3>
+                <p className="font-body-md text-body-md text-[#A39B8F] leading-relaxed">
+                  Milestone sealed and cryptographically locked. State permanently frozen.
+                </p>
+                <div className="mt-6 pt-3 border-t border-[#A39B8F]/20 font-label-meta text-label-meta text-[#8C8B91] uppercase">
+                  LEDGER: SEAL RECORD
+                </div>
+              </div>
             </div>
           </div>
         </section>
 
         {/* ========================================================================= */}
-        {/* 5. SECTION: INTERACTIVE EVIDENCE CHECK INSPECTION                         */}
+        {/* 5. SECTION 5.5: EVIDENCE CHECK SAMPLE PANEL (Warm Ivory #F2ECE6)          */}
         {/* ========================================================================= */}
         <section
           id="evidence-check"
-          className="w-full py-20 px-4 sm:px-6 lg:px-8 border-b border-white/10 bg-[#0a0c10]"
+          className="w-full bg-[#E6E2DD] text-[#101010] px-6 md:px-12 lg:px-20 py-24 border-t border-[#A39B8F]/30"
         >
-          <div className="max-w-5xl mx-auto">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
+          <div className="w-full max-w-4xl mx-auto">
+            {/* Panel Header Lead-in */}
+            <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
               <div>
-                <div className="inline-flex items-center space-x-2 text-xs font-mono text-amber-400 uppercase tracking-widest mb-2">
-                  <span className="w-2 h-2 bg-amber-400 rounded-xs" />
-                  <span>03 // LIVE EVIDENCE CHECK INSPECTION</span>
-                </div>
-                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-white">
-                  Interactive Audit Dossier Simulator
+                <span className="font-label-code text-label-code uppercase tracking-widest text-[#8C8B91] block mb-1">
+                  RUN-TIME AUDIT TELEMETRY
+                </span>
+                <h2 className="font-headline-lg text-headline-lg-mobile md:text-headline-lg font-bold text-[#101010] uppercase tracking-tight">
+                  Evidence Check Inspection
                 </h2>
               </div>
-              <div className="font-mono text-xs text-slate-400 flex items-center space-x-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                <span>SANDBOX SPECIMEN: SEC-04 // SLAB CASTING</span>
+              <div className="font-label-meta text-label-meta text-[#8C8B91] uppercase tracking-wider flex items-center space-x-2">
+                <span className="w-2 h-2 bg-[#2F6F4E] inline-block" />
+                <span>LIVE SPECIMEN RECORD // DEMO ENGINE</span>
               </div>
             </div>
 
-            {/* Dossier Card Panel */}
-            <div className="rounded-2xl border border-white/15 bg-gradient-to-b from-[#141824] to-[#0f121a] p-6 sm:p-8 lg:p-10 shadow-2xl relative overflow-hidden">
-              {/* Corner Registration Accents */}
-              <div className="absolute top-3 left-3 w-3 h-3 border-t border-l border-amber-400" />
-              <div className="absolute top-3 right-3 w-3 h-3 border-t border-r border-amber-400" />
-              <div className="absolute bottom-3 left-3 w-3 h-3 border-b border-l border-amber-400" />
-              <div className="absolute bottom-3 right-3 w-3 h-3 border-b border-r border-amber-400" />
+            {/* Evidence Card Panel */}
+            <div className="bg-[#F2ECE6] border border-[#A39B8F]/40 p-6 md:p-10 shadow-[0_30px_60px_-30px_rgba(16,16,16,0.35)] relative">
+              {/* Engineered Corner Crop Ticks */}
+              <div className="absolute -top-1.5 -left-1.5 w-3 h-3 border-t-2 border-l-2 border-[#FCBC18]" />
+              <div className="absolute -top-1.5 -right-1.5 w-3 h-3 border-t-2 border-r-2 border-[#FCBC18]" />
+              <div className="absolute -bottom-1.5 -left-1.5 w-3 h-3 border-b-2 border-l-2 border-[#FCBC18]" />
+              <div className="absolute -bottom-1.5 -right-1.5 w-3 h-3 border-b-2 border-r-2 border-[#FCBC18]" />
 
-              {/* Title Bar & Status Pill */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-white/10 gap-4">
+              {/* Card Title Bar & Badges */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-[#A39B8F]/40 gap-4">
                 <div className="flex items-center space-x-3">
-                  <div className="w-3 h-3 rounded-full bg-amber-400 animate-pulse" />
-                  <div>
-                    <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">
-                      SPECIMEN: Level 04 Post-Tensioned Slab Pour
-                    </h3>
-                    <span className="font-mono text-xs text-slate-400">
-                      MILESTONE CLAIM: #MS-0482 // SECTOR TOWER-A
-                    </span>
-                  </div>
+                  <span className="w-3 h-3 bg-[#FCBC18]" />
+                  <h3 className="font-headline-md text-headline-md uppercase font-bold text-[#101010] tracking-wide">
+                    SAMPLE: Slab Casting // Level 04
+                  </h3>
                 </div>
-
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-3">
+                  <span className="font-label-code text-label-code bg-[#E6E2DD] border border-[#101010] px-2.5 py-1 text-[#101010] uppercase font-bold">
+                    SPECIMEN: SEC-04
+                  </span>
                   <span
-                    className={`font-mono text-xs font-bold px-3 py-1.5 rounded border transition-colors flex items-center space-x-1.5 ${
+                    className={`font-label-code text-label-code px-2.5 py-1 uppercase font-bold border border-[#101010] transition-colors ${
                       demoFlagResolved
-                        ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
-                        : "bg-amber-500/20 text-amber-300 border-amber-500/40"
+                        ? "bg-[#2F6F4E] text-[#F2ECE6]"
+                        : "bg-[#FCBC18] text-[#101010]"
                     }`}
                   >
-                    <span className="material-symbols-outlined text-sm">
-                      {demoFlagResolved ? "verified" : "warning"}
-                    </span>
-                    <span>{demoFlagResolved ? "AUDIT CLEARED & LOCKED" : "EVIDENCE FLAGGED"}</span>
+                    STATUS: {demoFlagResolved ? "VERIFIED & CLEARED" : "FLAGGED"}
                   </span>
                 </div>
               </div>
 
-              {/* Parameter Check Rows */}
-              <div className="divide-y divide-white/10 my-6">
-                {/* Parameter 1: Geolocation */}
-                <div className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-9 h-9 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-slate-300">
+              {/* 3 Check Rows */}
+              <div className="divide-y divide-[#A39B8F]/30 my-6">
+                {/* Row 1: Location */}
+                <div className="py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-8 h-8 bg-[#101010] text-[#F2ECE6] flex items-center justify-center">
                       <span className="material-symbols-outlined text-lg">pin_drop</span>
                     </div>
                     <div>
-                      <span className="font-mono text-[11px] text-slate-400 block">
-                        CHECK 01 // GEOLOCATION
+                      <span className="font-label-code text-label-code uppercase text-[#8C8B91] block">
+                        CHECK PARAMETER 01
                       </span>
-                      <span className="text-sm font-semibold text-white">
-                        Site Perimeter Coordinates
+                      <span className="font-headline-md text-headline-md uppercase font-bold text-[#101010]">
+                        Location Proximity
                       </span>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-4 sm:text-right font-mono text-xs">
-                    <span className="text-slate-300">
-                      DELTA: <strong className="text-emerald-400">42m from centroid (≤ 150m)</strong>
-                    </span>
-                    <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-bold border border-emerald-500/30">
-                      PASS
-                    </span>
+                  <div className="flex items-center space-x-6 sm:text-right">
+                    <div className="font-label-code text-label-code text-[#5F5E5E]">
+                      READING: <span className="text-[#101010] font-bold">42 m from centroid</span>
+                    </div>
+                    <div className="flex items-center space-x-1.5 bg-[#2F6F4E] text-[#F2ECE6] px-3 py-1 font-label-code text-label-code uppercase font-bold">
+                      <span className="material-symbols-outlined text-sm">check_box</span>
+                      <span>PASS</span>
+                    </div>
                   </div>
                 </div>
 
-                {/* Parameter 2: Shutter Release Latency */}
-                <div className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-9 h-9 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-slate-300">
+                {/* Row 2: Capture Time */}
+                <div className="py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-8 h-8 bg-[#101010] text-[#F2ECE6] flex items-center justify-center">
                       <span className="material-symbols-outlined text-lg">schedule</span>
                     </div>
                     <div>
-                      <span className="font-mono text-[11px] text-slate-400 block">
-                        CHECK 02 // TIMESTAMP VALIDATION
+                      <span className="font-label-code text-label-code uppercase text-[#8C8B91] block">
+                        CHECK PARAMETER 02
                       </span>
-                      <span className="text-sm font-semibold text-white">
-                        Capture-to-Upload Latency
+                      <span className="font-headline-md text-headline-md uppercase font-bold text-[#101010]">
+                        Capture Time Latency
                       </span>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-4 sm:text-right font-mono text-xs">
-                    <span className="text-slate-300">
-                      RECORD: <strong className="text-emerald-400">182 seconds (Live Capture)</strong>
-                    </span>
-                    <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-bold border border-emerald-500/30">
-                      PASS
-                    </span>
+                  <div className="flex items-center space-x-6 sm:text-right">
+                    <div className="font-label-code text-label-code text-[#5F5E5E]">
+                      READING: <span className="text-[#101010] font-bold">3 min before upload</span>
+                    </div>
+                    <div className="flex items-center space-x-1.5 bg-[#2F6F4E] text-[#F2ECE6] px-3 py-1 font-label-code text-label-code uppercase font-bold">
+                      <span className="material-symbols-outlined text-sm">check_box</span>
+                      <span>PASS</span>
+                    </div>
                   </div>
                 </div>
 
-                {/* Parameter 3: Visual Morphology Match (Interactive) */}
+                {/* Row 3: Stage match (Interactive Flagged state) */}
                 <div
-                  className={`py-4 px-3 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors ${
+                  className={`py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-3 -mx-3 border-l-4 transition-all ${
                     demoFlagResolved
-                      ? "bg-emerald-500/10 border border-emerald-500/30"
-                      : "bg-amber-500/10 border border-amber-500/30"
+                      ? "border-[#2F6F4E] bg-[#2F6F4E]/10"
+                      : "border-[#FCBC18] bg-[#FCBC18]/10"
                   }`}
                 >
-                  <div className="flex items-center space-x-3">
+                  <div className="flex items-center space-x-4">
                     <div
-                      className={`w-9 h-9 rounded-lg flex items-center justify-center font-bold ${
+                      className={`w-8 h-8 flex items-center justify-center ${
                         demoFlagResolved
-                          ? "bg-emerald-500/20 text-emerald-300"
-                          : "bg-amber-500/20 text-amber-300"
+                          ? "bg-[#2F6F4E] text-[#F2ECE6]"
+                          : "bg-[#101010] text-[#FCBC18]"
                       }`}
                     >
                       <span className="material-symbols-outlined text-lg">
-                        {demoFlagResolved ? "check_circle" : "report"}
+                        {demoFlagResolved ? "verified" : "layers"}
                       </span>
                     </div>
                     <div>
-                      <span className="font-mono text-[11px] text-slate-400 block">
-                        CHECK 03 // STRUCTURAL MORPHOLOGY
+                      <span className="font-label-code text-label-code uppercase text-[#8C8B91] block">
+                        CHECK PARAMETER 03
                       </span>
-                      <span className="text-sm font-semibold text-white">
-                        Rebar Reinforcement Density
+                      <span className="font-headline-md text-headline-md uppercase font-bold text-[#101010]">
+                        Stage Morphology Match
                       </span>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-4 sm:text-right font-mono text-xs">
-                    <span className="text-slate-200">
+                  <div className="flex items-center space-x-6 sm:text-right">
+                    <div className="font-label-code text-label-code text-[#101010]">
                       {demoFlagResolved ? (
-                        <span className="text-emerald-300 font-medium">
-                          Auditor verified via rebar delivery slip CH-9812
+                        <span>
+                          REMEDIATION:{" "}
+                          <span className="text-[#2F6F4E] font-bold">
+                            Rebar mesh verified by secondary inspector
+                          </span>
                         </span>
                       ) : (
-                        <span className="text-amber-300 font-medium">
-                          Flag: Optical rebar coverage below 65% threshold
+                        <span>
+                          REASON:{" "}
+                          <span className="font-bold underline decoration-[#B3261E]">
+                            No reinforcement visible
+                          </span>
                         </span>
                       )}
-                    </span>
-                    <span
-                      className={`px-2 py-0.5 rounded font-bold border ${
+                    </div>
+                    <div
+                      className={`flex items-center space-x-1.5 px-3 py-1 font-label-code text-label-code uppercase font-bold border border-[#101010] ${
                         demoFlagResolved
-                          ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
-                          : "bg-amber-500/20 text-amber-300 border-amber-500/40"
+                          ? "bg-[#2F6F4E] text-[#F2ECE6]"
+                          : "bg-[#FCBC18] text-[#101010]"
                       }`}
                     >
-                      {demoFlagResolved ? "CLEARED" : "FLAGGED"}
-                    </span>
+                      <span className="material-symbols-outlined text-sm">
+                        {demoFlagResolved ? "check_circle" : "warning"}
+                      </span>
+                      <span>{demoFlagResolved ? "RESOLVED" : "FLAGGED"}</span>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Interactive Simulation Console */}
-              <div className="mt-8 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="font-mono text-xs text-slate-400">
-                  DECISION:{" "}
+              {/* Panel Footer / Interactive Simulation Toggle */}
+              <div className="mt-8 pt-6 border-t border-[#A39B8F]/40 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="font-label-code text-label-code text-[#5F5E5E]">
+                  AUDIT DECISION:{" "}
                   {demoFlagResolved ? (
-                    <span className="text-emerald-400 font-bold">
-                      ALL CHECKS PASSED // CRYPTOGRAPHIC SEAL RELEASED
+                    <span className="text-[#2F6F4E] font-bold">
+                      CLEARANCE GRANTED // CERTIFICATE UNLOCKED
                     </span>
                   ) : (
-                    <span className="text-amber-400 font-bold">
-                      PAYMENT RELEASE BLOCKED // AWAITING AUDITOR RESOLUTION
+                    <span className="text-[#B3261E] font-bold">
+                      CERTIFICATE ISSUANCE HALTED
                     </span>
                   )}
                 </div>
@@ -959,26 +908,28 @@ export const LandingPage = () => {
                 <div className="flex items-center space-x-3 w-full sm:w-auto">
                   <button
                     onClick={() => setDemoFlagResolved(!demoFlagResolved)}
-                    className="w-full sm:w-auto border border-white/20 hover:border-amber-400 active:scale-[0.98] text-white hover:text-amber-400 px-4 py-2.5 rounded font-mono text-xs uppercase tracking-wider transition-all cursor-pointer"
+                    className="w-full sm:w-auto bg-[#E6E2DD] text-[#101010] px-4 py-2 font-label-code text-label-code uppercase tracking-wider font-bold border border-[#101010] hover:bg-[#101010] hover:text-[#FCBC18] transition-colors cursor-pointer"
                     type="button"
                   >
-                    {demoFlagResolved ? "Re-open Defect Flag" : "Simulate Auditor Triage"}
+                    {demoFlagResolved ? "Re-open Defect Flag" : "Simulate Auditor Review"}
                   </button>
 
                   <button
                     disabled={!demoFlagResolved}
                     onClick={() => navigate("/login")}
-                    className={`w-full sm:w-auto px-5 py-2.5 rounded font-mono text-xs uppercase tracking-wider font-bold flex items-center justify-center space-x-2 transition-all ${
+                    className={`w-full sm:w-auto px-6 py-3 font-label-code text-label-code uppercase tracking-wider font-bold border border-[#101010] flex items-center justify-center space-x-2 transition-all ${
                       demoFlagResolved
-                        ? "bg-amber-400 hover:bg-amber-300 active:scale-[0.98] text-black shadow-lg shadow-amber-400/20 cursor-pointer"
-                        : "bg-white/5 text-slate-500 border border-white/10 cursor-not-allowed"
+                        ? "bg-[#FCBC18] text-[#101010] cursor-pointer shadow-[2px_2px_0px_#101010] hover:bg-[#101010] hover:text-[#FCBC18]"
+                        : "bg-[#101010] text-[#FCBC18] cursor-not-allowed shadow-[2px_2px_0px_#B3261E]"
                     }`}
                     type="button"
                   >
-                    <span className="material-symbols-outlined text-sm">
+                    <span className="material-symbols-outlined text-base">
                       {demoFlagResolved ? "key" : "lock"}
                     </span>
-                    <span>{demoFlagResolved ? "Unlock Portal" : "Gate Blocked"}</span>
+                    <span>
+                      {demoFlagResolved ? "Proceed to Signoff" : "Blocked: 1 open flag"}
+                    </span>
                   </button>
                 </div>
               </div>
@@ -987,160 +938,269 @@ export const LandingPage = () => {
         </section>
 
         {/* ========================================================================= */}
-        {/* 6. SECTION: ROLE AUTHORITY & RBAC MATRIX                                  */}
+        {/* 6. SECTION 5.6: ROLE MANUAL (Paper Background #E6E2DD)                    */}
         {/* ========================================================================= */}
         <section
           id="roles"
-          className="w-full py-20 px-4 sm:px-6 lg:px-8 border-b border-white/10 bg-[#0c0e14]"
+          className="w-full bg-[#E6E2DD] text-[#101010] px-6 md:px-12 lg:px-20 py-20 border-t border-[#A39B8F]/30"
         >
-          <div className="max-w-7xl mx-auto">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-8 border-b border-white/10">
-              <div>
-                <div className="inline-flex items-center space-x-2 text-xs font-mono text-amber-400 uppercase tracking-widest mb-2">
-                  <span className="w-2 h-2 bg-amber-400 rounded-xs" />
-                  <span>04 // ROLE AUTHORITY &amp; ACCESS MATRIX</span>
-                </div>
-                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-white">
-                  Three Autonomous Operational Roles
+          <div className="w-full max-w-7xl mx-auto">
+            {/* Section Header */}
+            <div className="w-full pb-8 border-b border-[#A39B8F]/40 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div className="flex items-center space-x-4">
+                <span className="font-label-code text-label-code text-[#101010] bg-[#FCBC18] px-2 py-0.5 font-bold uppercase tracking-widest border border-[#101010]">
+                  03 / ROLES
+                </span>
+                <h2 className="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-[#101010] uppercase font-bold tracking-tight">
+                  Role Manual &amp; Authority Matrix
                 </h2>
               </div>
-              <div className="font-mono text-xs text-slate-400">
-                SPEC: ZERO-OVERLAP RBAC SECURITY STANDARD
-              </div>
+              <span className="font-label-code text-label-code text-[#8C8B91] uppercase">
+                SECURITY ACCESS SPEC: RBAC-LEVEL-04
+              </span>
             </div>
 
-            {/* Role Navigation Tabs */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10">
-              {ROLES_DATA.map((role, idx) => {
-                const isActive = selectedRole === idx;
-                return (
-                  <div
-                    key={role.id}
-                    onClick={() => setSelectedRole(idx)}
-                    className={`p-6 rounded-xl border flex flex-col justify-between transition-all cursor-pointer ${
-                      isActive
-                        ? "bg-[#151926] border-amber-400 shadow-xl shadow-amber-500/5 ring-1 ring-amber-400/30"
-                        : "bg-[#10131c] border-white/10 hover:border-white/25"
-                    }`}
-                  >
-                    <div>
-                      <div className="flex items-center justify-between mb-4">
-                        <span
-                          className={`font-mono text-[10px] tracking-wider px-2 py-0.5 rounded border ${role.accent}`}
-                        >
-                          {role.badge}
-                        </span>
-                        <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                      </div>
+            {/* Permission Matrix Table */}
+            <div className="mt-12 bg-[#F2ECE6] border border-[#A39B8F]/40 overflow-x-auto relative">
+              <table className="w-full border-collapse text-left">
+                <thead>
+                  <tr className="bg-[#101010] text-[#F2ECE6] font-label-meta text-label-meta uppercase tracking-widest">
+                    <th className="p-4 border-r border-[#A39B8F]/30 w-2/5">FIELD ACTION / PRIVILEGE</th>
+                    <th className="p-4 border-r border-[#A39B8F]/30 w-1/5 text-center">SITE SUPERVISOR</th>
+                    <th className="p-4 border-r border-[#A39B8F]/30 w-1/5 text-center">STORE IN-CHARGE</th>
+                    <th className="p-4 w-1/5 text-center">PROJECT AUDITOR</th>
+                  </tr>
+                </thead>
+                <tbody className="font-label-code text-label-code divide-y divide-[#A39B8F]/30 text-[#101010]">
+                  <tr className="hover:bg-[#E6E2DD]/40 transition-colors">
+                    <td className="p-4 font-bold border-r border-[#A39B8F]/30 flex items-center space-x-2">
+                      <span className="w-1.5 h-1.5 bg-[#101010]" />
+                      <span>Upload stage photos</span>
+                    </td>
+                    <td className="p-4 border-r border-[#A39B8F]/30 text-center">
+                      <span className="inline-block px-3 py-1 bg-[#2F6F4E] text-[#F2ECE6] font-bold">YES</span>
+                    </td>
+                    <td className="p-4 border-r border-[#A39B8F]/30 text-center">
+                      <span className="inline-block px-3 py-1 bg-[#E6E2DD] text-[#8C8B91]">NO</span>
+                    </td>
+                    <td className="p-4 text-center">
+                      <span className="inline-block px-3 py-1 bg-[#E6E2DD] text-[#8C8B91]">NO</span>
+                    </td>
+                  </tr>
 
-                      <h3 className="text-xl font-bold text-white mb-2">{role.title}</h3>
-                      <p className="font-mono text-xs text-amber-400 mb-4">{role.scope}</p>
-                      <p className="text-sm text-slate-300 leading-relaxed mb-6">{role.summary}</p>
-                    </div>
+                  <tr className="hover:bg-[#E6E2DD]/40 transition-colors">
+                    <td className="p-4 font-bold border-r border-[#A39B8F]/30 flex items-center space-x-2">
+                      <span className="w-1.5 h-1.5 bg-[#101010]" />
+                      <span>Upload delivery challans</span>
+                    </td>
+                    <td className="p-4 border-r border-[#A39B8F]/30 text-center">
+                      <span className="inline-block px-3 py-1 bg-[#E6E2DD] text-[#8C8B91]">NO</span>
+                    </td>
+                    <td className="p-4 border-r border-[#A39B8F]/30 text-center">
+                      <span className="inline-block px-3 py-1 bg-[#2F6F4E] text-[#F2ECE6] font-bold">YES</span>
+                    </td>
+                    <td className="p-4 text-center">
+                      <span className="inline-block px-3 py-1 bg-[#E6E2DD] text-[#8C8B91]">NO</span>
+                    </td>
+                  </tr>
 
-                    <div className="pt-4 border-t border-white/10 space-y-2">
-                      <div className="font-mono text-xs text-slate-400 mb-2 font-semibold">
-                        KEY PERMISSIONS:
-                      </div>
-                      {role.permissions.map((perm) => (
-                        <div
-                          key={perm.name}
-                          className="flex items-center justify-between font-mono text-xs"
-                        >
-                          <span className="text-slate-300">{perm.name}</span>
-                          <span
-                            className={`font-bold ${
-                              perm.allowed ? "text-emerald-400" : "text-slate-600"
-                            }`}
-                          >
-                            {perm.allowed ? "ENABLED" : "RESTRICTED"}
-                          </span>
-                        </div>
-                      ))}
+                  <tr className="hover:bg-[#E6E2DD]/40 transition-colors">
+                    <td className="p-4 font-bold border-r border-[#A39B8F]/30 flex items-center space-x-2">
+                      <span className="w-1.5 h-1.5 bg-[#101010]" />
+                      <span>Log material issued</span>
+                    </td>
+                    <td className="p-4 border-r border-[#A39B8F]/30 text-center">
+                      <span className="inline-block px-3 py-1 bg-[#E6E2DD] text-[#8C8B91]">NO</span>
+                    </td>
+                    <td className="p-4 border-r border-[#A39B8F]/30 text-center">
+                      <span className="inline-block px-3 py-1 bg-[#2F6F4E] text-[#F2ECE6] font-bold">YES</span>
+                    </td>
+                    <td className="p-4 text-center">
+                      <span className="inline-block px-3 py-1 bg-[#E6E2DD] text-[#8C8B91]">NO</span>
+                    </td>
+                  </tr>
 
-                      <div className="pt-4 mt-4 border-t border-white/10 flex items-center justify-between">
-                        <Link
-                          to="/login"
-                          className="text-xs font-mono font-bold text-amber-400 hover:text-amber-300 flex items-center space-x-1"
-                        >
-                          <span>SIGN IN AS {role.title.toUpperCase()}</span>
-                          <span className="material-symbols-outlined text-sm">arrow_forward</span>
-                        </Link>
-                      </div>
-                    </div>
+                  <tr className="hover:bg-[#E6E2DD]/40 transition-colors">
+                    <td className="p-4 font-bold border-r border-[#A39B8F]/30 flex items-center space-x-2">
+                      <span className="w-1.5 h-1.5 bg-[#101010]" />
+                      <span>Review flags</span>
+                    </td>
+                    <td className="p-4 border-r border-[#A39B8F]/30 text-center">
+                      <span className="inline-block px-3 py-1 bg-[#FCBC18] text-[#101010] font-bold">VIEW</span>
+                    </td>
+                    <td className="p-4 border-r border-[#A39B8F]/30 text-center">
+                      <span className="inline-block px-3 py-1 bg-[#E6E2DD] text-[#8C8B91]">NO</span>
+                    </td>
+                    <td className="p-4 text-center">
+                      <span className="inline-block px-3 py-1 bg-[#2F6F4E] text-[#F2ECE6] font-bold">YES</span>
+                    </td>
+                  </tr>
+
+                  <tr className="hover:bg-[#E6E2DD]/40 transition-colors">
+                    <td className="p-4 font-bold border-r border-[#A39B8F]/30 flex items-center space-x-2">
+                      <span className="w-1.5 h-1.5 bg-[#101010]" />
+                      <span>Approve milestone</span>
+                    </td>
+                    <td className="p-4 border-r border-[#A39B8F]/30 text-center">
+                      <span className="inline-block px-3 py-1 bg-[#E6E2DD] text-[#8C8B91]">NO</span>
+                    </td>
+                    <td className="p-4 border-r border-[#A39B8F]/30 text-center">
+                      <span className="inline-block px-3 py-1 bg-[#E6E2DD] text-[#8C8B91]">NO</span>
+                    </td>
+                    <td className="p-4 text-center">
+                      <span className="inline-block px-3 py-1 bg-[#2F6F4E] text-[#F2ECE6] font-bold">YES</span>
+                    </td>
+                  </tr>
+
+                  <tr className="hover:bg-[#E6E2DD]/40 transition-colors">
+                    <td className="p-4 font-bold border-r border-[#A39B8F]/30 flex items-center space-x-2">
+                      <span className="w-1.5 h-1.5 bg-[#101010]" />
+                      <span>Change thresholds</span>
+                    </td>
+                    <td className="p-4 border-r border-[#A39B8F]/30 text-center">
+                      <span className="inline-block px-3 py-1 bg-[#E6E2DD] text-[#8C8B91]">NO</span>
+                    </td>
+                    <td className="p-4 border-r border-[#A39B8F]/30 text-center">
+                      <span className="inline-block px-3 py-1 bg-[#E6E2DD] text-[#8C8B91]">NO</span>
+                    </td>
+                    <td className="p-4 text-center">
+                      <span className="inline-block px-3 py-1 bg-[#2F6F4E] text-[#F2ECE6] font-bold">YES</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            {/* Role Summaries (3 Column Bento Cards) */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+              {/* Site Supervisor */}
+              <div className="p-6 bg-[#F2ECE6] border border-[#A39B8F]/40 flex flex-col justify-between hover:border-[#101010] transition-colors">
+                <div>
+                  <div className="font-label-meta text-label-meta uppercase tracking-widest text-[#8C8B91] mb-2">
+                    OPERATIONAL TIER 01
                   </div>
-                );
-              })}
+                  <h3 className="font-headline-md text-headline-md font-bold text-[#101010] uppercase mb-3">
+                    Site Supervisor
+                  </h3>
+                  <p className="font-body-md text-body-md text-[#5F5E5E] leading-relaxed">
+                    Captures ground truth at the exact point of execution. Bound by strictly live geolocation and chronological constraints.
+                  </p>
+                </div>
+                <div className="mt-6 pt-4 border-t border-[#A39B8F]/20 flex items-center justify-between font-label-code text-label-code">
+                  <span className="text-[#101010]">CLEARANCE: FIELD DATA ONLY</span>
+                  <Link
+                    to="/login"
+                    className="text-[#7a5900] font-bold hover:underline"
+                  >
+                    LOGIN →
+                  </Link>
+                </div>
+              </div>
+
+              {/* Store In-Charge */}
+              <div className="p-6 bg-[#F2ECE6] border border-[#A39B8F]/40 flex flex-col justify-between hover:border-[#101010] transition-colors">
+                <div>
+                  <div className="font-label-meta text-label-meta uppercase tracking-widest text-[#8C8B91] mb-2">
+                    OPERATIONAL TIER 02
+                  </div>
+                  <h3 className="font-headline-md text-headline-md font-bold text-[#101010] uppercase mb-3">
+                    Store In-Charge
+                  </h3>
+                  <p className="font-body-md text-body-md text-[#5F5E5E] leading-relaxed">
+                    Registers material receipt and reconciles against dispatches. Eliminates inventory ghosting at site perimeters.
+                  </p>
+                </div>
+                <div className="mt-6 pt-4 border-t border-[#A39B8F]/20 flex items-center justify-between font-label-code text-label-code">
+                  <span className="text-[#101010]">CLEARANCE: LOGISTICS LEDGER</span>
+                  <Link
+                    to="/login"
+                    className="text-[#7a5900] font-bold hover:underline"
+                  >
+                    LOGIN →
+                  </Link>
+                </div>
+              </div>
+
+              {/* Project Auditor */}
+              <div className="p-6 bg-[#F2ECE6] border border-[#A39B8F]/40 flex flex-col justify-between border-t-4 border-t-[#FCBC18] hover:border-[#101010] transition-colors">
+                <div>
+                  <div className="font-label-meta text-label-meta uppercase tracking-widest text-[#8C8B91] mb-2">
+                    GOVERNANCE TIER 03
+                  </div>
+                  <h3 className="font-headline-md text-headline-md font-bold text-[#101010] uppercase mb-3">
+                    Project Auditor
+                  </h3>
+                  <p className="font-body-md text-body-md text-[#5F5E5E] leading-relaxed">
+                    Holds final clearance authority with immutable evidentiary backing. The single signatory gatekeeper for financial milestones.
+                  </p>
+                </div>
+                <div className="mt-6 pt-4 border-t border-[#A39B8F]/20 flex items-center justify-between font-label-code text-label-code">
+                  <span className="text-[#2F6F4E] font-bold">CLEARANCE: APEX CRYPTO SEAL</span>
+                  <Link
+                    to="/login"
+                    className="text-[#7a5900] font-bold hover:underline"
+                  >
+                    LOGIN →
+                  </Link>
+                </div>
+              </div>
             </div>
           </div>
         </section>
 
         {/* ========================================================================= */}
-        {/* 7. SECTION: CLOSING MANDATE & ARCHITECTURAL CTA                           */}
+        {/* 7. SECTION 5.7: CLOSING CALL TO ACTION (Dark Ink Section #101010)         */}
         {/* ========================================================================= */}
         <section
           id="spec-2025"
-          className="w-full py-24 px-4 sm:px-6 lg:px-8 border-b border-white/10 bg-[#090b0e] relative overflow-hidden"
+          className="w-full bg-[#101010] text-[#F2ECE6] px-6 md:px-12 lg:px-20 py-28 border-t border-[#A39B8F]/20 relative overflow-hidden"
         >
-          {/* Background Drafting Grid Watermark */}
+          {/* Architectural Construction Crosshair Datum Pattern in Background */}
           <div className="pointer-events-none absolute inset-0 opacity-10 flex items-center justify-center">
-            <div className="w-[800px] h-[800px] border border-white/30 rounded-full flex items-center justify-center">
-              <div className="w-[500px] h-[500px] border border-amber-400/50 flex items-center justify-center">
-                <div className="w-[200px] h-[200px] border border-white/30 rotate-45" />
+            <div className="w-[800px] h-[800px] border border-[#A39B8F] flex items-center justify-center">
+              <div className="w-[500px] h-[500px] border border-[#FCBC18] flex items-center justify-center">
+                <div className="w-[200px] h-[200px] border border-[#A39B8F]" />
               </div>
             </div>
           </div>
 
-          <div className="max-w-4xl mx-auto text-center relative z-10">
-            <div className="inline-flex items-center space-x-2 px-3 py-1 rounded bg-amber-400/10 border border-amber-400/30 text-amber-400 font-mono text-xs uppercase tracking-widest mb-6">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-              <span>CONSTRA MANDATE 2025 // SITE CERTAINTY</span>
+          <div className="relative z-10 w-full max-w-4xl mx-auto flex flex-col items-center text-center">
+            <div className="inline-flex items-center space-x-2 border border-[#FCBC18] px-3 py-1 mb-8 bg-[#101010]">
+              <span className="w-2 h-2 bg-[#FCBC18]" />
+              <span className="font-label-code text-label-code uppercase tracking-widest text-[#FCBC18]">
+                MANDATE 2025 // SITE CERTAINTY
+              </span>
             </div>
 
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white mb-6 text-balance leading-tight">
-              Make every construction claim prove itself.
+            <h2 className="font-display-lg text-display-lg-mobile md:text-display-lg uppercase font-bold text-[#F2ECE6] tracking-tight leading-none mb-6">
+              Make every claim prove itself.
             </h2>
 
-            <p className="text-slate-300 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed mb-10">
-              Eliminate progress fiction, challan over-billing, and off-site material diversion. Deploy CONSTRA across your active civil works today.
+            <p className="font-body-lg text-body-lg text-[#A39B8F] max-w-2xl leading-relaxed mb-10">
+              Eliminate progress fiction, delivery leakage, and phantom material draws. Deploy CONSTRA across your active civil assets today.
             </p>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
               <Link
                 to="/login"
-                className="w-full sm:w-auto bg-amber-400 hover:bg-amber-300 active:scale-[0.98] text-[#0b0d11] font-mono font-bold text-xs uppercase tracking-wider px-8 py-4 rounded shadow-lg shadow-amber-400/20 flex items-center justify-center space-x-2 transition-all"
+                className="w-full sm:w-auto bg-[#FCBC18] text-[#101010] font-label-code text-label-code uppercase tracking-wider px-8 py-4 font-bold border border-[#101010] hover:bg-[#F2ECE6] transition-all shadow-[4px_4px_0px_#101010]"
               >
-                <span>ENTER CONSTRA PORTAL</span>
-                <span className="material-symbols-outlined text-sm font-bold">arrow_forward</span>
+                Open the portal
               </Link>
               <button
                 onClick={() => scrollToSection("protocol")}
-                className="w-full sm:w-auto border border-white/20 hover:border-white/50 active:scale-[0.98] text-white hover:text-amber-300 font-mono text-xs uppercase tracking-wider px-8 py-4 rounded transition-all cursor-pointer"
+                className="w-full sm:w-auto bg-transparent text-[#F2ECE6] font-label-code text-label-code uppercase tracking-wider px-8 py-4 font-bold border border-[#F2ECE6] hover:bg-[#F2ECE6] hover:text-[#101010] transition-colors cursor-pointer"
                 type="button"
               >
-                REVIEW AUDIT PROTOCOL
+                See how it works
               </button>
             </div>
 
-            {/* Performance Metrics Ticker */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-16 pt-12 border-t border-white/10 font-mono text-xs">
-              <div className="p-4 rounded bg-white/5 border border-white/5">
-                <span className="text-slate-400 block mb-1">SYSTEM UPTIME</span>
-                <span className="text-emerald-400 font-bold text-lg tabular-nums">99.98%</span>
-              </div>
-              <div className="p-4 rounded bg-white/5 border border-white/5">
-                <span className="text-slate-400 block mb-1">OCR EXTRACTION LATENCY</span>
-                <span className="text-amber-400 font-bold text-lg tabular-nums">&lt; 3.2 SEC</span>
-              </div>
-              <div className="p-4 rounded bg-white/5 border border-white/5">
-                <span className="text-slate-400 block mb-1">GPS CEP ACCURACY</span>
-                <span className="text-white font-bold text-lg tabular-nums">± 1.4 METERS</span>
-              </div>
-              <div className="p-4 rounded bg-white/5 border border-white/5">
-                <span className="text-slate-400 block mb-1">TAMPER DETECTION</span>
-                <span className="text-emerald-400 font-bold text-lg tabular-nums">SHA-256 SEAL</span>
-              </div>
+            {/* One-line project note */}
+            <div className="mt-16 pt-8 border-t border-[#A39B8F]/20 w-full flex flex-col md:flex-row items-center justify-between gap-4 font-label-meta text-label-meta text-[#8C8B91] uppercase tracking-wider">
+              <span>CONSTRA SPECIFICATION &amp; AUDIT STANDARD // 2025</span>
+              <span className="text-[#FCBC18]">BUILT FOR SITE CERTAINTY</span>
             </div>
           </div>
         </section>
@@ -1149,23 +1209,27 @@ export const LandingPage = () => {
       {/* ========================================================================= */}
       {/* 8. ARCHITECTURAL FOOTER                                                   */}
       {/* ========================================================================= */}
-      <footer className="relative z-10 border-t border-white/10 bg-[#08090c] text-slate-400 font-mono text-xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4 text-center sm:text-left">
-            <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 rounded-xs bg-amber-400" />
-              <span className="font-bold text-white tracking-wider">CONSTRA PLATFORM</span>
-            </div>
-            <span className="hidden sm:inline-block text-slate-600">//</span>
-            <span className="text-[11px] text-slate-400">
-              CIVIL AUDIT &amp; MILESTONE VERIFICATION STANDARD
+      <footer className="relative z-10 w-full bg-[#101010] text-[#F2ECE6] border-t border-[#101010]">
+        <div className="w-full px-6 md:px-10 py-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="flex items-center space-x-3">
+            <span className="font-label-code text-label-code text-[#FCBC18] uppercase tracking-[0.14em]">
+              CONSTRA AUDIT REGISTRY
+            </span>
+            <span className="text-[#A39B8F] text-body-sm">//</span>
+            <span className="font-label-meta text-label-meta text-[#A39B8F] uppercase tracking-[0.12em]">
+              CIVIL STANDARD ASTM-E2018
             </span>
           </div>
-
-          <div className="flex flex-wrap items-center justify-center gap-6 text-[11px]">
-            <span className="text-slate-400">SPEC ASTM-E2018</span>
-            <span className="text-slate-400">LAT 40.7128° N, 74.0060° W</span>
-            <span className="text-slate-300">© 2025 CONSTRA ENGINEERING</span>
+          <div className="flex flex-wrap items-center gap-6">
+            <span className="font-label-meta text-label-meta text-[#A39B8F] uppercase">
+              DOC REF: CS-8820-AUDIT
+            </span>
+            <span className="font-label-meta text-label-meta text-[#A39B8F] uppercase">
+              COORDINATE: 40.7128° N, 74.0060° W
+            </span>
+            <span className="font-label-code text-label-code text-[#F2ECE6]">
+              © 2025 CONSTRA ENGINEERING CORP.
+            </span>
           </div>
         </div>
       </footer>
