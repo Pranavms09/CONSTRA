@@ -35,7 +35,7 @@ export async function apiFetch(endpoint, options = {}) {
   let res;
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), options.timeout || 10000);
+    const timeoutId = setTimeout(() => controller.abort(), options.timeout || 30000);
     res = await fetch(url, {
       ...options,
       headers,
@@ -45,7 +45,7 @@ export async function apiFetch(endpoint, options = {}) {
   } catch (networkError) {
     if (networkError.name === "AbortError") {
       throw new Error(
-        `Backend server at ${API_BASE_URL} timed out after 10s. Please ensure FastAPI is running and responsive.`
+        `Backend server at ${API_BASE_URL} timed out after 30s. Free cloud instances take ~30s to wake up from idle. Please refresh.`
       );
     }
     throw new Error(
@@ -76,7 +76,7 @@ export async function demoLoginApi(role) {
   let res;
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
     res = await fetch(url, {
       method: "POST",
       headers: {
