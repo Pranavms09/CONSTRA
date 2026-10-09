@@ -5,7 +5,7 @@ import hashlib
 import json
 from decimal import Decimal
 from datetime import datetime, date, timezone
-from typing import Optional, List, Any, Dict
+from typing import Optional, List, Any, Dict, cast
 from PIL import Image
 
 from fastapi import (
@@ -98,7 +98,8 @@ def run_ocr_background(challan_id: int):
                 all_vendors = db.query(Vendor).all()
                 if all_vendors:
                     vendor_names: list[str] = [str(getattr(v, "name", "") or "") for v in all_vendors]
-                    v_match = process.extractOne(
+                    extract_one = cast(Any, process.extractOne)
+                    v_match = extract_one(
                         str(fields["vendor"]),
                         vendor_names,
                         scorer=fuzz.token_set_ratio
@@ -132,8 +133,9 @@ def run_ocr_background(challan_id: int):
                         norm = re.sub(r"\brbr\b", "rebar", norm, flags=re.IGNORECASE)
                         norm = re.sub(r"\bbars?\b", "rebar", norm, flags=re.IGNORECASE)
                         mat_names: list[str] = [str(getattr(m, "name", "") or "") for m in all_materials]
-                        best = process.extractOne(
-                            str(norm),
+                        extract_one = cast(Any, process.extractOne)
+                        best = extract_one(
+                            norm,
                             mat_names,
                             scorer=fuzz.token_set_ratio
                         )

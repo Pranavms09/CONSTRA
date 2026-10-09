@@ -866,7 +866,7 @@ export const AuditorHome = () => {
                       placeholder="e.g. John Doe"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
-                      className="w-full bg-[#E6E2DD] border border-on-surface px-3 py-2 text-[#101010] font-label-code text-label-code outline-none focus:border-primary-container"
+                      className="w-full bg-[#E6E2DD] border border-on-surface px-3 py-2 text-[#101010] font-label-code text-label-code outline-none focus:ring-2 focus:ring-primary-container"
                     />
                   </div>
 
@@ -878,7 +878,7 @@ export const AuditorHome = () => {
                       placeholder="user@gmail.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full bg-[#E6E2DD] border border-on-surface px-3 py-2 text-[#101010] font-label-code text-label-code outline-none focus:border-primary-container"
+                      className="w-full bg-[#E6E2DD] border border-on-surface px-3 py-2 text-[#101010] font-label-code text-label-code outline-none focus:ring-2 focus:ring-primary-container"
                     />
                   </div>
 
@@ -887,7 +887,7 @@ export const AuditorHome = () => {
                     <select
                       value={role}
                       onChange={(e) => setRole(e.target.value)}
-                      className="w-full bg-[#E6E2DD] border border-on-surface px-3 py-2 text-[#101010] font-label-code text-label-code uppercase outline-none focus:border-primary-container"
+                      className="w-full bg-[#E6E2DD] border border-on-surface px-3 py-2 text-[#101010] font-label-code text-label-code uppercase outline-none focus:ring-2 focus:ring-primary-container"
                     >
                       <option value="supervisor">SITE SUPERVISOR (LEVEL-01)</option>
                       <option value="store_incharge">STORE IN-CHARGE (LEVEL-02)</option>
