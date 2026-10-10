@@ -554,6 +554,15 @@ def confirm_challan(
     db.commit()
     db.refresh(challan)
 
+    # Blockchain anchoring hook: enqueue confirmed challan hash (fail-safe)
+    from app.services.chain_hooks import enqueue_anchor
+    enqueue_anchor(
+        entity="challan",
+        entity_id=str(challan.id),
+        sha256=challan.sha256,
+        project_id=str(challan.project_id) if challan.project_id else None,
+    )
+
     # Run Reconciliation & Generate Alerts
     reconcile_results = reconcile_challan(db, challan)
 

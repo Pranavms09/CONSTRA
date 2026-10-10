@@ -44,7 +44,7 @@ JOBS_DB: Dict[str, Dict[str, Any]] = {}
 
 class CreateClaimPayload(BaseModel):
     id: Optional[str] = None
-    claimant: Optional[str] = "Apex Site Operations"
+    claimant: Optional[str] = "PVGCOE Nashik Project Operations"
     policy_no: Optional[str] = "POL-INSP-LOT81"
     project_id: Optional[str] = "project-001"
     type: Optional[str] = "Stage Milestone Verification"
@@ -79,7 +79,7 @@ def list_claims():
     return [
         {
             "id": c["id"],
-            "claimant": c.get("claimant", "Apex Infrastructure Ltd"),
+            "claimant": c.get("claimant", "PVGCOE Nashik Infrastructure"),
             "policy_no": c.get("policy_no", "POL-INSP-001"),
             "type": c.get("type", "Stage Milestone Verification"),
             "filed_at": c.get("filed_at", datetime.now(timezone.utc).isoformat()),
@@ -101,7 +101,7 @@ def create_claim(payload: CreateClaimPayload):
 
     new_claim = {
         "id": claim_id,
-        "claimant": payload.claimant or "Apex Site Operations",
+        "claimant": payload.claimant or "PVGCOE Nashik Project Operations",
         "policy_no": payload.policy_no or "POL-INSP-LOT81",
         "project_id": payload.project_id or "project-001",
         "type": payload.type or "Stage Milestone Verification",
@@ -146,8 +146,8 @@ def get_claim(claim_id: str):
             try:
                 exif_report = analyze_exif_gps(
                     photo_path,
-                    site_latitude=28.6280,
-                    site_longitude=77.3649,
+                    site_latitude=20.03639,
+                    site_longitude=73.79959,
                 )
             except Exception:
                 exif_report = None
@@ -206,7 +206,7 @@ def process_agent_command(job_id: str, claim_id: str, command: str, params: Opti
                     photo_path = Path("backend") / "uploads" / photo_file
                 if photo_path.is_file():
                     try:
-                        report = analyze_exif_gps(photo_path, site_latitude=28.6280, site_longitude=77.3649)
+                        report = analyze_exif_gps(photo_path, site_latitude=20.03639, site_longitude=73.79959)
                         gps_check = next((c for c in report.get("checks", []) if c.get("name") == "gps_geofence"), None)
                         if gps_check and "details" in gps_check:
                             dist = gps_check["details"].get("distance_from_site_m", 0.0)

@@ -32,12 +32,22 @@ venv/
 *.sqlite
 *.sqlite3
 
-# Node / Frontend
+# Node / Frontend / Contracts
 frontend/node_modules/
+contracts/node_modules/
 node_modules/
 frontend/dist/
 dist/
+contracts/artifacts/
+contracts/cache/
+contracts/typechain-types/
+contracts/ignition/deployments/
+ignition/deployments/
+contracts/.env
+contracts/.env.*
+!contracts/.env.example
 .DS_Store
-# Uploads
-uploads/
-backend/uploads/
+*.log
+.idea/
+Mobile App/
+mobile

@@ -261,7 +261,7 @@ export const ImageAnalysisSection = () => {
               {/* HUD Overlay Badges */}
               <div className="absolute top-2 left-2 flex flex-col gap-1 pointer-events-none">
                 <span className="font-label-code text-label-code bg-[#101010]/90 text-[#f2f0f6] px-2 py-0.5 border border-[#d4c5ac]/40 tracking-wider">
-                  GEOTAG: 28.6280° N, 77.3649° E [MATCHED: LOT B-04]
+                  GEOTAG: 20.0364° N, 73.7996° E [MATCHED: PVGCOE NASHIK]
                 </span>
                 <span className="font-label-code text-label-code bg-[#101010]/90 text-[#f2f0f6] px-2 py-0.5 border border-[#d4c5ac]/40 tracking-wider">
                   TIMESTAMP: 2026-10-09 13:42:18 UTC

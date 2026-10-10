@@ -117,7 +117,7 @@ export const SupervisorHome = () => {
       confidence: "—",
       stage: "STAGE #02: STRUCTURAL SLAB CONCRETE CASTING & REBAR BINDING",
       sensor: "LOCAL INGESTION SENSOR // EXIF INTEGRITY VALIDATED",
-      geotag: "28.6280° N, 77.3649° E [MATCHED: LOT B-04]",
+      geotag: "20.0364° N, 73.7996° E [MATCHED: PVGCOE NASHIK]",
       timestamp: now,
     });
     setAiDescription("");
