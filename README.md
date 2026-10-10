@@ -1,11 +1,12 @@
-# SiteVerify: Multi-Stage Construction Milestone Verifier
+# CONSTRA: Multi-Stage Construction Milestone Verifier & Anti-Fraud Platform
 
-> **Automated construction site-audit platform leveraging Vision-Language Models (VLM), challan OCR reconciliation, metadata tamper detection, and statistical anomaly detection to prevent milestone fraud and gate payment certification.**
+> **CONSTRA is an automated construction site-audit and civil fraud prevention platform leveraging Vision-Language Models (VLM), delivery challan OCR reconciliation, EXIF geospatial forensics, statistical material anomaly detection, Cloudinary CDN storage, and immutable blockchain anchoring to prevent milestone fraud and gate payment certification.**
 
 [![Domain](https://img.shields.io/badge/Domain-PropTech%20%7C%20Computer%20Vision%20%7C%20Fraud%20Detection-blue)](#)
 [![Backend](https://img.shields.io/badge/Backend-FastAPI%20%7C%20Python%203.11-green)](#)
 [![Frontend](https://img.shields.io/badge/Frontend-React%20%7C%20Vite%20%7C%20TailwindCSS-cyan)](#)
 [![Database](https://img.shields.io/badge/Database-PostgreSQL%20%7C%20SQLAlchemy-blueviolet)](#)
+[![Blockchain](https://img.shields.io/badge/Blockchain-Ethereum%20Sepolia%20%7C%20Hardhat-orange)](#)
 [![Status](https://img.shields.io/badge/Status-Specification%20%26%20Design%20Complete-success)](#)
 
 ---
@@ -21,6 +22,7 @@
   - [3. Challan OCR & BOQ Reconciliation](#3-challan-ocr--boq-reconciliation)
   - [4. Material Consumption Anomaly Engine](#4-material-consumption-anomaly-engine)
   - [5. Milestone Clearance & Certificate Gating](#5-milestone-clearance--certificate-gating)
+  - [6. Blockchain Evidence Anchoring & Cloudinary CDN](#6-blockchain-evidence-anchoring--cloudinary-cdn)
 - [User Personas & Role-Based Access Control](#-user-personas--role-based-access-control)
 - [Milestone State Machine](#-milestone-state-machine)
 - [Technology Stack](#-technology-stack)
@@ -38,11 +40,13 @@
 
 General contractors and infrastructure developers routinely lose up to 10–15% of project capital to fabricated progress claims, ghost deliveries, and off-book material diversion. In traditional construction monitoring, milestone payments are approved based on paper challans, self-reported spreadsheets, and easily manipulated photo albums.
 
-**SiteVerify** changes this paradigm by turning milestone verification into an automated, multi-source evidence pipeline:
+**CONSTRA** changes this paradigm by turning milestone verification into an automated, multi-source evidence pipeline:
 - **Vision-Language Models (VLM)** audit stage completion photos against contract stage descriptions.
 - **EXIF Forensics & SHA-256 Hashing** catch off-site spoofing, recycled photos, and edited timestamps.
 - **OCR & Unit Normalization** extract line items from vendor delivery slips (challans) and reconcile them with the Bill of Quantities (BOQ).
 - **Progress-Tied Anomaly Detection** flags abnormal consumption ratios and statistical $z$-score deviations.
+- **Cloudinary CDN Distribution** serves evidence media reliably across all authority dashboards.
+- **Ethereum Sepolia Smart Contract Anchoring** creates immutable proof-of-existence for milestone evidence and clearance certificates.
 - **Cryptographically Gated Certificates** strictly prevent milestone certificate issuance whenever open critical alerts exist.
 
 ---
@@ -65,35 +69,38 @@ General contractors and infrastructure developers routinely lose up to 10–15% 
 
 ## 🏗️ System Architecture
 
-SiteVerify is engineered as a **Modular Monolith** with clear bounded contexts, asynchronous AI task execution, and an extensible verification pipeline.
+**CONSTRA** is engineered as a **Modular Monolith** with clear bounded contexts, asynchronous AI task execution, an extensible verification pipeline, Cloudinary CDN delivery, and immutable Ethereum Sepolia blockchain anchoring.
 
 ```mermaid
 flowchart TD
-    subgraph Clients["Frontend Clients (React + Vite + TailwindCSS)"]
-        SP["Site Supervisor (Mobile-First)"]
-        SC["Store In-Charge (Mobile / Tablet)"]
+    subgraph Clients["Frontend Clients (React + Vite + TailwindCSS + Android Kotlin)"]
+        SP["Site Supervisor (Mobile App / Web)"]
+        SC["Store In-Charge (Mobile App / Tablet)"]
         AU["Project Auditor (Desktop Portal)"]
     end
 
     subgraph Gateway["Application Layer (FastAPI Backend)"]
-        Auth["Auth & RBAC Middleware (JWT + Bcrypt)"]
+        Auth["Auth & RBAC Middleware (Firebase + JWT)"]
         UploadAPI["Upload & Ingestion Service (SHA-256)"]
         AlertEngine["Alert & Triage Engine"]
         FSM["Stage State Machine & Gatekeeper"]
         CertService["Certificate Service (PDF + Snapshot)"]
+        ChainWorker["Blockchain Anchor Worker (Web3.py)"]
     end
 
     subgraph Workers["Asynchronous Verification Pipeline"]
         EXIF["EXIF & Forensic Checker (Haversine + Time + Tags)"]
-        VLM["VLM Audit Worker (Claude / Gemini Multimodal)"]
+        VLM["VLM Audit Worker (Gemini 2.5 Flash / Claude)"]
         OCR["Challan OCR & Normalizer (Tesseract / VLM)"]
         BOQ["BOQ Reconciler (Unit Normalization)"]
         Anomaly["Anomaly Detector (Progress Ratio + Z-Score)"]
     end
 
-    subgraph Storage["Persistent Layer"]
-        DB[("PostgreSQL Database\n+ Audit Chain & Triggers")]
-        FS[("Secure File Storage\n(Originals + SHA-256 Hashes)")]
+    subgraph Storage["Persistent & Decentralized Layer"]
+        DB[("PostgreSQL / SQLite Database\n+ Audit Chain & Triggers")]
+        Cloudinary[("Cloudinary CDN\n(Evidence Images)")]
+        Firestore[("Firebase Cloud Firestore\n(Live Sync & Mirror)")]
+        Sepolia[("Ethereum Sepolia\nEvidenceRegistry Smart Contract")]
     end
 
     SP -->|Uploads Site Photos| UploadAPI
@@ -101,7 +108,7 @@ flowchart TD
     AU -->|Reviews Alerts & Approves| Gateway
 
     UploadAPI --> Auth
-    UploadAPI --> FS
+    UploadAPI --> Cloudinary
     UploadAPI --> Workers
 
     Workers --> AlertEngine
@@ -109,6 +116,10 @@ flowchart TD
     FSM --> DB
     CertService --> DB
     CertService --> AU
+
+    UploadAPI --> ChainWorker
+    ChainWorker --> Sepolia
+    ChainWorker --> Firestore
 ```
 
 ---
@@ -142,11 +153,16 @@ flowchart TD
   $$\text{Can Clear} \iff \text{Photo Verified} \land \text{Metadata Valid} \land \text{Material Reconciled} \land \neg(\text{Open Critical Alerts}) \land (\text{Approver} \ne \text{Submitter})$$
 - Generates a tamper-evident PDF milestone certificate containing a complete snapshot of evidence hashes, verification check outcomes, timestamps, and auditor credentials.
 
+### 6. Blockchain Evidence Anchoring & Cloudinary CDN
+- **Cloudinary CDN Integration:** Evidence photos captured from the Android app or web portal are uploaded directly to Cloudinary CDN, generating immutable secure HTTPS URLs accessible across all three role portals.
+- **Ethereum Sepolia Anchoring:** An automated background worker calculates the SHA-256 evidence fingerprint and anchors it to the `EvidenceRegistry` smart contract on Sepolia testnet (`0x9B4E3d4b62e59B622d5E69cbea0393A6Ee8Fdd14`), recording block number, transaction hash, and timestamp.
+- **Independent Verification:** Any auditor or regulator can verify the authenticity of a photo or completion certificate directly on Etherscan or via the `/api/v1/chain/verify/{fingerprint}` endpoint.
+
 ---
 
 ## 👥 User Personas & Role-Based Access Control
 
-SiteVerify enforces separation of duties across three specialized roles:
+**CONSTRA** enforces separation of duties across three specialized roles:
 
 | Role | Primary User | Core Responsibilities | Interface Focus |
 | :--- | :--- | :--- | :--- |
