@@ -30,5 +30,11 @@
     "tailwindcss": "^4.3.3",
     "typescript": "~6.0.2",
     "vite": "^8.3.0"
+  },
+  "optionalDependencies": {
+    "@oxlint/binding-linux-x64-gnu": "^1.87.0",
+    "@oxlint/binding-linux-x64-musl": "^1.87.0",
+    "@rolldown/binding-linux-x64-gnu": "^1.2.13",
+    "@rolldown/binding-linux-x64-musl": "^1.2.13"
   }
 }
