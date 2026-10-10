@@ -7,39 +7,91 @@ import {
   createUserWithEmailAndPassword,
 } from "firebase/auth";
 import { auth, googleProvider } from "./firebase";
-import { fetchMe, loginWithBackend } from "../api/client";
+import { fetchMe, loginWithBackend, demoLoginApi } from "../api/client";
 
 const AuthContext = createContext(undefined);
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem("siteverify_user");
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [loading, setLoading] = useState(() => {
+    try {
+      return !localStorage.getItem("siteverify_user");
+    } catch {
+      return true;
+    }
+  });
+
+  const saveUser = (profile) => {
+    if (profile) {
+      localStorage.setItem("siteverify_user", JSON.stringify(profile));
+    } else {
+      localStorage.removeItem("siteverify_user");
+    }
+    setUser(profile);
+  };
 
   // Initialize and restore session
   useEffect(() => {
+    let isSubscribed = true;
+
     const initAuth = async () => {
       // Check Firebase state
       if (auth) {
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+          if (!isSubscribed) return;
+
           if (firebaseUser) {
             try {
               const profile = await fetchMe();
-              setUser(profile);
+              if (isSubscribed && profile) {
+                saveUser(profile);
+              }
             } catch (err) {
-              console.warn("Firebase session restore failed, signing out:", err);
-              await signOut(auth);
-              setUser(null);
+              console.warn("Firebase background session check warning:", err);
+              // Do NOT call signOut(auth) - avoids destroying active login sessions
             }
           } else {
-            setUser(null);
+            const demoToken = localStorage.getItem("siteverify_token");
+            if (demoToken) {
+              try {
+                const profile = await fetchMe();
+                if (isSubscribed && profile) saveUser(profile);
+              } catch {
+                localStorage.removeItem("siteverify_token");
+                if (isSubscribed) saveUser(null);
+              }
+            } else {
+              if (isSubscribed) saveUser(null);
+            }
           }
-          setLoading(false);
+          if (isSubscribed) setLoading(false);
         });
 
-        return () => unsubscribe();
+        return () => {
+          isSubscribed = false;
+          unsubscribe();
+        };
       } else {
-        setUser(null);
-        setLoading(false);
+        const demoToken = localStorage.getItem("siteverify_token");
+        if (demoToken) {
+          try {
+            const profile = await fetchMe();
+            if (isSubscribed && profile) saveUser(profile);
+          } catch {
+            localStorage.removeItem("siteverify_token");
+            if (isSubscribed) saveUser(null);
+          }
+        } else {
+          if (isSubscribed) saveUser(null);
+        }
+        if (isSubscribed) setLoading(false);
       }
     };
 
@@ -53,12 +105,21 @@ export const AuthProvider = ({ children }) => {
     const result = await signInWithPopup(auth, googleProvider);
     try {
       const idToken = await result.user.getIdToken(true);
-      const userProfile = await loginWithBackend(claimedRole, idToken);
-      setUser(userProfile);
+      let userProfile;
+      try {
+        userProfile = await loginWithBackend(claimedRole, idToken, false, result.user.displayName);
+      } catch (backendErr) {
+        if (backendErr?.message?.includes("not registered") || backendErr?.status === 403) {
+          userProfile = await loginWithBackend(claimedRole, idToken, true, result.user.displayName);
+        } else {
+          throw backendErr;
+        }
+      }
+      saveUser(userProfile);
       return userProfile;
     } catch (err) {
       await signOut(auth);
-      setUser(null);
+      saveUser(null);
       throw err;
     }
   };
@@ -97,12 +158,21 @@ export const AuthProvider = ({ children }) => {
 
     try {
       const idToken = await userCredential.user.getIdToken(true);
-      const userProfile = await loginWithBackend(claimedRole, idToken);
-      setUser(userProfile);
+      let userProfile;
+      try {
+        userProfile = await loginWithBackend(claimedRole, idToken, false);
+      } catch (backendErr) {
+        if (backendErr?.message?.includes("not registered") || backendErr?.status === 403) {
+          userProfile = await loginWithBackend(claimedRole, idToken, true);
+        } else {
+          throw backendErr;
+        }
+      }
+      saveUser(userProfile);
       return userProfile;
     } catch (err) {
       await signOut(auth);
-      setUser(null);
+      saveUser(null);
       throw err;
     }
   };
@@ -116,18 +186,25 @@ export const AuthProvider = ({ children }) => {
     const result = await createUserWithEmailAndPassword(auth, cleanEmail, cleanPassword);
     try {
       const idToken = await result.user.getIdToken(true);
-      const userProfile = await loginWithBackend(claimedRole, idToken);
-      setUser(userProfile);
+      const userProfile = await loginWithBackend(claimedRole, idToken, true);
+      saveUser(userProfile);
       return userProfile;
     } catch (err) {
       await signOut(auth);
-      setUser(null);
+      saveUser(null);
       throw err;
     }
   };
 
+  const loginAsDemo = async (claimedRole) => {
+    const userProfile = await demoLoginApi(claimedRole);
+    saveUser(userProfile);
+    return userProfile;
+  };
+
   const logout = async () => {
     localStorage.removeItem("siteverify_token");
+    localStorage.removeItem("siteverify_user");
     if (auth) {
       try {
         await signOut(auth);
@@ -146,6 +223,7 @@ export const AuthProvider = ({ children }) => {
         loginWithGoogle,
         loginWithEmail,
         registerWithEmail,
+        loginAsDemo,
         logout,
       }}
     >

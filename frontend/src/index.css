@@ -129,3 +129,26 @@
   line-height: 0.75rem;
   letter-spacing: 0.14em;
 }
+
+.shadow-brutal-sm {
+  box-shadow: 2px 2px 0px #101010;
+}
+.shadow-brutal-sm:active {
+  box-shadow: none;
+}
+
+.input-spec {
+  background-color: #F2ECE6;
+  border: 1px solid rgba(16, 16, 16, 0.4);
+  color: #101010;
+  outline: none;
+  border-radius: 0;
+  transition: border-color 0.15s ease-in-out;
+}
+.input-spec:focus {
+  border-color: #101010;
+}
+.input-spec::placeholder {
+  color: rgba(130, 117, 96, 0.5);
+}
+

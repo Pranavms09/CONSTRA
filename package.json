@@ -1,11 +1,11 @@
 {
-  "name": "constra",
+  "name": "constra-monorepo",
   "private": true,
   "workspaces": [
     "frontend"
   ],
   "scripts": {
-    "build": "npm --prefix frontend run build",
-    "dev": "npm --prefix frontend run dev"
+    "build": "npm run build --workspace=frontend",
+    "dev": "npm run dev --workspace=frontend"
   }
 }

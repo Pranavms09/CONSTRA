@@ -2,24 +2,24 @@ import { initializeApp, getApps } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
-const rawApiKey = import.meta.env.VITE_FIREBASE_API_KEY;
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyA-8HwDzpux74MZ6RIt2yXHPQTesGwA1_Y",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "constra-b561b.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "constra-b561b",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "constra-b561b.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "328961609707",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:328961609707:web:841fdcb96e2e544c8093a",
+};
+
+const rawApiKey = firebaseConfig.apiKey;
 
 export const isFirebaseConfigured = Boolean(
   rawApiKey &&
   typeof rawApiKey === "string" &&
   rawApiKey.trim() !== "" &&
-  rawApiKey !== "AIzaSy..." &&
-  rawApiKey !== "your-api-key"
+  !rawApiKey.includes("your_firebase_api_key") &&
+  rawApiKey !== "AIzaSy..."
 );
-
-const firebaseConfig = {
-  apiKey: rawApiKey || "",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "",
-};
 
 let app = null;
 let auth = null;

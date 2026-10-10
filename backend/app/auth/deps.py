@@ -4,6 +4,7 @@ from sqlalchemy import func
 from app.database import get_db
 from app.models.user import User
 from app.auth.firebase import verify_firebase_token
+from app.config import settings
 
 DEMO_USERS_MAP = {
     "demo-supervisor": ("supervisor@siteverify.com", "Alice Supervisor", "supervisor"),
@@ -91,12 +92,28 @@ def get_current_user(
             detail="Token missing email claim"
         )
 
-    user = db.query(User).filter(func.lower(User.email) == email).first()
+    uid = decoded_token.get("uid")
+    user = db.query(User).filter(
+        (func.lower(User.email) == email) | (User.firebase_uid == uid)
+    ).first()
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Your account is not registered. Contact your Auditor."
-        )
+        if settings.BOOTSTRAP_ADMIN_EMAIL and email == settings.BOOTSTRAP_ADMIN_EMAIL.lower():
+            user = User(
+                email=email,
+                full_name=decoded_token.get("name") or "Bootstrap Project Auditor",
+                role="auditor",
+                is_active=True,
+                firebase_uid=uid,
+                auth_provider=sign_in_provider or "google"
+            )
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Your account is not registered. Contact your Auditor."
+            )
 
     if not user.is_active:
         raise HTTPException(

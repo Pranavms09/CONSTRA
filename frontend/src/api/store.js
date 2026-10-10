@@ -142,3 +142,11 @@ export async function fetchStoreAlerts(projectId, params = {}) {
   const qs = query.toString();
   return apiFetch(`/store/projects/${projectId}/alerts${qs ? `?${qs}` : ""}`);
 }
+
+export async function updateAlertAction(alertId, status, justification) {
+  return apiFetch(`/store/alerts/${alertId}/action`, {
+    method: "POST",
+    body: JSON.stringify({ status, justification }),
+  });
+}
+
