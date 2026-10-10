@@ -1,6 +1,13 @@
 import { auth } from "../auth/firebase";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+const defaultBaseUrl =
+  typeof window !== "undefined" &&
+  window.location.hostname !== "localhost" &&
+  window.location.hostname !== "127.0.0.1"
+    ? "https://constra-backend.onrender.com"
+    : "http://localhost:8000";
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || defaultBaseUrl;
 
 export async function apiFetch(endpoint, options = {}) {
   const demoToken = localStorage.getItem("siteverify_token");
@@ -28,7 +35,7 @@ export async function apiFetch(endpoint, options = {}) {
   let res;
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), options.timeout || 10000);
+    const timeoutId = setTimeout(() => controller.abort(), options.timeout || 30000);
     res = await fetch(url, {
       ...options,
       headers,
@@ -38,7 +45,7 @@ export async function apiFetch(endpoint, options = {}) {
   } catch (networkError) {
     if (networkError.name === "AbortError") {
       throw new Error(
-        `Backend server at ${API_BASE_URL} timed out after 10s. Please ensure FastAPI is running and responsive.`
+        `Backend server at ${API_BASE_URL} timed out after 30s. Free cloud instances take ~30s to wake up from idle. Please refresh.`
       );
     }
     throw new Error(
@@ -48,16 +55,23 @@ export async function apiFetch(endpoint, options = {}) {
 
   if (!res.ok) {
     let errorDetail = `Request failed with status ${res.status}`;
+    let blockers = null;
     try {
       const data = await res.json();
       if (data && data.detail) {
-        errorDetail = typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail);
+        if (typeof data.detail === "object" && data.detail.blockers) {
+          blockers = data.detail.blockers;
+          errorDetail = `${data.detail.message || "Approval blocked"}: ${data.detail.blockers.join(" | ")}`;
+        } else {
+          errorDetail = typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail);
+        }
       }
     } catch {
       // response was not JSON
     }
     const err = new Error(errorDetail);
     err.status = res.status;
+    err.blockers = blockers;
     throw err;
   }
 
@@ -69,7 +83,7 @@ export async function demoLoginApi(role) {
   let res;
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
     res = await fetch(url, {
       method: "POST",
       headers: {
@@ -112,7 +126,7 @@ export async function demoLoginApi(role) {
   return data;
 }
 
-export async function loginWithBackend(claimedRole, idToken) {
+export async function loginWithBackend(claimedRole, idToken, isSignup = false, fullName = null) {
   const url = `${API_BASE_URL}/auth/login`;
   let res;
   try {
@@ -122,11 +136,15 @@ export async function loginWithBackend(claimedRole, idToken) {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${idToken}`,
       },
-      body: JSON.stringify({ claimed_role: claimedRole }),
+      body: JSON.stringify({
+        claimed_role: claimedRole,
+        is_signup: isSignup,
+        full_name: fullName,
+      }),
     });
   } catch (networkError) {
     throw new Error(
-      `Cannot connect to backend server at ${API_BASE_URL}. Please ensure the FastAPI backend is running on port 8000.`
+      `Cannot connect to backend server at ${API_BASE_URL}. Please ensure the backend is running and reachable.`
     );
   }
 
@@ -299,3 +317,12 @@ export async function createClaimApi(claimPayload) {
     body: JSON.stringify(claimPayload),
   });
 }
+
+export async function fetchClaimCertificate(claimId) {
+  return apiFetch(`/api/v1/claims/${claimId}/certificate`);
+}
+
+export async function fetchStageCertificate(stageId) {
+  return apiFetch(`/api/v1/stages/${stageId}/certificate`);
+}
+

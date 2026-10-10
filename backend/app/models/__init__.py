@@ -6,6 +6,7 @@ from app.models.material import Material, UnitConversion, Vendor, BoqItem
 from app.models.challan import Challan, ChallanItem, MaterialIssue
 from app.models.alert import Alert
 from app.models.evidence import Evidence
+from app.models.certificate import ClearanceCertificate
 
 __all__ = [
     "User",
@@ -25,4 +26,5 @@ __all__ = [
     "MaterialIssue",
     "Alert",
     "Evidence",
+    "ClearanceCertificate",
 ]

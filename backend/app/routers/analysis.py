@@ -88,10 +88,48 @@ async def analyze_image(
     # 1. Validate file format, size, and image integrity via PIL
     normalized_mime, sha256_hash = validate_image_file(filename, content_type, file_bytes)
 
-    # 2. Call Google Gemini vision model
+    # 2. Check for duplicate upload across database
+    duplicate_record = db.query(ImageAnalysis).filter(ImageAnalysis.file_hash == sha256_hash).first()
+    is_duplicate = duplicate_record is not None
+    duplicate_of_id = duplicate_record.id if duplicate_record else None
+
+    # 3. Save physical file to shared upload storage for multi-laptop retrieval
+    import os
+    from datetime import datetime, timezone
+    from app.checks.exif_gps_analyzer import analyze_exif_gps
+
+    os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+    ext = os.path.splitext(filename)[1].lower() or ".jpg"
+    safe_filename = f"evd_{sha256_hash[:16]}{ext}"
+    saved_path = os.path.join(settings.UPLOAD_DIR, safe_filename)
+    if not os.path.exists(saved_path):
+        with open(saved_path, "wb") as f:
+            f.write(file_bytes)
+
+    # Also ensure original filename exists in uploads if needed for legacy lookups
+    orig_path = os.path.join(settings.UPLOAD_DIR, os.path.basename(filename))
+    if not os.path.exists(orig_path):
+        with open(orig_path, "wb") as f:
+            f.write(file_bytes)
+
+    # 4. Run real EXIF & GPS geofence analysis
+    exif_report = None
+    try:
+        exif_report = analyze_exif_gps(
+            saved_path,
+            site_latitude=28.6280,
+            site_longitude=77.3649,
+            uploaded_at=datetime.now(timezone.utc),
+            site_radius_m=350.0,
+            max_capture_age_hours=48,
+        )
+    except Exception as exc:
+        logger.warning(f"EXIF analysis note: {exc}")
+
+    # 5. Call Google Gemini vision model
     description = analyze_image_with_gemini(file_bytes, normalized_mime)
 
-    # 3. Persist original AI-generated description in database
+    # 6. Persist original AI-generated description in database
     analysis_record = ImageAnalysis(
         filename=filename,
         content_type=normalized_mime,
@@ -104,7 +142,7 @@ async def analyze_image(
     )
     db.add(analysis_record)
 
-    # 4. Record audit log entry
+    # 7. Record audit log entry
     ip_addr = request.client.host if request.client else None
     audit_entry = AuditLog(
         actor_id=current_user.id if current_user else None,
@@ -113,7 +151,9 @@ async def analyze_image(
         entity_id=sha256_hash[:16],
         detail=json.dumps({
             "filename": filename,
+            "saved_filename": safe_filename,
             "file_size": len(file_bytes),
+            "is_duplicate": is_duplicate,
             "model": settings.GEMINI_MODEL,
             "source": "backend_gemini_vision",
         }),
@@ -135,6 +175,10 @@ async def analyze_image(
         id=analysis_record.id,
         file_size=len(file_bytes),
         file_hash=sha256_hash,
+        file_url=f"/uploads/{safe_filename}",
+        is_duplicate=is_duplicate,
+        duplicate_of_id=duplicate_of_id,
+        exif_gps=exif_report,
         model=settings.GEMINI_MODEL,
         source="backend_gemini_vision",
         created_at=analysis_record.created_at.isoformat() if analysis_record.created_at else None,

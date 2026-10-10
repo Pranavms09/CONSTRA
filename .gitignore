@@ -48,6 +48,8 @@ contracts/.env.*
 !contracts/.env.example
 .DS_Store
 *.log
+.vscode/
 .idea/
+pyrefly.toml
 Mobile App/
 mobile

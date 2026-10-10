@@ -39,7 +39,7 @@ export const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
 
-  const { user, loginWithGoogle, loginWithEmail, registerWithEmail } = useAuth();
+  const { user, loginWithGoogle, loginWithEmail, registerWithEmail, loginAsDemo } = useAuth();
   const navigate = useNavigate();
 
   // If already logged in, redirect to user's assigned dashboard
@@ -48,6 +48,22 @@ export const LoginPage = () => {
       navigate(getRoleHomeRoute(user.role), { replace: true });
     }
   }, [user, navigate]);
+
+  const handleDemoSignIn = async () => {
+    if (loading) return;
+    setLoading(true);
+    setErrorMessage(null);
+
+    try {
+      const loggedInUser = await loginAsDemo(selectedRole);
+      navigate(getRoleHomeRoute(loggedInUser.role), { replace: true });
+    } catch (err) {
+      console.error("Demo sign-in error:", err);
+      setErrorMessage(err?.message || "Failed to sign in with demo credentials.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleGoogleSignIn = async () => {
     if (loading) return;
@@ -60,8 +76,10 @@ export const LoginPage = () => {
     } catch (err) {
       console.error("Google sign-in error:", err);
       let msg = err?.message || "Failed to sign in with Google.";
-      if (msg.includes("popup-closed-by-user")) {
-        msg = "Sign-in popup was closed before completing.";
+      if (msg.includes("popup-closed-by-user") || msg.includes("cancelled-popup-request")) {
+        msg = "Google sign-in popup was closed before completing. Click again to retry, or use the Email & Password form below.";
+      } else if (msg.includes("popup-blocked")) {
+        msg = "Google sign-in popup was blocked by your browser. Please allow popups or use Email & Password below.";
       }
       setErrorMessage(msg);
     } finally {
@@ -97,9 +115,9 @@ export const LoginPage = () => {
       console.error("Email auth error:", err);
       let msg = err?.message || "Failed to authenticate.";
       if (msg.includes("user-not-found") || msg.includes("wrong-password") || msg.includes("invalid-credential")) {
-        msg = "Invalid email or password. Please verify your credentials.";
+        msg = "Invalid email or password. If you don't have an account yet, click 'CREATE ACCOUNT' above to register.";
       } else if (msg.includes("email-already-in-use")) {
-        msg = "This email is already registered in Firebase. Switch to Sign In mode.";
+        msg = "This email is already registered. Click 'HAVE AN ACCOUNT? SIGN IN' above to log in.";
       }
       setErrorMessage(msg);
     } finally {
@@ -110,7 +128,7 @@ export const LoginPage = () => {
   const currentRoleObj = ROLES.find((r) => r.id === selectedRole) || ROLES[0];
 
   return (
-    <div className="bg-[#E6E2DD] text-[#1b1b20] font-body-md text-body-md min-h-screen relative flex flex-col justify-center items-center p-4 sm:p-8 selection:bg-[#FCBC18] selection:text-[#101010]">
+    <div className="bg-[#E6E2DD] text-on-surface font-body-md text-body-md min-h-screen relative flex flex-col justify-center items-center p-4 sm:p-8 selection:bg-[#FCBC18] selection:text-[#101010]">
       {/* 12-Column Coordinate Hairline Grid */}
       <div className="pointer-events-none fixed inset-0 z-0 grid grid-cols-12 gap-4 px-6 opacity-[0.06]">
         {[...Array(12)].map((_, i) => (
@@ -153,7 +171,7 @@ export const LoginPage = () => {
                   CONSTRA
                 </span>
               </Link>
-              <div className="h-[1px] w-16 bg-[#FCBC18]/80" />
+              <div className="h-px w-16 bg-[#FCBC18]/80" />
               <span className="font-label-code text-label-code uppercase text-[#FCBC18] tracking-[0.25em]">
                 TERMINAL OS // VERIFIED AUDIT MATRIX
               </span>
@@ -219,7 +237,7 @@ export const LoginPage = () => {
             <div>
               {/* Portal Subheader & Title */}
               <div className="flex flex-col gap-1 pb-4 border-b border-[#101010]/15">
-                <span className="font-label-code text-label-code text-[#504533] uppercase tracking-[0.2em] flex items-center gap-2">
+                <span className="font-label-code text-label-code text-on-surface-variant uppercase tracking-[0.2em] flex items-center gap-2">
                   <ConstraLogo className="w-4 h-4 object-contain" />
                   SIGN IN // SELECT ROLE PORTAL
                 </span>
@@ -232,7 +250,7 @@ export const LoginPage = () => {
               {errorMessage && (
                 <div
                   role="alert"
-                  className="mt-4 p-3 bg-[#ffdad6] border border-[#ba1a1a] text-[#ba1a1a] font-label-code text-label-code flex items-start justify-between gap-2"
+                  className="mt-4 p-3 bg-error-container border border-error text-error font-label-code text-label-code flex items-start justify-between gap-2"
                 >
                   <div className="flex items-start gap-2">
                     <span className="material-symbols-outlined text-base shrink-0 mt-0.5">warning</span>
@@ -250,7 +268,7 @@ export const LoginPage = () => {
 
               {/* Role Selection Matrix */}
               <fieldset className="mt-5">
-                <legend className="font-label-meta text-label-meta uppercase text-[#504533] tracking-widest mb-3 flex items-center justify-between w-full">
+                <legend className="font-label-meta text-label-meta uppercase text-on-surface-variant tracking-widest mb-3 flex items-center justify-between w-full">
                   <span>OPERATIONAL SECTOR SPECIFICATION</span>
                   <span className="text-[#827560]">SELECT 01</span>
                 </legend>
@@ -268,7 +286,7 @@ export const LoginPage = () => {
                         }`}
                       >
                         <div
-                          className={`absolute top-0 left-0 right-0 h-[3px] transition-colors ${
+                          className={`absolute top-0 left-0 right-0 h-0.75 transition-colors ${
                             isSelected ? "bg-[#FCBC18]" : "bg-transparent"
                           }`}
                         />
@@ -296,7 +314,7 @@ export const LoginPage = () => {
                               {r.level}
                             </span>
                           </div>
-                          <p className="font-body-sm text-body-sm text-[#504533] mt-0.5 leading-snug">
+                          <p className="font-body-sm text-body-sm text-on-surface-variant mt-0.5 leading-snug">
                             {r.description}
                           </p>
                         </div>
@@ -307,8 +325,8 @@ export const LoginPage = () => {
               </fieldset>
 
               {/* RBAC Governance Note */}
-              <div className="mt-3 p-2.5 bg-[#F2ECE6] border border-[#A39B8F]/40 font-label-meta text-[11px] text-[#504533] flex items-center gap-2">
-                <span className="material-symbols-outlined text-sm text-[#7a5900]">shield</span>
+              <div className="mt-3 p-2.5 bg-[#F2ECE6] border border-[#A39B8F]/40 font-label-meta text-[11px] text-on-surface-variant flex items-center gap-2">
+                <span className="material-symbols-outlined text-sm text-primary">shield</span>
                 <span>
                   Role assignment is governed exclusively by the Project Auditor. Unassigned users cannot access site dashboards.
                 </span>
@@ -317,7 +335,7 @@ export const LoginPage = () => {
               {/* Authentication Actions Section */}
               <div className="mt-5 space-y-4">
                 {/* Active Portal Target Indicator */}
-                <div className="flex items-center justify-between px-1 font-label-code text-xs text-[#504533]">
+                <div className="flex items-center justify-between px-1 font-label-code text-xs text-on-surface-variant">
                   <span>PORTAL DESTINATION:</span>
                   <span className="font-bold text-[#101010] uppercase">
                     {currentRoleObj.title} // {currentRoleObj.level}
@@ -328,7 +346,7 @@ export const LoginPage = () => {
                 <button
                   onClick={handleGoogleSignIn}
                   disabled={loading}
-                  className="w-full min-h-[50px] py-3 px-6 bg-[#FCBC18] hover:bg-[#101010] text-[#101010] hover:text-[#FCBC18] border border-[#101010] font-headline-md text-headline-md font-bold uppercase tracking-wider flex items-center justify-center gap-3 transition-colors shadow-[2px_2px_0px_#101010] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none cursor-pointer disabled:opacity-50"
+                  className="w-full min-h-12.5 py-3 px-6 bg-[#FCBC18] hover:bg-[#101010] text-[#101010] hover:text-[#FCBC18] border border-[#101010] font-headline-md text-headline-md font-bold uppercase tracking-wider flex items-center justify-center gap-3 transition-colors shadow-brutal-sm active:translate-x-px active:translate-y-px cursor-pointer disabled:opacity-50"
                   type="button"
                 >
                   <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
@@ -356,8 +374,8 @@ export const LoginPage = () => {
 
                 {/* Divider */}
                 <div className="relative flex items-center justify-center my-3">
-                  <div className="w-full h-[1px] bg-[#101010]/20" />
-                  <span className="absolute bg-[#E6E2DD] px-3 font-label-code text-[11px] uppercase tracking-widest text-[#504533]">
+                  <div className="w-full h-px bg-[#101010]/20" />
+                  <span className="absolute bg-[#E6E2DD] px-3 font-label-code text-[11px] uppercase tracking-widest text-on-surface-variant">
                     OR GMAIL &amp; PASSWORD
                   </span>
                 </div>
@@ -365,20 +383,20 @@ export const LoginPage = () => {
                 {/* 2. Email & Password Form */}
                 <form onSubmit={handleEmailPasswordSubmit} className="space-y-3">
                   <div className="flex items-center justify-between pb-1">
-                    <span className="font-label-meta text-label-meta uppercase text-[#504533] tracking-wider">
+                    <span className="font-label-meta text-label-meta uppercase text-on-surface-variant tracking-wider">
                       {authMode === "login" ? "SIGN IN WITH CREDENTIALS" : "REGISTER CREDENTIALS"}
                     </span>
                     <button
                       type="button"
                       onClick={() => setAuthMode(authMode === "login" ? "register" : "login")}
-                      className="font-label-code text-xs text-[#7a5900] underline font-bold cursor-pointer hover:text-[#101010]"
+                      className="font-label-code text-xs text-primary underline font-bold cursor-pointer hover:text-[#101010]"
                     >
                       {authMode === "login" ? "CREATE ACCOUNT" : "HAVE AN ACCOUNT? SIGN IN"}
                     </button>
                   </div>
 
                   <div>
-                    <label className="font-label-meta text-[10px] uppercase text-[#504533] block mb-1">
+                    <label className="font-label-meta text-[10px] uppercase text-on-surface-variant block mb-1">
                       EMAIL ADDRESS
                     </label>
                     <input
@@ -387,12 +405,12 @@ export const LoginPage = () => {
                       placeholder="pranavms09@gmail.com"
                       value={emailInput}
                       onChange={(e) => setEmailInput(e.target.value)}
-                      className="w-full h-[44px] bg-[#F2ECE6] border border-[#101010]/40 text-[#101010] px-3 font-label-code text-body-md outline-none focus:border-[#101010] transition-colors rounded-none placeholder:text-[#827560]/50"
+                      className="input-spec w-full h-11 px-3 font-label-code text-body-md"
                     />
                   </div>
 
                   <div>
-                    <label className="font-label-meta text-[10px] uppercase text-[#504533] block mb-1">
+                    <label className="font-label-meta text-[10px] uppercase text-on-surface-variant block mb-1">
                       PASSWORD
                     </label>
                     <input
@@ -401,14 +419,14 @@ export const LoginPage = () => {
                       placeholder="••••••••"
                       value={passwordInput}
                       onChange={(e) => setPasswordInput(e.target.value)}
-                      className="w-full h-[44px] bg-[#F2ECE6] border border-[#101010]/40 text-[#101010] px-3 font-label-code text-body-md outline-none focus:border-[#101010] transition-colors rounded-none placeholder:text-[#827560]/50"
+                      className="input-spec w-full h-11 px-3 font-label-code text-body-md"
                     />
                   </div>
 
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full min-h-[46px] py-2.5 px-6 bg-[#101010] hover:bg-[#FCBC18] text-[#F2ECE6] hover:text-[#101010] border border-[#101010] font-headline-md text-headline-md uppercase tracking-wider font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:opacity-50 shadow-[2px_2px_0px_#101010] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
+                    className="w-full min-h-11.5 py-2.5 px-6 bg-[#101010] hover:bg-[#FCBC18] text-[#F2ECE6] hover:text-[#101010] border border-[#101010] font-headline-md text-headline-md uppercase tracking-wider font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:opacity-50 shadow-brutal-sm active:translate-x-px active:translate-y-px"
                   >
                     <span className="material-symbols-outlined text-sm">
                       {authMode === "login" ? "key" : "person_add"}
@@ -422,12 +440,31 @@ export const LoginPage = () => {
                     </span>
                   </button>
                 </form>
+
+                {/* Instant Test / Demo Access */}
+                <div className="pt-2">
+                  <div className="relative flex items-center justify-center my-3">
+                    <div className="w-full h-px bg-[#101010]/20" />
+                    <span className="absolute bg-[#E6E2DD] px-3 font-label-code text-[11px] uppercase tracking-widest text-on-surface-variant">
+                      OR TEST ACCESS
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleDemoSignIn}
+                    disabled={loading}
+                    className="w-full min-h-11 py-2 px-4 bg-transparent hover:bg-[#101010]/10 text-[#101010] border border-dashed border-[#101010] font-label-code text-xs uppercase tracking-wider font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    <span className="material-symbols-outlined text-sm text-primary">bolt</span>
+                    <span>ENTER DEMO MODE ({currentRoleObj.title})</span>
+                  </button>
+                </div>
               </div>
             </div>
 
             {/* Security & Compliance Footer */}
-            <div className="mt-6 pt-4 border-t border-[#101010]/15 flex items-start gap-2 text-[#504533]">
-              <span className="material-symbols-outlined text-[1rem] text-[#ba1a1a] shrink-0 mt-0.5">
+            <div className="mt-6 pt-4 border-t border-[#101010]/15 flex items-start gap-2 text-on-surface-variant">
+              <span className="material-symbols-outlined text-[1rem] text-error shrink-0 mt-0.5">
                 lock
               </span>
               <p className="font-label-meta text-label-meta tracking-wider uppercase leading-tight">

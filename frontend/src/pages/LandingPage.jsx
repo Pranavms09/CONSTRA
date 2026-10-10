@@ -302,8 +302,8 @@ export const LandingPage = () => {
                     </span>
                     <span
                       className={`w-2.5 h-2.5 transition-all ${isActive
-                          ? "bg-[#FCBC18]"
-                          : "bg-[#A39B8F]/30 group-hover:bg-[#FCBC18]"
+                        ? "bg-[#FCBC18]"
+                        : "bg-[#A39B8F]/30 group-hover:bg-[#FCBC18]"
                         }`}
                     />
                   </button>
@@ -799,8 +799,8 @@ export const LandingPage = () => {
                   </span>
                   <span
                     className={`font-label-code text-label-code px-2.5 py-1 uppercase font-bold border border-[#101010] transition-colors ${demoFlagResolved
-                        ? "bg-[#2F6F4E] text-[#F2ECE6]"
-                        : "bg-[#FCBC18] text-[#101010]"
+                      ? "bg-[#2F6F4E] text-[#F2ECE6]"
+                      : "bg-[#FCBC18] text-[#101010]"
                       }`}
                   >
                     STATUS: {demoFlagResolved ? "VERIFIED & CLEARED" : "FLAGGED"}
@@ -865,15 +865,15 @@ export const LandingPage = () => {
                 {/* Row 3: Stage match (Interactive Flagged state) */}
                 <div
                   className={`py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-3 -mx-3 border-l-4 transition-all ${demoFlagResolved
-                      ? "border-[#2F6F4E] bg-[#2F6F4E]/10"
-                      : "border-[#FCBC18] bg-[#FCBC18]/10"
+                    ? "border-[#2F6F4E] bg-[#2F6F4E]/10"
+                    : "border-[#FCBC18] bg-[#FCBC18]/10"
                     }`}
                 >
                   <div className="flex items-center space-x-4">
                     <div
                       className={`w-8 h-8 flex items-center justify-center ${demoFlagResolved
-                          ? "bg-[#2F6F4E] text-[#F2ECE6]"
-                          : "bg-[#101010] text-[#FCBC18]"
+                        ? "bg-[#2F6F4E] text-[#F2ECE6]"
+                        : "bg-[#101010] text-[#FCBC18]"
                         }`}
                     >
                       <span className="material-symbols-outlined text-lg">
@@ -909,8 +909,8 @@ export const LandingPage = () => {
                     </div>
                     <div
                       className={`flex items-center space-x-1.5 px-3 py-1 font-label-code text-label-code uppercase font-bold border border-[#101010] ${demoFlagResolved
-                          ? "bg-[#2F6F4E] text-[#F2ECE6]"
-                          : "bg-[#FCBC18] text-[#101010]"
+                        ? "bg-[#2F6F4E] text-[#F2ECE6]"
+                        : "bg-[#FCBC18] text-[#101010]"
                         }`}
                     >
                       <span className="material-symbols-outlined text-sm">
@@ -950,8 +950,8 @@ export const LandingPage = () => {
                     disabled={!demoFlagResolved}
                     onClick={() => navigate("/login")}
                     className={`w-full sm:w-auto px-6 py-3 font-label-code text-label-code uppercase tracking-wider font-bold border border-[#101010] flex items-center justify-center space-x-2 transition-all ${demoFlagResolved
-                        ? "bg-[#FCBC18] text-[#101010] cursor-pointer shadow-[2px_2px_0px_#101010] hover:bg-[#101010] hover:text-[#FCBC18]"
-                        : "bg-[#101010] text-[#FCBC18] cursor-not-allowed shadow-[2px_2px_0px_#B3261E]"
+                      ? "bg-[#FCBC18] text-[#101010] cursor-pointer shadow-[2px_2px_0px_#101010] hover:bg-[#101010] hover:text-[#FCBC18]"
+                      : "bg-[#101010] text-[#FCBC18] cursor-not-allowed shadow-[2px_2px_0px_#B3261E]"
                       }`}
                     type="button"
                   >
