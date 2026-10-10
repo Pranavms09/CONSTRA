@@ -6,7 +6,8 @@
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
-    "html_handling": "single-page-application",
+    "html_handling": "auto-trailing-slash",
     "not_found_handling": "single-page-application"
-  }
+  },
+  "previews": {}
 }
