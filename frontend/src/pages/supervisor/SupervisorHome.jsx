@@ -167,15 +167,26 @@ export const SupervisorHome = () => {
     setErrorMessage(null);
 
     try {
-      const response = await analyzeImage(selectedFile);
+      const response = await analyzeImage(selectedFile, selectedProjectId, selectedStageId);
       if (response && response.description) {
         setAiDescription(response.description);
         const exifInfo = response.exif_gps;
+        const gpsVer = response.gps_verification;
         const isDup = !!response.is_duplicate;
         const fileUrl = response.file_url;
 
         let geotagDisplay = "28.6280° N, 77.3649° E [MATCHED: LOT B-04]";
-        if (exifInfo && exifInfo.valid_exif) {
+        if (gpsVer) {
+          if (gpsVer.status === "PASS") {
+            const ext = gpsVer.extracted_coordinates;
+            geotagDisplay = `${ext.latitude.toFixed(4)}° N, ${ext.longitude.toFixed(4)}° E [Dist: ${gpsVer.distance_m}m — PASS (≤${gpsVer.permitted_radius_m}m)]`;
+          } else if (gpsVer.status === "FLAGGED") {
+            const ext = gpsVer.extracted_coordinates;
+            geotagDisplay = `${ext?.latitude?.toFixed(4) || "?"}° N, ${ext?.longitude?.toFixed(4) || "?"}° E [Dist: ${gpsVer.distance_m}m — GEOFENCE BREACH]`;
+          } else {
+            geotagDisplay = "NO VALID EXIF GPS METADATA [REVIEW REQUIRED]";
+          }
+        } else if (exifInfo && exifInfo.valid_exif) {
           geotagDisplay = `${exifInfo.lat?.toFixed(4)}° N, ${exifInfo.lon?.toFixed(4)}° E [Dist: ${exifInfo.distance_m || 0}m, ${exifInfo.within_site ? "IN GEOFENCE" : "OUTSIDE GEOFENCE"}]`;
         }
 
@@ -188,21 +199,33 @@ export const SupervisorHome = () => {
           fileUrl: fileUrl,
           isDuplicate: isDup,
           exifGps: exifInfo,
+          gpsVerification: gpsVer,
+          alertId: response.alert_id,
           geotag: geotagDisplay,
           confidence: `${((response.confidence || 0.98) * 100).toFixed(1)}%`,
           stage: currentStageName,
           timestamp: new Date().toISOString().replace("T", " ").substring(0, 19) + " UTC",
         }));
-        setQueueStatus("INFERENCE SYNCHRONIZED // READY FOR AUDITOR QUEUE SUBMISSION");
-        if (isDup) {
-          showToast("⚠️ Warning: Photo SHA-256 fingerprint matches an existing database submission.");
+
+        if (gpsVer?.status === "FLAGGED") {
+          setQueueStatus("GEOFENCE BREACH // HIGH SEVERITY ALERT RAISED");
+          showToast("⚠️ Geofence Breach: Photo is outside permitted radius. High severity alert created.");
+        } else if (gpsVer?.status === "REVIEW") {
+          setQueueStatus("INFERENCE READY // GPS REVIEW REQUIRED");
+          showToast("ℹ️ GPS Review Required: Photo is missing valid EXIF GPS tags.");
         } else {
-          showToast("Gemini Vision analysis synchronized. Cryptographic description generated.");
+          setQueueStatus("INFERENCE SYNCHRONIZED // READY FOR AUDITOR QUEUE SUBMISSION");
+          if (isDup) {
+            showToast("⚠️ Warning: Photo SHA-256 fingerprint matches an existing database submission.");
+          } else {
+            showToast("Gemini Vision analysis synchronized. Cryptographic description generated.");
+          }
         }
       } else {
         throw new Error("No description returned by the AI vision model.");
       }
     } catch (err) {
+
       setErrorMessage(
         err?.message || "Image analysis failed. Please verify FastAPI backend is active."
       );
@@ -260,7 +283,13 @@ export const SupervisorHome = () => {
         stage_id: parseInt(selectedStageId, 10),
         type: currentStageName,
         filed_at: new Date().toISOString(),
-        risk: analysisMeta?.isDuplicate ? "HIGH" : (analysisMeta?.exifGps && !analysisMeta.exifGps.within_site ? "MEDIUM" : "LOW"),
+        risk: analysisMeta?.isDuplicate
+          ? "HIGH"
+          : (analysisMeta?.gpsVerification?.status === "FLAGGED"
+              ? "HIGH"
+              : (analysisMeta?.gpsVerification?.status === "REVIEW"
+                  ? "MEDIUM"
+                  : "LOW")),
         status: "IN_REVIEW",
         files: [
           {
@@ -293,13 +322,18 @@ export const SupervisorHome = () => {
           },
           gps_distance_m: {
             fieldKey: "gps_distance_m",
-            value: analysisMeta.exifGps?.distance_m ?? 0.0,
-            confidence: analysisMeta.exifGps?.valid_exif ? 0.99 : 0.85,
-            source: analysisMeta.exifGps?.valid_exif ? "EXIF GPS Geofence Match" : "Device GPS Fallback",
+            value: analysisMeta.gpsVerification?.distance_m ?? (analysisMeta.exifGps?.distance_m ?? 0.0),
+            status: analysisMeta.gpsVerification?.status || "REVIEW",
+            explanation: analysisMeta.gpsVerification?.explanation,
+            confidence: analysisMeta.gpsVerification?.status === "PASS" ? 0.99 : 0.85,
+            source: analysisMeta.gpsVerification?.status === "PASS" ? "EXIF GPS Geofence Match" : "EXIF GPS Signal",
           },
+          gps_verification: analysisMeta.gpsVerification,
+          alert_id: analysisMeta.alertId,
           damage_severity: {
             fieldKey: "damage_severity",
             value: analysisMeta.isDuplicate ? "FLAGGED_DUPLICATE_ASSET" : "ZERO_SPALLING_PITCH_OK",
+
             confidence: 0.98,
             source: "Gemini Vision Structural VLM",
           },
@@ -813,8 +847,127 @@ export const SupervisorHome = () => {
                   </div>
                 </div>
 
+                {/* GPS GEOFENCING VERIFICATION RESULTS CARD (Requirement 4 & 8) */}
+                {analysisMeta?.gpsVerification && (
+                  <div className="relative bg-[#F2ECE6] border-2 border-[#101010] p-5 shadow-[4px_4px_0px_#101010]">
+                    <div className="absolute -top-[2px] -left-[2px] w-2.5 h-2.5 border-t-2 border-l-2 border-[#101010]"></div>
+                    <div className="absolute -top-[2px] -right-[2px] w-2.5 h-2.5 border-t-2 border-r-2 border-[#101010]"></div>
+                    <div className="absolute -bottom-[2px] -left-[2px] w-2.5 h-2.5 border-b-2 border-l-2 border-[#101010]"></div>
+                    <div className="absolute -bottom-[2px] -right-[2px] w-2.5 h-2.5 border-b-2 border-r-2 border-[#101010]"></div>
+
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[#101010] gap-2 mb-4">
+                      <div className="flex items-center gap-2">
+                        <span className="w-3 h-3 bg-[#FCBC18]"></span>
+                        <span className="font-label-code text-label-code font-bold uppercase tracking-wider text-[#101010]">
+                          GPS GEOFENCING VERIFICATION // AUDIT GATE
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`px-3 py-1 font-label-code text-label-code font-bold uppercase border tracking-wider shadow-[2px_2px_0px_#101010] ${
+                          analysisMeta.gpsVerification.status === "PASS"
+                            ? "bg-[#296a49] text-white border-[#101010]"
+                            : analysisMeta.gpsVerification.status === "FLAGGED"
+                            ? "bg-[#ba1a1a] text-white border-[#101010]"
+                            : "bg-[#FCBC18] text-[#101010] border-[#101010]"
+                        }`}>
+                          GATE STATUS: {analysisMeta.gpsVerification.status}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* High Severity Breach Banner */}
+                    {analysisMeta.gpsVerification.status === "FLAGGED" && (
+                      <div className="mb-4 p-3.5 bg-[#ffdad6] border-2 border-[#ba1a1a] text-[#ba1a1a] font-label-code text-label-code flex items-start gap-3 shadow-[2px_2px_0px_#ba1a1a]">
+                        <span className="material-symbols-outlined text-2xl shrink-0 text-[#ba1a1a]">warning</span>
+                        <div className="space-y-1">
+                          <span className="font-bold uppercase tracking-wide block text-sm">
+                            ⚠️ HIGH SEVERITY ALERT GENERATED (GEOFENCE BREACH)
+                          </span>
+                          <p className="font-body-md text-xs text-[#410002]">
+                            Photo GPS coordinates breach permitted site boundary radius. A HIGH severity verification alert has been automatically raised on the project. Milestone clearance is blocked until resolved by an auditor with mandatory written justification.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Review Required Banner */}
+                    {analysisMeta.gpsVerification.status === "REVIEW" && (
+                      <div className="mb-4 p-3.5 bg-[#fff0d4] border-2 border-[#7a5900] text-[#7a5900] font-label-code text-label-code flex items-start gap-3 shadow-[2px_2px_0px_#7a5900]">
+                        <span className="material-symbols-outlined text-2xl shrink-0 text-[#7a5900]">info</span>
+                        <div className="space-y-1">
+                          <span className="font-bold uppercase tracking-wide block text-sm">
+                            ℹ️ AUDITOR MANUAL REVIEW REQUIRED
+                          </span>
+                          <p className="font-body-md text-xs text-[#504533]">
+                            Photo is missing valid EXIF GPS metadata. Flagged for auditor manual physical inspection. (Location metadata was not silently accepted as valid).
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Coordinate & Distance Metrics Grid */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 font-label-code text-label-code mb-4">
+                      <div className="p-3 bg-white border border-[#101010]">
+                        <span className="font-label-meta text-label-meta text-[#5F5E5E] uppercase block mb-1">
+                          CALCULATED DISTANCE
+                        </span>
+                        <span className="font-bold text-xl text-[#101010] tabular-nums">
+                          {analysisMeta.gpsVerification.distance_m !== null ? `${analysisMeta.gpsVerification.distance_m} m` : "—"}
+                        </span>
+                      </div>
+                      <div className="p-3 bg-white border border-[#101010]">
+                        <span className="font-label-meta text-label-meta text-[#5F5E5E] uppercase block mb-1">
+                          PERMITTED SITE RADIUS
+                        </span>
+                        <span className="font-bold text-xl text-[#101010] tabular-nums">
+                          {analysisMeta.gpsVerification.permitted_radius_m} m
+                        </span>
+                      </div>
+                      <div className="p-3 bg-white border border-[#101010]">
+                        <span className="font-label-meta text-label-meta text-[#5F5E5E] uppercase block mb-1">
+                          PHOTO EXTRACTED GPS
+                        </span>
+                        <span className="font-bold text-sm text-[#101010] break-words">
+                          {analysisMeta.gpsVerification.extracted_coordinates
+                            ? `${analysisMeta.gpsVerification.extracted_coordinates.latitude.toFixed(5)}°, ${analysisMeta.gpsVerification.extracted_coordinates.longitude.toFixed(5)}°`
+                            : "NONE (MISSING)"}
+                        </span>
+                      </div>
+                      <div className="p-3 bg-white border border-[#101010]">
+                        <span className="font-label-meta text-label-meta text-[#5F5E5E] uppercase block mb-1">
+                          AUTHORITATIVE PROJECT SITE
+                        </span>
+                        <span className="font-bold text-sm text-[#101010] break-words">
+                          {analysisMeta.gpsVerification.project_coordinates
+                            ? `${analysisMeta.gpsVerification.project_coordinates.latitude.toFixed(5)}°, ${analysisMeta.gpsVerification.project_coordinates.longitude.toFixed(5)}°`
+                            : "—"}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Explanation */}
+                    <div className="p-3.5 bg-white border border-[#101010] text-[#101010] font-label-code text-label-code mb-3">
+                      <span className="font-bold text-[#5F5E5E] uppercase block mb-1">
+                        VERIFICATION OUTCOME EXPLANATION:
+                      </span>
+                      <p className="font-body-md text-sm text-[#101010] leading-relaxed">
+                        {analysisMeta.gpsVerification.explanation}
+                      </p>
+                    </div>
+
+                    {/* Security Disclaimer Box */}
+                    <div className="p-2.5 bg-[#E6E2DD] border border-[#101010] text-[11px] font-label-meta text-[#504533] uppercase leading-relaxed flex items-start gap-2">
+                      <span className="material-symbols-outlined text-sm shrink-0 text-[#7a5900]">shield</span>
+                      <span>
+                        <strong>SECURITY NOTICE:</strong> {analysisMeta.gpsVerification.security_disclaimer || "EXIF GPS coordinates provide metadata-based location verification, not cryptographic proof of physical presence. Metadata can be omitted, modified, or forged. Missing or invalid metadata does not automatically declare fraud."}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
                 {/* SECTION 3: AI-GENERATED DESCRIPTION & MILESTONE OUTPUT */}
                 <div className="relative bg-white border border-[#d4c5ac]/50 p-4">
+
                   <div className="absolute -top-[2px] -left-[2px] w-2 h-2 border-t-2 border-l-2 border-[#fcbc18]"></div>
                   <div className="absolute -top-[2px] -right-[2px] w-2 h-2 border-t-2 border-r-2 border-[#fcbc18]"></div>
                   <div className="absolute -bottom-[2px] -left-[2px] w-2 h-2 border-b-2 border-l-2 border-[#fcbc18]"></div>

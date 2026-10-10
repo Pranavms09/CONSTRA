@@ -197,7 +197,7 @@ def create_claim(
 
 
 @router.get("/claims/{claim_id}")
-def get_claim(claim_id: str):
+def get_claim(claim_id: str, db: Session = Depends(get_db)):
     """Fetch complete claim details including AI extractions, auditor decisions, and report."""
     claim = CLAIMS_DB.get(claim_id)
     if not claim:
@@ -214,11 +214,23 @@ def get_claim(claim_id: str):
             photo_path = Path("backend") / "uploads" / photo_file
 
         if photo_path.is_file():
+            proj_id = 1
+            try:
+                proj_id = int(claim.get("project_id", 1))
+            except Exception:
+                proj_id = 1
+
+            proj = db.query(Project).filter((Project.id == proj_id) | (Project.id == 1)).first()
+            site_lat = proj.centroid_lat if (proj and proj.centroid_lat is not None) else 28.6280
+            site_lng = proj.centroid_lng if (proj and proj.centroid_lng is not None) else 77.3649
+            site_radius = proj.site_radius_m if (proj and proj.site_radius_m and proj.site_radius_m > 0) else 200.0
+
             try:
                 exif_report = analyze_exif_gps(
                     photo_path,
-                    site_latitude=28.6280,
-                    site_longitude=77.3649,
+                    site_latitude=site_lat,
+                    site_longitude=site_lng,
+                    site_radius_m=site_radius,
                 )
             except Exception:
                 exif_report = None
@@ -227,6 +239,7 @@ def get_claim(claim_id: str):
         **claim,
         "exif_report": exif_report
     }
+
 
 
 def process_agent_command(job_id: str, claim_id: str, command: str, params: Optional[Dict[str, Any]]):
@@ -271,26 +284,45 @@ def process_agent_command(job_id: str, claim_id: str, command: str, params: Opti
             time.sleep(1.0)
             photo_file = next((f["name"] for f in claim.get("files", []) if f.get("kind") == "photo"), None)
             dist = 0.0
+            gps_status = "REVIEW"
+            gps_explanation = "No photo attached"
             if photo_file:
                 photo_path = Path("uploads") / photo_file
                 if not photo_path.is_file():
                     photo_path = Path("backend") / "uploads" / photo_file
                 if photo_path.is_file():
+                    db_sess = SessionLocal()
                     try:
-                        report = analyze_exif_gps(photo_path, site_latitude=28.6280, site_longitude=77.3649)
-                        gps_check = next((c for c in report.get("checks", []) if c.get("name") == "gps_geofence"), None)
-                        if gps_check and "details" in gps_check:
-                            dist = gps_check["details"].get("distance_from_site_m", 0.0)
+                        proj_id = 1
+                        try:
+                            proj_id = int(claim.get("project_id", 1))
+                        except Exception:
+                            proj_id = 1
+                        proj = db_sess.query(Project).filter((Project.id == proj_id) | (Project.id == 1)).first()
+                        site_lat = proj.centroid_lat if (proj and proj.centroid_lat is not None) else 28.6280
+                        site_lng = proj.centroid_lng if (proj and proj.centroid_lng is not None) else 77.3649
+                        site_radius = proj.site_radius_m if (proj and proj.site_radius_m and proj.site_radius_m > 0) else 200.0
+
+                        report = analyze_exif_gps(photo_path, site_latitude=site_lat, site_longitude=site_lng, site_radius_m=site_radius)
+                        gps_ver = report.get("gps_verification", {})
+                        dist = gps_ver.get("distance_m", 0.0)
+                        gps_status = gps_ver.get("status", "REVIEW")
+                        gps_explanation = gps_ver.get("explanation", "")
                     except Exception:
                         dist = 0.0
+                    finally:
+                        db_sess.close()
 
             new_extractions["gps_distance_m"] = {
                 "fieldKey": "gps_distance_m",
                 "value": dist,
+                "status": gps_status,
+                "explanation": gps_explanation,
                 "confidence": 0.99,
                 "source": "EXIF GPS Geofence Check",
                 "source_ref": photo_file or "Site Photo"
             }
+
 
         if command == "rerun_field" and params and "fieldKey" in params:
             fkey = params["fieldKey"]
@@ -658,4 +690,79 @@ def get_stage_certificate(stage_id: int, db: Session = Depends(get_db)):
     if not cert:
         raise HTTPException(status_code=404, detail="No clearance certificate issued for this stage.")
     return cert.to_dict()
+
+
+class AlertActionPayload(BaseModel):
+    status: str = "resolved"  # resolved, escalated, acknowledged, open
+    justification: str  # mandatory reason min 5 characters
+
+
+@router.patch("/alerts/{alert_id}")
+@router.post("/alerts/{alert_id}/action")
+def resolve_alert_action(
+    alert_id: int,
+    payload: AlertActionPayload,
+    user: User = Depends(require_role("auditor", "store_incharge")),
+    db: Session = Depends(get_db)
+):
+    """
+    Allow the auditor to review and resolve verification alerts with a mandatory written justification.
+    Records the actor and timestamp in the alert and the immutable audit trail (Requirement 9).
+    """
+    if not payload.justification or len(payload.justification.strip()) < 5:
+        raise HTTPException(
+            status_code=422,
+            detail="A mandatory written justification of at least 5 characters is required to resolve or escalate an alert."
+        )
+
+    if payload.status not in ["resolved", "escalated", "acknowledged", "open"]:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid alert status. Must be resolved, escalated, or acknowledged."
+        )
+
+    alert = db.query(Alert).filter(Alert.id == alert_id).first()
+    if not alert:
+        raise HTTPException(status_code=404, detail="Alert not found")
+
+    prev_status = alert.status
+    alert.status = payload.status
+    now_utc_str = datetime.now(timezone.utc).isoformat()
+    actor_label = user.full_name or user.email or f"User-{user.id}"
+    alert.auditor_comment = f"[{actor_label} ({user.role}) - {now_utc_str}] {payload.justification.strip()}"
+    db.commit()
+    db.refresh(alert)
+
+    # Immutable Audit Log Record
+    log_entry = AuditLog(
+        actor_id=user.id,
+        action="alert_resolved" if payload.status == "resolved" else "alert_status_updated",
+        entity="alert",
+        entity_id=str(alert.id),
+        detail=json.dumps({
+            "previous_status": prev_status,
+            "new_status": payload.status,
+            "justification": payload.justification.strip(),
+            "project_id": alert.project_id,
+            "actor": actor_label,
+            "timestamp": now_utc_str,
+        })
+    )
+    db.add(log_entry)
+    db.commit()
+
+    return {
+        "id": alert.id,
+        "project_id": alert.project_id,
+        "stage_id": alert.stage_id,
+        "type": alert.type,
+        "severity": alert.severity,
+        "status": alert.status,
+        "explanation": alert.explanation,
+        "evidence": json.loads(alert.evidence) if alert.evidence else None,
+        "auditor_comment": alert.auditor_comment,
+        "created_at": alert.created_at.isoformat() if alert.created_at else None,
+        "updated_at": alert.updated_at.isoformat() if alert.updated_at else None,
+    }
+
 

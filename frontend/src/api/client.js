@@ -206,9 +206,16 @@ export async function deleteUser(userId) {
   });
 }
 
-export async function analyzeImage(file) {
+export async function analyzeImage(file, projectId = null, stageId = null) {
   const formData = new FormData();
   formData.append("file", file);
+  if (projectId) {
+    formData.append("project_id", projectId);
+  }
+  if (stageId) {
+    formData.append("stage_id", stageId);
+  }
+
 
   const demoToken = localStorage.getItem("siteverify_token");
   let token = demoToken;

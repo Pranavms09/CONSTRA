@@ -6,6 +6,8 @@
   ],
   "scripts": {
     "build": "npm run build --workspace=frontend",
-    "dev": "npm run dev --workspace=frontend"
+    "dev": "npm run dev --workspace=frontend",
+    "dev:frontend": "npm run dev --workspace=frontend",
+    "dev:backend": "cd backend && .\\.venv\\Scripts\\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload"
   }
 }

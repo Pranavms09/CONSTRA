@@ -64,10 +64,36 @@ def bootstrap_admin():
 import os
 from fastapi.staticfiles import StaticFiles
 
+def ensure_db_columns():
+    """Idempotently ensure newly added columns exist in SQLite database."""
+    try:
+        from sqlalchemy import text
+        with engine.connect() as conn:
+            result = conn.execute(text("PRAGMA table_info(image_analyses)"))
+            existing_cols = {row[1] for row in result.fetchall()}
+            needed = [
+                ("project_id", "INTEGER"),
+                ("stage_id", "INTEGER"),
+                ("gps_status", "VARCHAR(50)"),
+                ("gps_latitude", "FLOAT"),
+                ("gps_longitude", "FLOAT"),
+                ("gps_distance_m", "FLOAT"),
+                ("verification_result", "TEXT"),
+                ("alert_id", "INTEGER"),
+            ]
+            for col_name, col_type in needed:
+                if col_name not in existing_cols:
+                    conn.execute(text(f"ALTER TABLE image_analyses ADD COLUMN {col_name} {col_type}"))
+            conn.commit()
+    except Exception as exc:
+        logger.warning(f"Schema column check note: {exc}")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Ensure database schema is initialized
     Base.metadata.create_all(bind=engine)
+    ensure_db_columns()
     bootstrap_admin()
     try:
         from scripts.seed_store_demo import seed_store_demo
@@ -75,6 +101,7 @@ async def lifespan(app: FastAPI):
     except Exception as exc:
         logger.warning(f"Demo store seeding note: {exc}")
     yield
+
 
 
 app = FastAPI(

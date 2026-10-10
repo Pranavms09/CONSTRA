@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Dict, Any
 from pydantic import BaseModel
 
 
@@ -13,6 +13,10 @@ class ImageAnalysisResponse(BaseModel):
     is_duplicate: bool = False
     duplicate_of_id: Optional[int] = None
     exif_gps: Optional[dict] = None
+    gps_verification: Optional[Dict[str, Any]] = None
+    project_id: Optional[int] = None
+    stage_id: Optional[int] = None
+    alert_id: Optional[int] = None
     model: str
     source: str
     created_at: Optional[str] = None
@@ -23,3 +27,4 @@ class HealthResponse(BaseModel):
     app: str
     gemini_configured: bool
     model: Optional[str] = None
+

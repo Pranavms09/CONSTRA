@@ -46,6 +46,7 @@ export const ClaimAuditDesk = () => {
   // Clearance Certificate & Blocker state
   const [blockersList, setBlockersList] = useState([]);
   const [certificateModal, setCertificateModal] = useState(null);
+  const [showGpsDetails, setShowGpsDetails] = useState(false);
 
   // Load claims list from Firebase Firestore & Backend
   const loadClaims = async () => {
@@ -470,92 +471,205 @@ export const ClaimAuditDesk = () => {
 
               {/* Field by field audit controls */}
               <div className="space-y-3 font-label-code text-label-code">
-                {[
-                  {
-                    key: "claimant",
-                    label: "CLAIMANT ENTITY",
-                    val: claim.ai?.claimant?.value || claim.claimant,
-                    source: "SUPERVISOR AUTH",
-                  },
-                  {
-                    key: "inspection_date",
-                    label: "INSPECTION DATE",
-                    val: claim.ai?.inspection_date?.value || new Date(claim.filed_at || Date.now()).toLocaleDateString(),
-                    source: "EXIF TIMESTAMPS",
-                  },
-                  {
-                    key: "stated_total",
-                    label: "STAGE BOQ VALUATION",
-                    val: `₹${claim.ai?.stated_total?.value || "45000"}`,
-                    source: "BOQ MATRIX",
-                  },
-                  {
-                    key: "gps_distance_m",
-                    label: "GEOFENCE DISTANCE",
-                    val: `${claim.ai?.gps_distance_m?.value ?? "0.0"}m [VALID LOT B-04]`,
-                    source: "GPS RADIUS",
-                  },
-                  {
-                    key: "damage_severity",
-                    label: "STRUCTURAL DEFECT SCAN",
-                    val: claim.ai?.damage_severity?.value || "ZERO_SPALLING_PITCH_OK",
-                    source: "VLM VERDICT",
-                  },
-                ].map((item) => {
-                  const dec = decisions[item.key]?.dec || "agree";
-                  return (
-                    <div
-                      key={item.key}
-                      className="p-3 bg-white border border-[#101010] flex flex-col md:flex-row md:items-center justify-between gap-3"
-                    >
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-[#101010]">{item.label}:</span>
-                          <span className="font-body-md text-[#101010]">{item.val}</span>
-                        </div>
-                        <span className="font-label-meta text-label-meta text-[#5F5E5E] uppercase">
-                          SOURCE: {item.source}
-                        </span>
-                      </div>
+                {(() => {
+                  const gpsVer = claim.ai?.gps_verification;
+                  let gpsVal = `${claim.ai?.gps_distance_m?.value ?? "0.0"}m [VALID LOT B-04]`;
+                  if (gpsVer) {
+                    if (gpsVer.status === "PASS") {
+                      gpsVal = `${gpsVer.distance_m}m [PASS — WITHIN ${gpsVer.permitted_radius_m}m SITE RADIUS]`;
+                    } else if (gpsVer.status === "FLAGGED") {
+                      gpsVal = `${gpsVer.distance_m}m [FLAGGED — OUTSIDE ${gpsVer.permitted_radius_m}m RADIUS]`;
+                    } else if (gpsVer.status === "REVIEW") {
+                      gpsVal = `REVIEW REQUIRED — ${gpsVer.explanation}`;
+                    }
+                  }
 
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <button
-                          type="button"
-                          onClick={() => handleDecision(item.key, "agree", item.val)}
-                          className={`px-3 py-1 border uppercase font-bold cursor-pointer transition-colors ${
-                            dec === "agree"
-                              ? "bg-[#296a49] text-white border-[#296a49]"
-                              : "bg-[#E6E2DD] text-[#101010] border-[#101010] hover:bg-white"
-                          }`}
+                  const fields = [
+                    {
+                      key: "claimant",
+                      label: "CLAIMANT ENTITY",
+                      val: claim.ai?.claimant?.value || claim.claimant,
+                      source: "SUPERVISOR AUTH",
+                    },
+                    {
+                      key: "inspection_date",
+                      label: "INSPECTION DATE",
+                      val: claim.ai?.inspection_date?.value || new Date(claim.filed_at || Date.now()).toLocaleDateString(),
+                      source: "EXIF TIMESTAMPS",
+                    },
+                    {
+                      key: "stated_total",
+                      label: "STAGE BOQ VALUATION",
+                      val: `₹${claim.ai?.stated_total?.value || "45000"}`,
+                      source: "BOQ MATRIX",
+                    },
+                    {
+                      key: "gps_distance_m",
+                      label: "GEOFENCE DISTANCE",
+                      val: gpsVal,
+                      source: "GPS RADIUS",
+                    },
+                    {
+                      key: "damage_severity",
+                      label: "STRUCTURAL DEFECT SCAN",
+                      val: claim.ai?.damage_severity?.value || "ZERO_SPALLING_PITCH_OK",
+                      source: "VLM VERDICT",
+                    },
+                  ];
+
+                  return fields.map((item) => {
+                    const dec = decisions[item.key]?.dec || "agree";
+                    const isGps = item.key === "gps_distance_m";
+
+                    return (
+                      <div key={item.key} className="space-y-2">
+                        <div
+                          className="p-3 bg-white border border-[#101010] flex flex-col md:flex-row md:items-center justify-between gap-3"
                         >
-                          ✓ AGREE
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDecision(item.key, "amend", item.val)}
-                          className={`px-3 py-1 border uppercase font-bold cursor-pointer transition-colors ${
-                            dec === "amend"
-                              ? "bg-[#FCBC18] text-[#101010] border-[#101010]"
-                              : "bg-[#E6E2DD] text-[#101010] border-[#101010] hover:bg-white"
-                          }`}
-                        >
-                          ✎ AMEND
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDecision(item.key, "flag", item.val)}
-                          className={`px-3 py-1 border uppercase font-bold cursor-pointer transition-colors ${
-                            dec === "flag"
-                              ? "bg-[#ba1a1a] text-white border-[#ba1a1a]"
-                              : "bg-[#E6E2DD] text-[#101010] border-[#101010] hover:bg-white"
-                          }`}
-                        >
-                          ▲ FLAG
-                        </button>
+                          <div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="font-bold text-[#101010]">{item.label}:</span>
+                              <span className="font-body-md text-[#101010]">{item.val}</span>
+                              {isGps && gpsVer && (
+                                <span
+                                  className={`px-2 py-0.5 text-xs font-bold uppercase border ${
+                                    gpsVer.status === "PASS"
+                                      ? "bg-[#93d5ad]/30 text-[#296a49] border-[#296a49]"
+                                      : gpsVer.status === "FLAGGED"
+                                      ? "bg-[#ffdad6] text-[#ba1a1a] border-[#ba1a1a]"
+                                      : "bg-[#ffdea2] text-[#7a5900] border-[#7a5900]"
+                                  }`}
+                                >
+                                  {gpsVer.status}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-3 mt-0.5">
+                              <span className="font-label-meta text-label-meta text-[#5F5E5E] uppercase">
+                                SOURCE: {item.source}
+                              </span>
+                              {isGps && gpsVer && (
+                                <button
+                                  type="button"
+                                  onClick={() => setShowGpsDetails((prev) => !prev)}
+                                  className="text-xs text-[#101010] underline font-bold uppercase cursor-pointer hover:text-[#FCBC18]"
+                                >
+                                  {showGpsDetails ? "HIDE GEOFENCE TELEMETRY ▲" : "VIEW GEOFENCE TELEMETRY ▼"}
+                                </button>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => handleDecision(item.key, "agree", item.val)}
+                              className={`px-3 py-1 border uppercase font-bold cursor-pointer transition-colors ${
+                                dec === "agree"
+                                  ? "bg-[#296a49] text-white border-[#296a49]"
+                                  : "bg-[#E6E2DD] text-[#101010] border-[#101010] hover:bg-white"
+                              }`}
+                            >
+                              ✓ AGREE
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDecision(item.key, "amend", item.val)}
+                              className={`px-3 py-1 border uppercase font-bold cursor-pointer transition-colors ${
+                                dec === "amend"
+                                  ? "bg-[#FCBC18] text-[#101010] border-[#101010]"
+                                  : "bg-[#E6E2DD] text-[#101010] border-[#101010] hover:bg-white"
+                              }`}
+                            >
+                              ✎ AMEND
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDecision(item.key, "flag", item.val)}
+                              className={`px-3 py-1 border uppercase font-bold cursor-pointer transition-colors ${
+                                dec === "flag"
+                                  ? "bg-[#ba1a1a] text-white border-[#ba1a1a]"
+                                  : "bg-[#E6E2DD] text-[#101010] border-[#101010] hover:bg-white"
+                              }`}
+                            >
+                              ▲ FLAG
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* GPS Geofencing Detailed Drawer */}
+                        {isGps && gpsVer && showGpsDetails && (
+                          <div className="p-4 bg-[#F2ECE6] border border-[#101010] space-y-3">
+                            <div className="flex items-center justify-between border-b border-[#A39B8F]/30 pb-2">
+                              <span className="font-bold uppercase text-xs text-[#101010]">
+                                HAVERSINE SPATIAL AUDIT BREAKDOWN
+                              </span>
+                              <span className="font-label-meta text-label-meta uppercase text-[#5F5E5E]">
+                                PERMITTED RADIUS: {gpsVer.permitted_radius_m || 200.0}m
+                              </span>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-xs">
+                              <div className="p-2 bg-white border border-[#101010]">
+                                <span className="font-label-meta uppercase text-[#5F5E5E] block">
+                                  PROJECT CENTROID
+                                </span>
+                                <span className="font-bold text-[#101010] block mt-0.5">
+                                  {gpsVer.project_coordinates
+                                    ? `${gpsVer.project_coordinates.latitude.toFixed(5)}°, ${gpsVer.project_coordinates.longitude.toFixed(5)}°`
+                                    : "UNREGISTERED"}
+                                </span>
+                              </div>
+                              <div className="p-2 bg-white border border-[#101010]">
+                                <span className="font-label-meta uppercase text-[#5F5E5E] block">
+                                  EXTRACTED PHOTO GPS
+                                </span>
+                                <span className="font-bold text-[#101010] block mt-0.5">
+                                  {gpsVer.extracted_coordinates
+                                    ? `${gpsVer.extracted_coordinates.latitude.toFixed(5)}°, ${gpsVer.extracted_coordinates.longitude.toFixed(5)}°`
+                                    : "UNAVAILABLE IN EXIF"}
+                                </span>
+                              </div>
+                              <div className="p-2 bg-white border border-[#101010]">
+                                <span className="font-label-meta uppercase text-[#5F5E5E] block">
+                                  CALCULATED DISTANCE
+                                </span>
+                                <span className="font-bold text-[#101010] block mt-0.5">
+                                  {gpsVer.distance_m !== null && gpsVer.distance_m !== undefined
+                                    ? `${gpsVer.distance_m} m`
+                                    : "N/A"}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="p-2 bg-white border border-[#101010] text-xs">
+                              <span className="font-label-meta uppercase text-[#5F5E5E] block">
+                                EXPLANATION:
+                              </span>
+                              <p className="text-[#101010] font-medium mt-0.5">{gpsVer.explanation}</p>
+                            </div>
+
+                            {gpsVer.alert_required && (
+                              <div className="p-2 bg-[#ffdad6] border border-[#ba1a1a] text-xs text-[#ba1a1a] font-bold uppercase">
+                                ⚠️ HIGH SEVERITY ALERT TRIGGERED: Evidence photo was taken outside the permitted site radius. Written auditor justification required.
+                              </div>
+                            )}
+
+                            <div className="p-2 bg-[#101010] text-[#E6E2DD] text-[11px] font-label-code">
+                              <strong className="text-[#FCBC18] uppercase block mb-0.5">
+                                SECURITY ADVISORY:
+                              </strong>
+                              <span>
+                                {gpsVer.security_disclaimer ||
+                                  "EXIF GPS coordinates can be forged or stripped. This check performs metadata-based location verification, not cryptographic proof of physical presence. Missing GPS metadata alone does not indicate fraud."}
+                              </span>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  });
+                })()}
               </div>
             </div>
 

@@ -217,6 +217,7 @@ export const AuditorHome = () => {
       case "FLAGGED":
       case "FAIL":
         return "bg-[#ffdad6] text-[#ba1a1a] border-[#ba1a1a]";
+      case "REVIEW":
       case "REVIEW_REQUIRED":
       case "WARNING":
         return "bg-[#ffdea2] text-[#7a5900] border-[#7a5900]";
@@ -749,6 +750,131 @@ export const AuditorHome = () => {
                     <p className="text-xl font-bold text-[#8C8B91] mt-1 tabular-nums">{exifReport.summary.not_checked}</p>
                   </div>
                 </div>
+
+                {/* GPS Geofencing Verification Card */}
+                {exifReport.gps_verification && (
+                  <div className="p-5 bg-[#F2ECE6] border-2 border-[#101010] shadow-[3px_3px_0px_#101010] space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#A39B8F]/40 pb-3">
+                      <div className="flex items-center gap-2">
+                        <span className="material-symbols-outlined text-[#FCBC18]">distance</span>
+                        <div>
+                          <h4 className="font-headline-md text-headline-md font-bold uppercase text-[#101010]">
+                            GPS GEOFENCING VERIFICATION AUDIT
+                          </h4>
+                          <span className="font-label-meta text-label-meta uppercase text-[#5F5E5E]">
+                            HAVERSINE SPATIAL DISTANCE &amp; AUTHORITATIVE RADIUS CHECK
+                          </span>
+                        </div>
+                      </div>
+                      <span
+                        className={`px-3 py-1 font-label-code text-label-code font-bold uppercase border self-start sm:self-auto ${
+                          exifReport.gps_verification.status === "PASS"
+                            ? "bg-[#296a49] text-white border-[#296a49]"
+                            : exifReport.gps_verification.status === "FLAGGED"
+                            ? "bg-[#ba1a1a] text-white border-[#ba1a1a]"
+                            : "bg-[#FCBC18] text-[#101010] border-[#101010]"
+                        }`}
+                      >
+                        GATE STATUS: {exifReport.gps_verification.status}
+                      </span>
+                    </div>
+
+                    {/* Geofence Parameters Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 font-label-code text-label-code">
+                      <div className="p-3 bg-[#E6E2DD] border border-[#101010]">
+                        <span className="font-label-meta text-label-meta uppercase text-[#5F5E5E] block">
+                          CALCULATED DISTANCE
+                        </span>
+                        <span className="text-lg font-bold text-[#101010] block mt-1">
+                          {exifReport.gps_verification.distance_m !== null && exifReport.gps_verification.distance_m !== undefined
+                            ? `${exifReport.gps_verification.distance_m} m`
+                            : "N/A (NO COORDS)"}
+                        </span>
+                        <span className="text-[11px] text-[#5F5E5E]">Haversine Spherical Metric</span>
+                      </div>
+
+                      <div className="p-3 bg-[#E6E2DD] border border-[#101010]">
+                        <span className="font-label-meta text-label-meta uppercase text-[#5F5E5E] block">
+                          PERMITTED SITE RADIUS
+                        </span>
+                        <span className="text-lg font-bold text-[#101010] block mt-1">
+                          {exifReport.gps_verification.permitted_radius_m || 200.0} m
+                        </span>
+                        <span className="text-[11px] text-[#5F5E5E]">Backend Authoritative DB</span>
+                      </div>
+
+                      <div className="p-3 bg-[#E6E2DD] border border-[#101010]">
+                        <span className="font-label-meta text-label-meta uppercase text-[#5F5E5E] block">
+                          PROJECT CENTROID
+                        </span>
+                        <span className="text-sm font-bold text-[#101010] block mt-1">
+                          {exifReport.gps_verification.project_coordinates
+                            ? `${exifReport.gps_verification.project_coordinates.latitude.toFixed(5)}°, ${exifReport.gps_verification.project_coordinates.longitude.toFixed(5)}°`
+                            : "UNREGISTERED"}
+                        </span>
+                        <span className="text-[11px] text-[#5F5E5E]">Authoritative Site Anchor</span>
+                      </div>
+
+                      <div className="p-3 bg-[#E6E2DD] border border-[#101010]">
+                        <span className="font-label-meta text-label-meta uppercase text-[#5F5E5E] block">
+                          EXTRACTED EXIF GPS
+                        </span>
+                        <span className="text-sm font-bold text-[#101010] block mt-1">
+                          {exifReport.gps_verification.extracted_coordinates
+                            ? `${exifReport.gps_verification.extracted_coordinates.latitude.toFixed(5)}°, ${exifReport.gps_verification.extracted_coordinates.longitude.toFixed(5)}°`
+                            : "UNAVAILABLE / MISSING"}
+                        </span>
+                        <span className="text-[11px] text-[#5F5E5E]">Photo Header Telemetry</span>
+                      </div>
+                    </div>
+
+                    {/* Explanation */}
+                    <div className="p-3 bg-[#E6E2DD] border border-[#101010] font-label-code text-label-code">
+                      <span className="font-label-meta text-label-meta uppercase text-[#5F5E5E] block mb-1">
+                        VERIFICATION EXPLANATION:
+                      </span>
+                      <p className="font-medium text-[#101010]">
+                        {exifReport.gps_verification.explanation}
+                      </p>
+                    </div>
+
+                    {/* Geofence Breach Alert Action Callout */}
+                    {exifReport.gps_verification.alert_required && (
+                      <div className="p-3.5 bg-[#ffdad6] border-2 border-[#ba1a1a] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="flex items-center gap-2">
+                          <span className="material-symbols-outlined text-[#ba1a1a]">warning</span>
+                          <div>
+                            <strong className="text-[#ba1a1a] font-label-code text-label-code uppercase block">
+                              HIGH SEVERITY ALERT TRIGGERED: OUTSIDE PERMITTED RADIUS
+                            </strong>
+                            <p className="text-xs font-label-code text-label-code text-[#ba1a1a]">
+                              A formal High-Severity alert has been logged in the audit ledger. Auditor review and written justification are required to resolve.
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab("alerts")}
+                          className="px-3.5 py-1.5 bg-[#ba1a1a] text-white hover:bg-[#101010] hover:text-[#FCBC18] font-label-code text-label-code uppercase font-bold text-xs border border-[#ba1a1a] transition-colors cursor-pointer shrink-0"
+                        >
+                          OPEN ALERTS TRIAGE →
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Security Disclaimer */}
+                    <div className="p-3 bg-[#101010] border border-[#101010] text-[#E6E2DD] text-xs font-label-code text-label-code">
+                      <div className="flex items-center gap-1.5 text-[#FCBC18] font-bold uppercase mb-1">
+                        <span className="material-symbols-outlined text-sm">shield</span>
+                        <span>SECURITY ADVISORY // EXIF METADATA ASSURANCE LIMITATIONS:</span>
+                      </div>
+                      <p className="text-[#A39B8F] leading-relaxed">
+                        {exifReport.gps_verification.security_disclaimer ||
+                          "EXIF GPS coordinates can be forged or stripped. This check performs metadata-based location verification, not cryptographic proof of physical presence. Missing GPS metadata alone does not indicate fraud."}
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 {/* Checks Breakdown */}
                 <div className="space-y-3">
