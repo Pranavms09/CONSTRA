@@ -166,40 +166,40 @@ export const LandingPage = () => {
           </div>
 
           {/* Navigation Items */}
-          <nav className="hidden md:flex items-center space-x-1">
+          <nav className="hidden md:flex items-center space-x-1.5 lg:space-x-2">
             <button
               onClick={() => scrollToSection("how-it-works")}
-              className="px-3.5 py-1.5 font-label-code text-label-code uppercase tracking-[0.14em] text-[#F2ECE6] hover:bg-[#F2ECE6] hover:text-[#101010] transition-colors border border-transparent hover:border-[#101010] cursor-pointer"
+              className="px-3.5 py-2 font-label-code text-xs lg:text-[13px] uppercase tracking-[0.14em] text-[#F2ECE6] hover:bg-[#F2ECE6] hover:text-[#101010] transition-colors border border-transparent hover:border-[#101010] cursor-pointer"
             >
               How it works
             </button>
             <button
               onClick={() => scrollToSection("leakage-vectors")}
-              className="px-3.5 py-1.5 font-label-code text-label-code uppercase tracking-[0.14em] text-[#F2ECE6] hover:bg-[#F2ECE6] hover:text-[#101010] transition-colors border border-transparent hover:border-[#101010] cursor-pointer"
+              className="px-3.5 py-2 font-label-code text-xs lg:text-[13px] uppercase tracking-[0.14em] text-[#F2ECE6] hover:bg-[#F2ECE6] hover:text-[#101010] transition-colors border border-transparent hover:border-[#101010] cursor-pointer"
             >
               Vectors
             </button>
             <button
               onClick={() => scrollToSection("protocol")}
-              className="px-3.5 py-1.5 font-label-code text-label-code uppercase tracking-[0.14em] text-[#F2ECE6] hover:bg-[#F2ECE6] hover:text-[#101010] transition-colors border border-transparent hover:border-[#101010] cursor-pointer"
+              className="px-3.5 py-2 font-label-code text-xs lg:text-[13px] uppercase tracking-[0.14em] text-[#F2ECE6] hover:bg-[#F2ECE6] hover:text-[#101010] transition-colors border border-transparent hover:border-[#101010] cursor-pointer"
             >
               Protocol
             </button>
             <button
               onClick={() => scrollToSection("evidence-check")}
-              className="px-3.5 py-1.5 font-label-code text-label-code uppercase tracking-[0.14em] text-[#F2ECE6] hover:bg-[#F2ECE6] hover:text-[#101010] transition-colors border border-transparent hover:border-[#101010] cursor-pointer"
+              className="px-3.5 py-2 font-label-code text-xs lg:text-[13px] uppercase tracking-[0.14em] text-[#F2ECE6] hover:bg-[#F2ECE6] hover:text-[#101010] transition-colors border border-transparent hover:border-[#101010] cursor-pointer"
             >
               Inspection
             </button>
             <button
               onClick={() => scrollToSection("roles")}
-              className="px-3.5 py-1.5 font-label-code text-label-code uppercase tracking-[0.14em] text-[#F2ECE6] hover:bg-[#F2ECE6] hover:text-[#101010] transition-colors border border-transparent hover:border-[#101010] cursor-pointer"
+              className="px-3.5 py-2 font-label-code text-xs lg:text-[13px] uppercase tracking-[0.14em] text-[#F2ECE6] hover:bg-[#F2ECE6] hover:text-[#101010] transition-colors border border-transparent hover:border-[#101010] cursor-pointer"
             >
               Roles
             </button>
             <button
               onClick={() => scrollToSection("spec-2025")}
-              className="px-3.5 py-1.5 font-label-code text-label-code uppercase tracking-[0.14em] text-[#F2ECE6] hover:bg-[#F2ECE6] hover:text-[#101010] transition-colors border border-transparent hover:border-[#101010] cursor-pointer"
+              className="px-3.5 py-2 font-label-code text-xs lg:text-[13px] uppercase tracking-[0.14em] text-[#F2ECE6] hover:bg-[#F2ECE6] hover:text-[#101010] transition-colors border border-transparent hover:border-[#101010] cursor-pointer"
             >
               Spec // 2025
             </button>
@@ -207,34 +207,23 @@ export const LandingPage = () => {
 
           {/* Operational State & Authentication Action */}
           <div className="flex items-center space-x-4">
-            <div className="hidden xl:flex items-center space-x-2 border border-[#A39B8F]/30 px-2.5 py-1">
-              <div className="w-2 h-2 bg-tertiary-fixed-dim animate-pulse" />
-              <span className="font-label-code text-label-code text-[#F2ECE6] uppercase">
-                GATE: OPERATIONAL
-              </span>
-            </div>
-
-            <div className="hidden sm:inline-block border border-[#A39B8F]/40 px-2.5 py-1 font-label-code text-label-code uppercase text-[#FCBC18]">
-              SPEC V1.04
-            </div>
-
             {user ? (
               <div className="flex items-center space-x-3">
                 <button
                   onClick={() => navigate(getRoleHomeRoute(user.role))}
-                  className="bg-[#FCBC18] text-[#101010] px-3.5 py-1.5 font-label-code text-label-code uppercase font-bold tracking-wider hover:bg-[#F2ECE6] transition-colors shadow-[2px_2px_0px_#101010] flex items-center space-x-1 cursor-pointer"
+                  className="h-10 bg-[#FCBC18] text-[#101010] px-5 font-label-code text-xs md:text-sm uppercase font-bold tracking-wider hover:bg-[#F2ECE6] transition-all shadow-[2px_2px_0px_#101010] flex items-center space-x-1.5 cursor-pointer"
                 >
                   <span>PORTAL CONSOLE</span>
                   <span className="material-symbols-outlined text-sm">arrow_forward</span>
                 </button>
-                <div className="w-8 h-8 rounded-none border border-[#FCBC18] bg-[#101010] flex items-center justify-center font-label-code text-xs text-[#FCBC18] font-bold">
+                <div className="w-10 h-10 rounded-none border border-[#FCBC18] bg-[#101010] flex items-center justify-center font-label-code text-xs text-[#FCBC18] font-bold">
                   {user.role ? user.role.slice(0, 2).toUpperCase() : "US"}
                 </div>
               </div>
             ) : (
               <Link
                 to="/login"
-                className="border border-[#F2ECE6] px-4 py-1.5 font-label-code text-label-code uppercase text-[#F2ECE6] hover:bg-[#F2ECE6] hover:text-[#101010] transition-colors shadow-[2px_2px_0px_#FCBC18] font-bold"
+                className="h-10 px-5.5 flex items-center justify-center border border-[#F2ECE6] font-label-code text-xs md:text-sm uppercase text-[#F2ECE6] hover:bg-[#FCBC18] hover:border-[#FCBC18] hover:text-[#101010] transition-all shadow-[2px_2px_0px_#FCBC18] font-bold tracking-wider cursor-pointer"
               >
                 Sign in
               </Link>
@@ -342,12 +331,6 @@ export const LandingPage = () => {
 
                     {/* Content Block */}
                     <div className="relative z-10 flex flex-col justify-center px-6 md:px-16 lg:px-24 max-w-3xl">
-                      <div className="inline-flex items-center space-x-2 border border-[#FCBC18] px-2.5 py-1 mb-6 bg-[#101010] w-max">
-                        <span className="w-2 h-2 bg-[#FCBC18]" />
-                        <span className="font-label-code text-label-code uppercase tracking-widest text-[#FCBC18]">
-                          {chapter.tag}
-                        </span>
-                      </div>
 
                       {chapter.title === "CONSTRA" ? (
                         <div className="w-full max-w-2xl h-24 sm:h-28 md:h-36 mb-4 relative -ml-3">
@@ -420,21 +403,13 @@ export const LandingPage = () => {
                       {/* Interactive Buttons */}
                       <div className="flex flex-wrap items-center gap-4">
                         {idx === 0 ? (
-                          <>
-                            <Link
-                              to="/login"
-                              className="bg-[#FCBC18] text-[#101010] font-label-code text-label-code uppercase tracking-wider px-6 py-3 border border-[#101010] hover:bg-[#F2ECE6] transition-all font-bold shadow-[3px_3px_0px_#101010]"
-                            >
-                              INITIALIZE VERIFICATION
-                            </Link>
-                            <button
-                              onClick={() => goToSlide(1)}
-                              className="bg-transparent text-[#F2ECE6] border border-[#F2ECE6] font-label-code text-label-code uppercase tracking-wider px-6 py-3 hover:bg-[#F2ECE6] hover:text-[#101010] transition-colors cursor-pointer"
-                              type="button"
-                            >
-                              NEXT: CAPTURE →
-                            </button>
-                          </>
+                          <Link
+                            to="/login"
+                            className="bg-[#FCBC18] text-[#101010] font-label-code text-sm md:text-base uppercase tracking-wider px-7 py-3.5 border border-[#101010] hover:bg-[#F2ECE6] transition-all font-bold shadow-[3px_3px_0px_#101010] inline-flex items-center gap-2 cursor-pointer"
+                          >
+                            <span>INITIALIZE VERIFICATION</span>
+                            <span className="material-symbols-outlined text-base">arrow_forward</span>
+                          </Link>
                         ) : idx === CHAPTERS.length - 1 ? (
                           <>
                             <button
@@ -480,15 +455,15 @@ export const LandingPage = () => {
           <div className="w-full max-w-7xl mx-auto">
             {/* Section Header */}
             <div className="w-full pb-8 border-b border-[#A39B8F]/40 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-              <div className="flex items-center space-x-4">
-                <span className="font-label-code text-label-code text-[#101010] bg-[#FCBC18] px-2 py-0.5 font-bold uppercase tracking-widest border border-[#101010]">
+              <div className="flex items-center gap-4 flex-wrap">
+                <span className="inline-flex items-center font-label-code text-sm md:text-base text-[#101010] bg-[#FCBC18] px-4 py-1.5 font-extrabold uppercase tracking-wider border-2 border-[#101010] shadow-[2.5px_2.5px_0px_#101010]">
                   01 / LEAKAGE VECTORS
                 </span>
-                <span className="font-label-meta text-label-meta text-[#8C8B91] uppercase tracking-[0.18em]">
+                <span className="font-label-meta text-sm md:text-base text-[#3D3C3A] font-extrabold uppercase tracking-[0.18em]">
                   SYSTEMIC CAPITAL EROSION ANALYSIS
                 </span>
               </div>
-              <div className="font-label-code text-label-code text-[#8C8B91]">
+              <div className="font-label-code text-xs md:text-sm text-[#8C8B91] font-bold tracking-wider">
                 SPEC REF: CS-VEC-09
               </div>
             </div>
@@ -497,14 +472,14 @@ export const LandingPage = () => {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 mt-12 items-start">
               {/* Sticky Left Block (5 columns) */}
               <div className="lg:col-span-5 lg:sticky lg:top-28">
-                <div className="relative pl-6 border-l-2 border-[#101010]">
-                  <span className="font-label-code text-label-code text-[#8C8B91] uppercase tracking-widest block mb-2">
+                <div className="relative pl-6 border-l-3 border-[#101010]">
+                  <span className="font-label-code text-xs md:text-sm text-[#8C8B91] uppercase tracking-[0.18em] font-bold block mb-2">
                     FINANCIAL INTEGRITY HAZARDS
                   </span>
-                  <h2 className="font-headline-lg text-headline-lg-mobile md:text-headline-lg uppercase font-bold text-[#101010] tracking-tight leading-tight mb-4">
+                  <h2 className="font-headline-lg text-3xl sm:text-4xl md:text-[42px] uppercase font-extrabold text-[#101010] tracking-tight leading-none mb-4">
                     Three ways a site loses money.
                   </h2>
-                  <p className="font-body-lg text-body-lg text-[#5F5E5E] leading-relaxed">
+                  <p className="font-body-lg text-base md:text-lg text-[#3D3C3A] leading-relaxed font-medium">
                     Discrepancies in civil works compound silently. By decoupling billing events from verifiable physical stage completions, owners absorb structural margin bleed that remains undetected until final reconciliations.
                   </p>
                   <div className="mt-8 border border-[#A39B8F]/40 p-4 bg-[#F2ECE6]">
@@ -530,62 +505,62 @@ export const LandingPage = () => {
                 <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 border-b-2 border-r-2 border-[#101010]" />
 
                 {/* Table Header */}
-                <div className="grid grid-cols-12 bg-[#101010] text-[#F2ECE6] px-4 py-3 font-label-meta text-label-meta uppercase tracking-widest">
+                <div className="hidden md:grid grid-cols-12 bg-[#101010] text-[#F2ECE6] px-5 py-3.5 font-label-meta text-xs uppercase tracking-widest font-bold">
                   <div className="col-span-3">VECTOR // LEAK</div>
-                  <div className="col-span-5 pl-2 border-l border-[#A39B8F]/30">HOW IT HAPPENS</div>
-                  <div className="col-span-4 pl-2 border-l border-[#A39B8F]/30">CONSTRA INTERCEPT</div>
+                  <div className="col-span-5 pl-4 border-l border-[#A39B8F]/30">HOW IT HAPPENS</div>
+                  <div className="col-span-4 pl-4 border-l border-[#A39B8F]/30">CONSTRA INTERCEPT</div>
                 </div>
 
                 {/* Row 1 */}
-                <div className="grid grid-cols-12 px-4 py-6 border-b border-[#A39B8F]/30 hover:bg-[#E6E2DD]/50 transition-colors">
-                  <div className="col-span-12 md:col-span-3 mb-2 md:mb-0">
-                    <span className="font-label-code text-label-code text-[#B3261E] bg-error-container px-1.5 py-0.5 inline-block font-bold mb-1 border border-[#B3261E]/30">
+                <div className="grid grid-cols-12 px-5 py-6 border-b border-[#A39B8F]/30 hover:bg-[#E6E2DD]/50 transition-colors items-center">
+                  <div className="col-span-12 md:col-span-3 mb-3 md:mb-0">
+                    <span className="font-label-code text-xs text-[#B3261E] bg-error-container px-2 py-0.5 inline-block font-bold mb-1.5 border border-[#B3261E]/30">
                       VEC-01
                     </span>
-                    <h3 className="font-headline-md text-headline-md font-bold text-[#101010] uppercase">
+                    <h3 className="font-headline-lg text-xl md:text-2xl font-bold text-[#101010] uppercase tracking-tight">
                       Fake progress
                     </h3>
                   </div>
-                  <div className="col-span-12 md:col-span-5 md:pl-2 md:border-l border-[#A39B8F]/30 mb-2 md:mb-0 font-body-md text-body-md text-[#5F5E5E]">
+                  <div className="col-span-12 md:col-span-5 md:pl-4 md:border-l border-[#A39B8F]/30 mb-3 md:mb-0 font-body-md text-base text-[#3D3C3A]">
                     Old or borrowed photos billed as new work across adjacent structural units or repeated floors.
                   </div>
-                  <div className="col-span-12 md:col-span-4 md:pl-2 md:border-l border-[#A39B8F]/30 font-label-code text-label-code text-[#101010]">
+                  <div className="col-span-12 md:col-span-4 md:pl-4 md:border-l border-[#A39B8F]/30 font-label-code text-xs md:text-sm text-[#101010]">
                     <span className="text-[#2F6F4E] font-bold">✓</span> Location coordinates, capture timestamp, and visual stage match.
                   </div>
                 </div>
 
                 {/* Row 2 */}
-                <div className="grid grid-cols-12 px-4 py-6 border-b border-[#A39B8F]/30 hover:bg-[#E6E2DD]/50 transition-colors">
-                  <div className="col-span-12 md:col-span-3 mb-2 md:mb-0">
-                    <span className="font-label-code text-label-code text-[#B3261E] bg-error-container px-1.5 py-0.5 inline-block font-bold mb-1 border border-[#B3261E]/30">
+                <div className="grid grid-cols-12 px-5 py-6 border-b border-[#A39B8F]/30 hover:bg-[#E6E2DD]/50 transition-colors items-center">
+                  <div className="col-span-12 md:col-span-3 mb-3 md:mb-0">
+                    <span className="font-label-code text-xs text-[#B3261E] bg-error-container px-2 py-0.5 inline-block font-bold mb-1.5 border border-[#B3261E]/30">
                       VEC-02
                     </span>
-                    <h3 className="font-headline-md text-headline-md font-bold text-[#101010] uppercase">
+                    <h3 className="font-headline-lg text-xl md:text-2xl font-bold text-[#101010] uppercase tracking-tight">
                       Inflated paperwork
                     </h3>
                   </div>
-                  <div className="col-span-12 md:col-span-5 md:pl-2 md:border-l border-[#A39B8F]/30 mb-2 md:mb-0 font-body-md text-body-md text-[#5F5E5E]">
+                  <div className="col-span-12 md:col-span-5 md:pl-4 md:border-l border-[#A39B8F]/30 mb-3 md:mb-0 font-body-md text-base text-[#3D3C3A]">
                     Delivery slips and dispatch notes that do not match the engineered plan or physical bills of quantities.
                   </div>
-                  <div className="col-span-12 md:col-span-4 md:pl-2 md:border-l border-[#A39B8F]/30 font-label-code text-label-code text-[#101010]">
+                  <div className="col-span-12 md:col-span-4 md:pl-4 md:border-l border-[#A39B8F]/30 font-label-code text-xs md:text-sm text-[#101010]">
                     <span className="text-[#2F6F4E] font-bold">✓</span> Automated OCR challan delta against approved Bill of Quantities.
                   </div>
                 </div>
 
                 {/* Row 3 */}
-                <div className="grid grid-cols-12 px-4 py-6 hover:bg-[#E6E2DD]/50 transition-colors">
-                  <div className="col-span-12 md:col-span-3 mb-2 md:mb-0">
-                    <span className="font-label-code text-label-code text-[#B3261E] bg-error-container px-1.5 py-0.5 inline-block font-bold mb-1 border border-[#B3261E]/30">
+                <div className="grid grid-cols-12 px-5 py-6 hover:bg-[#E6E2DD]/50 transition-colors items-center">
+                  <div className="col-span-12 md:col-span-3 mb-3 md:mb-0">
+                    <span className="font-label-code text-xs text-[#B3261E] bg-error-container px-2 py-0.5 inline-block font-bold mb-1.5 border border-[#B3261E]/30">
                       VEC-03
                     </span>
-                    <h3 className="font-headline-md text-headline-md font-bold text-[#101010] uppercase">
+                    <h3 className="font-headline-lg text-xl md:text-2xl font-bold text-[#101010] uppercase tracking-tight">
                       Diverted material
                     </h3>
                   </div>
-                  <div className="col-span-12 md:col-span-5 md:pl-2 md:border-l border-[#A39B8F]/30 mb-2 md:mb-0 font-body-md text-body-md text-[#5F5E5E]">
+                  <div className="col-span-12 md:col-span-5 md:pl-4 md:border-l border-[#A39B8F]/30 mb-3 md:mb-0 font-body-md text-base text-[#3D3C3A]">
                     More raw bulk material issued from storage yards than the verified structural element physically requires.
                   </div>
-                  <div className="col-span-12 md:col-span-4 md:pl-2 md:border-l border-[#A39B8F]/30 font-label-code text-label-code text-[#101010]">
+                  <div className="col-span-12 md:col-span-4 md:pl-4 md:border-l border-[#A39B8F]/30 font-label-code text-xs md:text-sm text-[#101010]">
                     <span className="text-[#2F6F4E] font-bold">✓</span> Store issue reconciliation mapped directly to proven progress.
                   </div>
                 </div>
@@ -603,11 +578,11 @@ export const LandingPage = () => {
         >
           {/* Section Header Block */}
           <div className="w-full max-w-7xl mx-auto pb-8 border-b border-[#A39B8F]/30 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div className="flex items-center space-x-4">
-              <span className="font-label-code text-label-code text-[#101010] bg-[#FCBC18] px-2 py-0.5 font-bold uppercase tracking-widest border border-[#101010]">
+            <div className="flex flex-wrap items-center gap-4">
+              <span className="font-label-code text-sm md:text-base text-[#101010] bg-[#FCBC18] px-4 py-1.5 font-bold uppercase tracking-wider border-2 border-[#101010] shadow-[2px_2px_0px_#FCBC18]">
                 02 / PROTOCOL
               </span>
-              <h2 className="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-[#F2ECE6] uppercase font-bold tracking-tight">
+              <h2 className="font-headline-lg text-2xl sm:text-3xl md:text-4xl text-[#F2ECE6] uppercase font-extrabold tracking-tight">
                 How verification works
               </h2>
             </div>
@@ -764,10 +739,10 @@ export const LandingPage = () => {
             {/* Panel Header Lead-in */}
             <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
               <div>
-                <span className="font-label-code text-label-code uppercase tracking-widest text-[#8C8B91] block mb-1">
+                <span className="font-label-code text-xs md:text-sm uppercase tracking-[0.2em] text-[#8C8B91] font-bold block mb-1">
                   RUN-TIME AUDIT TELEMETRY
                 </span>
-                <h2 className="font-headline-lg text-headline-lg-mobile md:text-headline-lg font-bold text-[#101010] uppercase tracking-tight">
+                <h2 className="font-headline-lg text-2xl sm:text-3xl md:text-4xl font-extrabold text-[#101010] uppercase tracking-tight">
                   Evidence Check Inspection
                 </h2>
               </div>
@@ -978,11 +953,11 @@ export const LandingPage = () => {
           <div className="w-full max-w-7xl mx-auto">
             {/* Section Header */}
             <div className="w-full pb-8 border-b border-[#A39B8F]/40 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-              <div className="flex items-center space-x-4">
-                <span className="font-label-code text-label-code text-[#101010] bg-[#FCBC18] px-2 py-0.5 font-bold uppercase tracking-widest border border-[#101010]">
+              <div className="flex flex-wrap items-center gap-4">
+                <span className="font-label-code text-sm md:text-base text-[#101010] bg-[#FCBC18] px-4 py-1.5 font-bold uppercase tracking-wider border-2 border-[#101010] shadow-[2px_2px_0px_#101010]">
                   03 / ROLES
                 </span>
-                <h2 className="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-[#101010] uppercase font-bold tracking-tight">
+                <h2 className="font-headline-lg text-2xl sm:text-3xl md:text-4xl text-[#101010] uppercase font-extrabold tracking-tight">
                   Role Manual &amp; Authority Matrix
                 </h2>
               </div>
@@ -995,107 +970,107 @@ export const LandingPage = () => {
             <div className="mt-12 bg-[#F2ECE6] border border-[#A39B8F]/40 overflow-x-auto relative">
               <table className="w-full border-collapse text-left">
                 <thead>
-                  <tr className="bg-[#101010] text-[#F2ECE6] font-label-meta text-label-meta uppercase tracking-widest">
-                    <th className="p-4 border-r border-[#A39B8F]/30 w-2/5">FIELD ACTION / PRIVILEGE</th>
-                    <th className="p-4 border-r border-[#A39B8F]/30 w-1/5 text-center">SITE SUPERVISOR</th>
-                    <th className="p-4 border-r border-[#A39B8F]/30 w-1/5 text-center">STORE IN-CHARGE</th>
-                    <th className="p-4 w-1/5 text-center">PROJECT AUDITOR</th>
+                  <tr className="bg-[#101010] text-[#F2ECE6] font-label-meta text-xs md:text-sm uppercase tracking-widest font-bold">
+                    <th className="p-4.5 md:p-5 border-r border-[#A39B8F]/30 w-2/5">FIELD ACTION / PRIVILEGE</th>
+                    <th className="p-4.5 md:p-5 border-r border-[#A39B8F]/30 w-1/5 text-center">SITE SUPERVISOR</th>
+                    <th className="p-4.5 md:p-5 border-r border-[#A39B8F]/30 w-1/5 text-center">STORE IN-CHARGE</th>
+                    <th className="p-4.5 md:p-5 w-1/5 text-center">PROJECT AUDITOR</th>
                   </tr>
                 </thead>
-                <tbody className="font-label-code text-label-code divide-y divide-[#A39B8F]/30 text-[#101010]">
+                <tbody className="font-label-code divide-y divide-[#A39B8F]/30 text-[#101010]">
                   <tr className="hover:bg-[#E6E2DD]/40 transition-colors">
-                    <td className="p-4 font-bold border-r border-[#A39B8F]/30 flex items-center space-x-2">
-                      <span className="w-1.5 h-1.5 bg-[#101010]" />
+                    <td className="p-4.5 md:p-5 font-bold border-r border-[#A39B8F]/30 flex items-center space-x-3 text-base md:text-lg">
+                      <span className="w-2 h-2 bg-[#101010] shrink-0" />
                       <span>Upload stage photos</span>
                     </td>
-                    <td className="p-4 border-r border-[#A39B8F]/30 text-center">
-                      <span className="inline-block px-3 py-1 bg-[#2F6F4E] text-[#F2ECE6] font-bold">YES</span>
+                    <td className="p-4.5 md:p-5 border-r border-[#A39B8F]/30 text-center">
+                      <span className="inline-block px-4 py-1.5 bg-[#2F6F4E] text-[#F2ECE6] font-bold text-xs md:text-sm tracking-wider">YES</span>
                     </td>
-                    <td className="p-4 border-r border-[#A39B8F]/30 text-center">
-                      <span className="inline-block px-3 py-1 bg-[#E6E2DD] text-[#8C8B91]">NO</span>
+                    <td className="p-4.5 md:p-5 border-r border-[#A39B8F]/30 text-center">
+                      <span className="inline-block px-4 py-1.5 bg-[#E6E2DD] text-[#8C8B91] font-bold text-xs md:text-sm tracking-wider">NO</span>
                     </td>
-                    <td className="p-4 text-center">
-                      <span className="inline-block px-3 py-1 bg-[#E6E2DD] text-[#8C8B91]">NO</span>
+                    <td className="p-4.5 md:p-5 text-center">
+                      <span className="inline-block px-4 py-1.5 bg-[#E6E2DD] text-[#8C8B91] font-bold text-xs md:text-sm tracking-wider">NO</span>
                     </td>
                   </tr>
 
                   <tr className="hover:bg-[#E6E2DD]/40 transition-colors">
-                    <td className="p-4 font-bold border-r border-[#A39B8F]/30 flex items-center space-x-2">
-                      <span className="w-1.5 h-1.5 bg-[#101010]" />
+                    <td className="p-4.5 md:p-5 font-bold border-r border-[#A39B8F]/30 flex items-center space-x-3 text-base md:text-lg">
+                      <span className="w-2 h-2 bg-[#101010] shrink-0" />
                       <span>Upload delivery challans</span>
                     </td>
-                    <td className="p-4 border-r border-[#A39B8F]/30 text-center">
-                      <span className="inline-block px-3 py-1 bg-[#E6E2DD] text-[#8C8B91]">NO</span>
+                    <td className="p-4.5 md:p-5 border-r border-[#A39B8F]/30 text-center">
+                      <span className="inline-block px-4 py-1.5 bg-[#E6E2DD] text-[#8C8B91] font-bold text-xs md:text-sm tracking-wider">NO</span>
                     </td>
-                    <td className="p-4 border-r border-[#A39B8F]/30 text-center">
-                      <span className="inline-block px-3 py-1 bg-[#2F6F4E] text-[#F2ECE6] font-bold">YES</span>
+                    <td className="p-4.5 md:p-5 border-r border-[#A39B8F]/30 text-center">
+                      <span className="inline-block px-4 py-1.5 bg-[#2F6F4E] text-[#F2ECE6] font-bold text-xs md:text-sm tracking-wider">YES</span>
                     </td>
-                    <td className="p-4 text-center">
-                      <span className="inline-block px-3 py-1 bg-[#E6E2DD] text-[#8C8B91]">NO</span>
+                    <td className="p-4.5 md:p-5 text-center">
+                      <span className="inline-block px-4 py-1.5 bg-[#E6E2DD] text-[#8C8B91] font-bold text-xs md:text-sm tracking-wider">NO</span>
                     </td>
                   </tr>
 
                   <tr className="hover:bg-[#E6E2DD]/40 transition-colors">
-                    <td className="p-4 font-bold border-r border-[#A39B8F]/30 flex items-center space-x-2">
-                      <span className="w-1.5 h-1.5 bg-[#101010]" />
+                    <td className="p-4.5 md:p-5 font-bold border-r border-[#A39B8F]/30 flex items-center space-x-3 text-base md:text-lg">
+                      <span className="w-2 h-2 bg-[#101010] shrink-0" />
                       <span>Log material issued</span>
                     </td>
-                    <td className="p-4 border-r border-[#A39B8F]/30 text-center">
-                      <span className="inline-block px-3 py-1 bg-[#E6E2DD] text-[#8C8B91]">NO</span>
+                    <td className="p-4.5 md:p-5 border-r border-[#A39B8F]/30 text-center">
+                      <span className="inline-block px-4 py-1.5 bg-[#E6E2DD] text-[#8C8B91] font-bold text-xs md:text-sm tracking-wider">NO</span>
                     </td>
-                    <td className="p-4 border-r border-[#A39B8F]/30 text-center">
-                      <span className="inline-block px-3 py-1 bg-[#2F6F4E] text-[#F2ECE6] font-bold">YES</span>
+                    <td className="p-4.5 md:p-5 border-r border-[#A39B8F]/30 text-center">
+                      <span className="inline-block px-4 py-1.5 bg-[#2F6F4E] text-[#F2ECE6] font-bold text-xs md:text-sm tracking-wider">YES</span>
                     </td>
-                    <td className="p-4 text-center">
-                      <span className="inline-block px-3 py-1 bg-[#E6E2DD] text-[#8C8B91]">NO</span>
+                    <td className="p-4.5 md:p-5 text-center">
+                      <span className="inline-block px-4 py-1.5 bg-[#E6E2DD] text-[#8C8B91] font-bold text-xs md:text-sm tracking-wider">NO</span>
                     </td>
                   </tr>
 
                   <tr className="hover:bg-[#E6E2DD]/40 transition-colors">
-                    <td className="p-4 font-bold border-r border-[#A39B8F]/30 flex items-center space-x-2">
-                      <span className="w-1.5 h-1.5 bg-[#101010]" />
+                    <td className="p-4.5 md:p-5 font-bold border-r border-[#A39B8F]/30 flex items-center space-x-3 text-base md:text-lg">
+                      <span className="w-2 h-2 bg-[#101010] shrink-0" />
                       <span>Review flags</span>
                     </td>
-                    <td className="p-4 border-r border-[#A39B8F]/30 text-center">
-                      <span className="inline-block px-3 py-1 bg-[#FCBC18] text-[#101010] font-bold">VIEW</span>
+                    <td className="p-4.5 md:p-5 border-r border-[#A39B8F]/30 text-center">
+                      <span className="inline-block px-4 py-1.5 bg-[#FCBC18] text-[#101010] font-bold text-xs md:text-sm tracking-wider">VIEW</span>
                     </td>
-                    <td className="p-4 border-r border-[#A39B8F]/30 text-center">
-                      <span className="inline-block px-3 py-1 bg-[#E6E2DD] text-[#8C8B91]">NO</span>
+                    <td className="p-4.5 md:p-5 border-r border-[#A39B8F]/30 text-center">
+                      <span className="inline-block px-4 py-1.5 bg-[#E6E2DD] text-[#8C8B91] font-bold text-xs md:text-sm tracking-wider">NO</span>
                     </td>
-                    <td className="p-4 text-center">
-                      <span className="inline-block px-3 py-1 bg-[#2F6F4E] text-[#F2ECE6] font-bold">YES</span>
+                    <td className="p-4.5 md:p-5 text-center">
+                      <span className="inline-block px-4 py-1.5 bg-[#2F6F4E] text-[#F2ECE6] font-bold text-xs md:text-sm tracking-wider">YES</span>
                     </td>
                   </tr>
 
                   <tr className="hover:bg-[#E6E2DD]/40 transition-colors">
-                    <td className="p-4 font-bold border-r border-[#A39B8F]/30 flex items-center space-x-2">
-                      <span className="w-1.5 h-1.5 bg-[#101010]" />
+                    <td className="p-4.5 md:p-5 font-bold border-r border-[#A39B8F]/30 flex items-center space-x-3 text-base md:text-lg">
+                      <span className="w-2 h-2 bg-[#101010] shrink-0" />
                       <span>Approve milestone</span>
                     </td>
-                    <td className="p-4 border-r border-[#A39B8F]/30 text-center">
-                      <span className="inline-block px-3 py-1 bg-[#E6E2DD] text-[#8C8B91]">NO</span>
+                    <td className="p-4.5 md:p-5 border-r border-[#A39B8F]/30 text-center">
+                      <span className="inline-block px-4 py-1.5 bg-[#E6E2DD] text-[#8C8B91] font-bold text-xs md:text-sm tracking-wider">NO</span>
                     </td>
-                    <td className="p-4 border-r border-[#A39B8F]/30 text-center">
-                      <span className="inline-block px-3 py-1 bg-[#E6E2DD] text-[#8C8B91]">NO</span>
+                    <td className="p-4.5 md:p-5 border-r border-[#A39B8F]/30 text-center">
+                      <span className="inline-block px-4 py-1.5 bg-[#E6E2DD] text-[#8C8B91] font-bold text-xs md:text-sm tracking-wider">NO</span>
                     </td>
-                    <td className="p-4 text-center">
-                      <span className="inline-block px-3 py-1 bg-[#2F6F4E] text-[#F2ECE6] font-bold">YES</span>
+                    <td className="p-4.5 md:p-5 text-center">
+                      <span className="inline-block px-4 py-1.5 bg-[#2F6F4E] text-[#F2ECE6] font-bold text-xs md:text-sm tracking-wider">YES</span>
                     </td>
                   </tr>
 
                   <tr className="hover:bg-[#E6E2DD]/40 transition-colors">
-                    <td className="p-4 font-bold border-r border-[#A39B8F]/30 flex items-center space-x-2">
-                      <span className="w-1.5 h-1.5 bg-[#101010]" />
+                    <td className="p-4.5 md:p-5 font-bold border-r border-[#A39B8F]/30 flex items-center space-x-3 text-base md:text-lg">
+                      <span className="w-2 h-2 bg-[#101010] shrink-0" />
                       <span>Change thresholds</span>
                     </td>
-                    <td className="p-4 border-r border-[#A39B8F]/30 text-center">
-                      <span className="inline-block px-3 py-1 bg-[#E6E2DD] text-[#8C8B91]">NO</span>
+                    <td className="p-4.5 md:p-5 border-r border-[#A39B8F]/30 text-center">
+                      <span className="inline-block px-4 py-1.5 bg-[#E6E2DD] text-[#8C8B91] font-bold text-xs md:text-sm tracking-wider">NO</span>
                     </td>
-                    <td className="p-4 border-r border-[#A39B8F]/30 text-center">
-                      <span className="inline-block px-3 py-1 bg-[#E6E2DD] text-[#8C8B91]">NO</span>
+                    <td className="p-4.5 md:p-5 border-r border-[#A39B8F]/30 text-center">
+                      <span className="inline-block px-4 py-1.5 bg-[#E6E2DD] text-[#8C8B91] font-bold text-xs md:text-sm tracking-wider">NO</span>
                     </td>
-                    <td className="p-4 text-center">
-                      <span className="inline-block px-3 py-1 bg-[#2F6F4E] text-[#F2ECE6] font-bold">YES</span>
+                    <td className="p-4.5 md:p-5 text-center">
+                      <span className="inline-block px-4 py-1.5 bg-[#2F6F4E] text-[#F2ECE6] font-bold text-xs md:text-sm tracking-wider">YES</span>
                     </td>
                   </tr>
                 </tbody>
