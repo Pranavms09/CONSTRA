@@ -1,0 +1,17 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Tamper-evident blockchain anchoring records
+    // Completely deny all direct client reads and writes
+    // All access must route through the FastAPI backend via Admin SDK
+    match /chain_anchors/{sha256} {
+      allow read, write: if false;
+    }
+
+    // Default rules for authenticated users
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}

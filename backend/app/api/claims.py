@@ -65,7 +65,7 @@ def get_optional_user(
 
 class CreateClaimPayload(BaseModel):
     id: Optional[str] = None
-    claimant: Optional[str] = "Apex Site Operations"
+    claimant: Optional[str] = "PVGCOE Nashik Project Operations"
     policy_no: Optional[str] = "POL-INSP-LOT81"
     project_id: Optional[str] = "1"
     stage_id: Optional[int] = None
@@ -103,7 +103,7 @@ def list_claims():
     return [
         {
             "id": c["id"],
-            "claimant": c.get("claimant", "Apex Infrastructure Ltd"),
+            "claimant": c.get("claimant", "PVGCOE Nashik Infrastructure"),
             "submitter_id": c.get("submitter_id"),
             "submitter_email": c.get("submitter_email"),
             "policy_no": c.get("policy_no", "POL-INSP-001"),
@@ -137,7 +137,7 @@ def create_claim(
 
     new_claim = {
         "id": claim_id,
-        "claimant": sub_name or "Apex Site Operations",
+        "claimant": sub_name or payload.claimant or "PVGCOE Nashik Project Operations",
         "submitter_id": sub_id,
         "submitter_email": sub_email,
         "policy_no": payload.policy_no or "POL-INSP-LOT81",
@@ -217,8 +217,8 @@ def get_claim(claim_id: str):
             try:
                 exif_report = analyze_exif_gps(
                     photo_path,
-                    site_latitude=28.6280,
-                    site_longitude=77.3649,
+                    site_latitude=20.03639,
+                    site_longitude=73.79959,
                 )
             except Exception:
                 exif_report = None
@@ -277,7 +277,7 @@ def process_agent_command(job_id: str, claim_id: str, command: str, params: Opti
                     photo_path = Path("backend") / "uploads" / photo_file
                 if photo_path.is_file():
                     try:
-                        report = analyze_exif_gps(photo_path, site_latitude=28.6280, site_longitude=77.3649)
+                        report = analyze_exif_gps(photo_path, site_latitude=20.03639, site_longitude=73.79959)
                         gps_check = next((c for c in report.get("checks", []) if c.get("name") == "gps_geofence"), None)
                         if gps_check and "details" in gps_check:
                             dist = gps_check["details"].get("distance_from_site_m", 0.0)

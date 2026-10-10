@@ -51,15 +51,15 @@ def seed_store_demo():
             print(f"Existing user found: {user.email}")
 
         # 2. Project
-        proj_name = "Apex Tower — Commercial Block A"
+        proj_name = "Pune Vidyarthi Griha's College of Engineering, Nashik"
         project = db.query(Project).filter(Project.name == proj_name).first()
         if not project:
             project = Project(
                 name=proj_name,
-                site_address="Sector 62, Noida, Uttar Pradesh",
-                centroid_lat=28.6280,
-                centroid_lng=77.3649,
-                site_radius_m=350.0,
+                site_address="206, Dindori Road, Behind Reliance Petrol Pump, Mhasrul, Nashik, Maharashtra 422004",
+                centroid_lat=20.03639,
+                centroid_lng=73.79959,
+                site_radius_m=500.0,
             )
             db.add(project)
             db.flush()

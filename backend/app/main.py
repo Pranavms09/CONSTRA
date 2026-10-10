@@ -63,6 +63,7 @@ def bootstrap_admin():
 
 import os
 from fastapi.staticfiles import StaticFiles
+from app.workers.anchor_worker import anchor_worker
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -74,7 +75,10 @@ async def lifespan(app: FastAPI):
         seed_store_demo()
     except Exception as exc:
         logger.warning(f"Demo store seeding note: {exc}")
+    # Start blockchain anchor background worker
+    anchor_worker.start()
     yield
+    anchor_worker.stop()
 
 
 app = FastAPI(
@@ -124,3 +128,7 @@ app.include_router(store.router)
 app.include_router(analysis_router)
 app.include_router(claims_router)
 app.include_router(analysis.router)
+from app.routers import chain as chain_router
+app.include_router(chain_router.router)
+from app.routers import supervisor as supervisor_router
+app.include_router(supervisor_router.router)
