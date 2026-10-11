@@ -14,8 +14,8 @@ import {
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
   (typeof window !== "undefined" &&
-  window.location.hostname !== "localhost" &&
-  window.location.hostname !== "127.0.0.1"
+    window.location.hostname !== "localhost" &&
+    window.location.hostname !== "127.0.0.1"
     ? "https://constra-backend.onrender.com"
     : "http://localhost:8000");
 
@@ -280,24 +280,22 @@ export const ClaimAuditDesk = () => {
                 <button
                   key={c.id}
                   onClick={() => setSelectedClaimId(c.id)}
-                  className={`w-full text-left p-3.5 border transition-all cursor-pointer font-label-code text-label-code ${
-                    isSelected
+                  className={`w-full text-left p-3.5 border transition-all cursor-pointer font-label-code text-label-code ${isSelected
                       ? "bg-[#F2ECE6] text-[#101010] border-[#FCBC18] shadow-[2px_2px_0px_#FCBC18]"
                       : "bg-[#1b1b20] text-[#F2ECE6] border-[#A39B8F]/30 hover:border-[#F2ECE6]"
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center justify-between mb-1.5">
                     <span className={`font-bold ${isSelected ? "text-[#101010]" : "text-[#FCBC18]"}`}>
                       {c.id}
                     </span>
                     <span
-                      className={`text-[10px] px-1.5 py-0.5 border font-bold uppercase ${
-                        c.status === "APPROVED"
+                      className={`text-[10px] px-1.5 py-0.5 border font-bold uppercase ${c.status === "APPROVED"
                           ? "bg-[#93d5ad]/30 text-[#296a49] border-[#296a49]"
                           : c.status === "FLAGGED"
-                          ? "bg-[#ffdad6] text-[#ba1a1a] border-[#ba1a1a]"
-                          : "bg-[#ffdea2] text-[#7a5900] border-[#7a5900]"
-                      }`}
+                            ? "bg-[#ffdad6] text-[#ba1a1a] border-[#ba1a1a]"
+                            : "bg-[#ffdea2] text-[#7a5900] border-[#7a5900]"
+                        }`}
                     >
                       {c.status || "IN_REVIEW"}
                     </span>
@@ -522,33 +520,30 @@ export const ClaimAuditDesk = () => {
                         <button
                           type="button"
                           onClick={() => handleDecision(item.key, "agree", item.val)}
-                          className={`px-3 py-1 border uppercase font-bold cursor-pointer transition-colors ${
-                            dec === "agree"
+                          className={`px-3 py-1 border uppercase font-bold cursor-pointer transition-colors ${dec === "agree"
                               ? "bg-[#296a49] text-white border-[#296a49]"
                               : "bg-[#E6E2DD] text-[#101010] border-[#101010] hover:bg-white"
-                          }`}
+                            }`}
                         >
                           ✓ AGREE
                         </button>
                         <button
                           type="button"
                           onClick={() => handleDecision(item.key, "amend", item.val)}
-                          className={`px-3 py-1 border uppercase font-bold cursor-pointer transition-colors ${
-                            dec === "amend"
+                          className={`px-3 py-1 border uppercase font-bold cursor-pointer transition-colors ${dec === "amend"
                               ? "bg-[#FCBC18] text-[#101010] border-[#101010]"
                               : "bg-[#E6E2DD] text-[#101010] border-[#101010] hover:bg-white"
-                          }`}
+                            }`}
                         >
                           ✎ AMEND
                         </button>
                         <button
                           type="button"
                           onClick={() => handleDecision(item.key, "flag", item.val)}
-                          className={`px-3 py-1 border uppercase font-bold cursor-pointer transition-colors ${
-                            dec === "flag"
+                          className={`px-3 py-1 border uppercase font-bold cursor-pointer transition-colors ${dec === "flag"
                               ? "bg-[#ba1a1a] text-white border-[#ba1a1a]"
                               : "bg-[#E6E2DD] text-[#101010] border-[#101010] hover:bg-white"
-                          }`}
+                            }`}
                         >
                           ▲ FLAG
                         </button>
@@ -626,33 +621,30 @@ export const ClaimAuditDesk = () => {
                 <button
                   type="button"
                   onClick={() => setVerdict("agree")}
-                  className={`p-3 border text-center font-bold uppercase cursor-pointer transition-colors ${
-                    verdict === "agree"
+                  className={`p-3 border text-center font-bold uppercase cursor-pointer transition-colors ${verdict === "agree"
                       ? "bg-[#296a49] text-white border-[#296a49] shadow-[2px_2px_0px_#101010]"
                       : "bg-white text-[#101010] border-[#101010] hover:bg-[#FCBC18]"
-                  }`}
+                    }`}
                 >
                   ✓ APPROVE MILESTONE
                 </button>
                 <button
                   type="button"
                   onClick={() => setVerdict("amend")}
-                  className={`p-3 border text-center font-bold uppercase cursor-pointer transition-colors ${
-                    verdict === "amend"
+                  className={`p-3 border text-center font-bold uppercase cursor-pointer transition-colors ${verdict === "amend"
                       ? "bg-[#FCBC18] text-[#101010] border-[#101010] shadow-[2px_2px_0px_#101010]"
                       : "bg-white text-[#101010] border-[#101010] hover:bg-[#FCBC18]"
-                  }`}
+                    }`}
                 >
                   ✎ APPROVE WITH AMENDMENTS
                 </button>
                 <button
                   type="button"
                   onClick={() => setVerdict("flag")}
-                  className={`p-3 border text-center font-bold uppercase cursor-pointer transition-colors ${
-                    verdict === "flag"
+                  className={`p-3 border text-center font-bold uppercase cursor-pointer transition-colors ${verdict === "flag"
                       ? "bg-[#ba1a1a] text-white border-[#ba1a1a] shadow-[2px_2px_0px_#101010]"
                       : "bg-white text-[#101010] border-[#101010] hover:bg-[#ffdad6]"
-                  }`}
+                    }`}
                 >
                   ▲ FLAG / REJECT
                 </button>

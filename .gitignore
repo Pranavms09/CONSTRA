@@ -51,5 +51,3 @@ contracts/.env.*
 .vscode/
 .idea/
 pyrefly.toml
-Mobile App/
-mobile

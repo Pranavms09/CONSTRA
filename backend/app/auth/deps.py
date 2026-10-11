@@ -1,3 +1,4 @@
+from typing import Optional
 from fastapi import Depends, Header, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -24,13 +25,18 @@ def parse_bearer_token(authorization: str) -> str:
 
 
 def get_current_user(
-    authorization: str = Header(...),
+    authorization: Optional[str] = Header(None),
     db: Session = Depends(get_db)
 ) -> User:
     """
     Verifies Bearer token (Firebase or demo mode token) and returns active database User.
     Never trusts roles from client or token - loads strictly from database.
     """
+    if not authorization or not authorization.strip():
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication token required. Please sign in."
+        )
     token = parse_bearer_token(authorization)
 
     # Session token for Email & Password authentication

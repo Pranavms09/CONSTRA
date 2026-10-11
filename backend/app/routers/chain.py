@@ -64,7 +64,7 @@ def _verify_hash_internal(sha256_hex: str, client: Any, req: Request) -> PublicV
     data = doc_snap.to_dict() or {}
     db_status = data.get("status")
 
-    if db_status != "anchored":
+    if db_status not in ("anchored", "confirmed"):
         return PublicVerifyResponse(status="not_found", sha256=norm_hash, simulated=False)
 
     # In REAL mode: must confirm with smart contract on-chain

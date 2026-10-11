@@ -138,7 +138,14 @@ class ChainService:
         chain_id = settings.CHAIN_ID or rpc_chain_id
 
         if len(bytes32_hashes) == 1:
-            fn = contract.functions.anchor(bytes32_hashes[0], kinds[0])
+            try:
+                existing_time, _ = contract.functions.verify(bytes32_hashes[0]).call()
+                if existing_time > 0:
+                    logger.info("Hash %s is already anchored on-chain at timestamp %s", norm_hashes[0], existing_time)
+                    return "0xALREADY_ANCHORED"
+            except Exception as v_err:
+                logger.debug("Pre-check verify note: %s", v_err)
+            fn = contract.functions.anchorMany(bytes32_hashes, kinds)
         else:
             fn = contract.functions.anchorMany(bytes32_hashes, kinds)
 
@@ -196,6 +203,9 @@ class ChainService:
             block_time = int(time.time())
             return block_num, block_time
 
+        if tx_hash == "0xALREADY_ANCHORED":
+            return 0, int(time.time())
+
         w3, _, _ = self.get_client()
         receipt = w3.eth.wait_for_transaction_receipt(tx_hash, timeout=timeout)
         if receipt.get("status") != 1:
@@ -218,7 +228,7 @@ class ChainService:
             doc = client.collection("chain_anchors").document(norm_h).get()
             if doc.exists:
                 data = doc.to_dict() or {}
-                if data.get("status") == "anchored":
+                if data.get("status") in ("anchored", "confirmed"):
                     anchored_at = data.get("anchored_at")
                     if anchored_at is not None:
                         if hasattr(anchored_at, "timestamp"):

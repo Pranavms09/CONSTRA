@@ -44,8 +44,19 @@ class Evidence(Base):
     
     # Blockchain anchor tracking
     blockchain_tx = Column(String(100), nullable=True)
-    blockchain_status = Column(String(50), default="pending", nullable=False) # pending, anchored, simulated
-    
+    blockchain_status = Column(String(50), default="queued", nullable=False) # queued, submitted, confirmed, failed, simulated
+    blockchain_block_number = Column(Integer, nullable=True)
+    blockchain_network = Column(String(50), default="sepolia", nullable=False)
+    blockchain_chain_id = Column(Integer, default=11155111, nullable=False)
+
+    # AI Construction Vision Analysis
+    ai_status = Column(String(50), default="pending", nullable=False) # pending, analyzing, completed, failed
+    ai_summary = Column(Text, nullable=True)
+    ai_report = Column(Text, nullable=True)
+    ai_structured_result = Column(Text, nullable=True)
+    ai_analyzed_at = Column(DateTime(timezone=True), nullable=True)
+    ai_model = Column(String(100), default="gemini-2.5-flash", nullable=True)
+
     # Submission status
     status = Column(String(50), default="VERIFIED_SUBMITTED", nullable=False)
     notes = Column(Text, nullable=True)
@@ -55,6 +66,49 @@ class Evidence(Base):
     supervisor = relationship("User")
 
     def to_dict(self):
+        import json
+        from app.config import settings
+
+        # Parse AI structured result
+        structured = None
+        if self.ai_structured_result:
+            try:
+                structured = json.loads(self.ai_structured_result)
+            except Exception:
+                structured = None
+
+        # Build real explorer URL
+        is_real_tx = bool(
+            self.blockchain_tx
+            and not self.blockchain_tx.startswith("0xSIM")
+            and not self.blockchain_tx.startswith("0xFAKE")
+        )
+        explorer_url = f"{settings.EXPLORER_TX_URL}{self.blockchain_tx}" if is_real_tx and settings.EXPLORER_TX_URL else None
+
+        # Standardized sub-objects
+        ai_block = {
+            "status": self.ai_status or "pending",
+            "summary": self.ai_summary,
+            "report": self.ai_report,
+            "structured_result": structured,
+            "analyzed_at": self.ai_analyzed_at.isoformat() if self.ai_analyzed_at else None,
+            "model": self.ai_model or settings.GEMINI_MODEL,
+            "version": "1.0.0",
+            "error": self.ai_report if self.ai_status == "failed" else None,
+        }
+
+        chain_block = {
+            "status": self.blockchain_status or "queued",
+            "network": self.blockchain_network or "sepolia",
+            "chain_id": self.blockchain_chain_id or 11155111,
+            "transaction_hash": self.blockchain_tx if is_real_tx else (self.blockchain_tx if self.blockchain_status == "simulated" else None),
+            "block_number": self.blockchain_block_number,
+            "explorer_url": explorer_url,
+            "anchored_at": None,
+            "contract_address": settings.CONTRACT_ADDRESS,
+            "last_error": None,
+        }
+
         return {
             "id": self.id,
             "device_evidence_id": self.device_evidence_id,
@@ -83,4 +137,8 @@ class Evidence(Base):
             "blockchain_status": self.blockchain_status,
             "status": self.status,
             "notes": self.notes,
+            # Extended fields
+            "ai_analysis": ai_block,
+            "blockchain": chain_block,
         }
+

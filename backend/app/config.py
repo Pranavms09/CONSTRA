@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     BOOTSTRAP_ADMIN_EMAIL: Optional[str] = None
     SECRET_KEY: str = "siteverify-secret-key-2025-constra-apex"
     GEMINI_API_KEY: Optional[str] = None
-    GEMINI_MODEL: str = "gemini-2.5-flash"
+    GEMINI_MODEL: str = "gemini-flash-latest"
 
     # Store Module Settings
     UPLOAD_DIR: str = "./uploads"
@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     CLOUDINARY_API_SECRET: Optional[str] = None
 
     # Blockchain Anchoring Settings
-    CHAIN_MODE: str = "fake"  # fake | real
+    CHAIN_MODE: str = "real"  # fake | real
     RPC_URL: Optional[str] = None
     CHAIN_ID: Optional[int] = None
     CONTRACT_ADDRESS: Optional[str] = None

@@ -1,4 +1,4 @@
-# 🏗️ SiteVerify Frontend — Construction Milestone & Anti-Fraud Portal
+# 🏗️ CONSTRA Frontend — Construction Milestone & Anti-Fraud Portal
 
 > **Industrial-grade, role-based web application for automated construction site verification, VLM stage audits, delivery challan OCR reconciliation, material consumption monitoring, and cryptographic milestone certificate gating.**
 
@@ -38,7 +38,7 @@
 
 ## 🌟 Overview
 
-**SiteVerify Frontend** provides an intuitive, high-precision civil engineering dashboard built to eliminate milestone fraud, ghost deliveries, and off-book material diversion.
+**CONSTRA Frontend** provides an intuitive, high-precision civil engineering dashboard built to eliminate milestone fraud, ghost deliveries, and off-book material diversion.
 
 Equipped with a custom technical drafting design system (**CONSTRA**), smooth GSAP scroll choreography, Lenis inertia scrolling, and TanStack asynchronous query caching, the frontend delivers specialized workflows for three core stakeholders:
 1. **Site Supervisors** submitting geo-tagged, tamper-verified milestone progress photos from the job site.
@@ -51,7 +51,7 @@ Equipped with a custom technical drafting design system (**CONSTRA**), smooth GS
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
-│                                SITEVERIFY PORTAL ARCHITECTURE                           │
+│                                 CONSTRA PORTAL ARCHITECTURE                            │
 ├─────────────────────┬───────────────────────┬───────────────────┬──────────────────────┤
 │ 🌐 Public Landing   │ 👷 Supervisor         │ 📦 Store In-Charge│ 🔍 Auditor Center    │
 │ • Interactive VLM   │ • Geo-tagged uploads  │ • Challan OCR scan│ • Milestone triage   │

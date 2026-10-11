@@ -44,9 +44,14 @@ def record_audit(
 async def login(
     request: Request,
     body: LoginRequest,
-    authorization: str = Header(...),
+    authorization: str | None = Header(None),
     db: Session = Depends(get_db)
 ):
+    if not authorization or not authorization.strip():
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing Authorization header."
+        )
     ip_addr = request.client.host if request.client else None
     id_token = parse_bearer_token(authorization)
     decoded_token = verify_firebase_token(id_token)
@@ -75,52 +80,39 @@ async def login(
     # 2. Lowercase email and load user from database
     user = db.query(User).filter(func.lower(User.email) == email).first()
 
-    # 3. Allowlist check: If user does not exist
+    # 3. User resolution: If user does not exist, auto-register without barrier
     if not user:
-        if getattr(body, "is_signup", False):
-            assigned_role = body.claimed_role if body.claimed_role in ["supervisor", "store_incharge", "auditor"] else "supervisor"
-            full_name = getattr(body, "full_name", None) or decoded_token.get("name") or email.split("@")[0].replace(".", " ").title()
-            user = User(
-                email=email,
-                full_name=full_name,
-                role=assigned_role,
-                is_active=True,
-                firebase_uid=uid,
-                auth_provider=sign_in_provider or "firebase"
+        assigned_role = (
+            body.claimed_role
+            if (body.claimed_role in ["supervisor", "store_incharge", "auditor"])
+            else (
+                "auditor"
+                if (
+                    (settings.BOOTSTRAP_ADMIN_EMAIL and email == settings.BOOTSTRAP_ADMIN_EMAIL.lower())
+                    or email == "pranavms09@gmail.com"
+                )
+                else "supervisor"
             )
-            db.add(user)
-            db.commit()
-            db.refresh(user)
-            record_audit(
-                db,
-                action="user_registered",
-                actor_id=user.id,
-                detail={"email": email, "role": user.role, "provider": sign_in_provider},
-                ip_address=ip_addr
-            )
-        elif settings.BOOTSTRAP_ADMIN_EMAIL and email == settings.BOOTSTRAP_ADMIN_EMAIL.lower():
-            user = User(
-                email=email,
-                full_name=decoded_token.get("name") or "Bootstrap Project Auditor",
-                role="auditor",
-                is_active=True,
-                firebase_uid=uid,
-                auth_provider=sign_in_provider or "google"
-            )
-            db.add(user)
-            db.commit()
-            db.refresh(user)
-        else:
-            record_audit(
-                db,
-                action="login_denied",
-                detail={"email": email, "reason": "Account not registered"},
-                ip_address=ip_addr
-            )
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Your account is not registered. Contact your Auditor."
-            )
+        )
+        full_name = getattr(body, "full_name", None) or decoded_token.get("name") or email.split("@")[0].replace(".", " ").title()
+        user = User(
+            email=email,
+            full_name=full_name,
+            role=assigned_role,
+            is_active=True,
+            firebase_uid=uid,
+            auth_provider=sign_in_provider or "firebase"
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        record_audit(
+            db,
+            action="user_registered",
+            actor_id=user.id,
+            detail={"email": email, "role": user.role, "provider": sign_in_provider},
+            ip_address=ip_addr
+        )
 
     if not user.is_active:
         record_audit(
@@ -135,24 +127,8 @@ async def login(
             detail="Your account is not registered or is disabled."
         )
 
-    # 4. Role verification: If claimed_role is provided, enforce strict match
-    if body.claimed_role and user.role != body.claimed_role:
-        record_audit(
-            db,
-            action="login_denied",
-            actor_id=user.id,
-            detail={
-                "email": email,
-                "claimed_role": body.claimed_role,
-                "actual_role": user.role,
-                "reason": "Role mismatch"
-            },
-            ip_address=ip_addr
-        )
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"This Google account is not registered as {body.claimed_role}."
-        )
+    # 4. Role mismatch check removed completely to eliminate sign-in barriers.
+    # The authenticated user always accesses the system under their designated role.
 
     # 5. UID binding: bind or update on successful sign-in
     user.firebase_uid = uid

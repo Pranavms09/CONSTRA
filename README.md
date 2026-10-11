@@ -210,55 +210,54 @@ stateDiagram-v2
 
 | Layer | Component | Choice | Rationale |
 | :--- | :--- | :--- | :--- |
-| **Frontend** | Framework & Styling | **React (TypeScript) + Vite + Tailwind CSS** | Ultra-responsive, mobile-first layouts, rapid component composition |
-| **Backend** | API Framework | **FastAPI (Python 3.11)** | High-performance async support, native Pydantic v2 schemas, automated OpenAPI docs |
-| **Database** | Relational DB & ORM | **PostgreSQL + SQLAlchemy + Alembic** | Strict relational integrity, foreign key cascades, transactional consistency |
-| **AI / Multimodal** | VLM Audit Service | **Claude Vision / Gemini 1.5 Pro Multimodal** | Precise reasoning over visual checklist evidence with strict JSON output |
-| **Computer Vision** | OCR & Preprocessing | **OpenCV (`cv2`) + Tesseract (`pytesseract`)** | Local, zero-latency image filtering and text extraction |
-| **Forensics & Math** | Metadata & Anomaly | **Pillow / ExifRead + NumPy + Pandas** | Direct EXIF inspection, Haversine spatial math, and rolling $z$-score statistics |
-| **Security & Auth** | Cryptography & Tokens | **PyJWT + Passlib (Bcrypt) + Hashlib** | Stateless JWT authentication and SHA-256 evidence hashing |
+| **Web Portal** | Framework & Styling | **React 19 + Vite + Tailwind CSS + GSAP + Lenis** | Ultra-responsive, drafting-grade CONSTRA UI with micro-motion and smooth inertia |
+| **Mobile App** | Native Android | **Kotlin + Jetpack Compose + CameraX** | On-site photo capture with unstripped EXIF GPS metadata and offline queueing |
+| **Backend API** | Application Server | **FastAPI (Python 3.12)** | Asynchronous ASGI runtime, native Pydantic v2 schemas, automated OpenAPI documentation |
+| **Database** | Relational & Live Sync | **PostgreSQL / SQLite + Cloud Firestore** | ACID relational integrity with Alembic migrations and real-time Firestore mirror |
+| **Media CDN** | Evidence Storage | **Cloudinary CDN** | Instant cross-dashboard image distribution with secure HTTPS access for all 3 roles |
+| **Blockchain** | Decentralized Anchor | **Ethereum Sepolia + Web3.py + Hardhat** | Immutable proof-of-existence via `EvidenceRegistry.sol` smart contract |
+| **AI / Multimodal** | VLM Audit Service | **Google Gemini 2.5 Flash / Claude Vision** | Deep visual reasoning over structural stage completion checklists |
+| **Computer Vision** | OCR & Preprocessing | **OpenCV (`cv2`) + Tesseract (`pytesseract`)** | Local, zero-latency image filtering, adaptive thresholding, and challan parsing |
+| **Forensics & Math** | Metadata & Anomaly | **Pillow / ExifRead + NumPy + Pandas** | Direct EXIF extraction, Haversine geospatial radius math, and rolling $z$-scores |
+| **Security & Auth** | Cryptography & RBAC | **Firebase Auth + JWT + SHA-256** | Zero-trust token authentication and SHA-256 cryptographic evidence chaining |
 | **Certificates** | Document Generation | **ReportLab / WeasyPrint** | High-fidelity, auditable PDF milestone certificate rendering |
-| **Containerization** | Orchestration | **Docker & Docker Compose** | Reproducible multi-service deployment for local evaluation and production |
 
 ---
 
 ## 📁 Project Directory Structure
 
-The system follows a clean modular monolith architecture:
+The system follows a clean modular architecture:
 
 ```
 Hack-A-Night/
-├── backend/
+├── backend/                            # FastAPI backend services & AI pipelines
 │   ├── app/
 │   │   ├── main.py                     # FastAPI entry point & middleware registration
 │   │   ├── config.py                   # Environment settings & threshold loaders
-│   │   ├── api/                        # HTTP Routers (auth, projects, stages, alerts, etc.)
+│   │   ├── api/                        # HTTP Routers (claims, analysis)
+│   │   ├── routers/                    # Domain routers (store, supervisor, chain, auth)
 │   │   ├── checks/                     # Pluggable verification pipeline classes
-│   │   │   ├── base.py                 # CheckOutcome protocol & PhotoCheck interface
-│   │   │   ├── exif_checker.py         # Haversine distance, time & software checks
-│   │   │   ├── vlm_checker.py          # Vision-Language Model stage matching
-│   │   │   ├── boq_checker.py          # Delivery tolerance reconciliation
-│   │   │   └── anomaly_checker.py      # Drawdown ratio & z-score anomaly detector
-│   │   ├── ai/                         # VLM client wrappers & fallback parsers
 │   │   ├── domain/                     # Pure domain logic: state machine, unit conversion
 │   │   ├── models/                     # SQLAlchemy relational models
 │   │   ├── schemas/                    # Pydantic v2 request/response schemas
-│   │   ├── services/                   # Business logic (evidence, certificate, audit chain)
-│   │   └── workers/                    # Background job task execution
-│   └── tests/                          # Unit, integration, and security test suites
-├── frontend/
+│   │   ├── services/                   # Business logic (cloudinary_service, chain, firestore_db)
+│   │   └── workers/                    # Background blockchain anchor worker
+│   ├── .env                            # Consolidated environment secrets & configs
+│   └── requirements.txt                # Python backend dependencies
+├── frontend/                           # React 19 + Vite + Tailwind CSS portal
 │   ├── src/
 │   │   ├── api/                        # Typed API clients
-│   │   ├── auth/                       # AuthContext, token storage, and route guards
-│   │   ├── components/                 # StatusBadge, SeverityTag, CheckRow, Uploader
-│   │   └── pages/
-│   │       ├── supervisor/             # MyProject, StageDetail, PhotoUpload
-│   │       ├── store/                  # StoreDashboard, ChallanReview, MaterialIssue
-│   │       └── auditor/                # AuditDashboard, AlertDetail, StageReview, Settings
+│   │   ├── auth/                       # Firebase AuthContext & route guards
+│   │   ├── components/                 # CONSTRA design system components
+│   │   └── pages/                      # Role portals (supervisor, store, auditor, analysis)
+│   ├── DESIGN.md                       # CONSTRA technical drafting specification
 │   ├── package.json
 │   └── vite.config.ts
-├── docker-compose.yml                  # Local orchestration (FastAPI + React + Postgres)
-├── .env.example                        # Template environment variables
+├── Mobile App/                         # Native Android field evidence capture app (Kotlin)
+├── contracts/                          # Ethereum Sepolia EvidenceRegistry smart contract
+│   ├── contracts/EvidenceRegistry.sol  # Solidity immutable anchoring contract
+│   └── hardhat.config.ts
+├── docs/                               # System design, PRDs, and chain integration guides
 └── README.md                           # Master project guide
 ```
 
@@ -281,12 +280,15 @@ Hack-A-Night/
 | `PATCH` | `/api/v1/alerts/{id}` | Auditor | Resolves or escalates an alert (mandatory written justification) |
 | `POST` | `/api/v1/stages/{id}/approve` | Auditor | Evaluates clearance gate and marks stage `CLEARED` |
 | `GET` | `/api/v1/stages/{id}/certificate` | Supervisor, Auditor | Generates and downloads signed milestone clearance PDF certificate |
+| `POST` | `/api/v1/chain/anchor` | Relayer / Internal | Submits batch of SHA-256 evidence fingerprints to smart contract |
+| `GET` | `/api/v1/chain/verify/{fingerprint}`| Public | Verifies evidence fingerprint and returns on-chain proof |
+| `GET` | `/api/v1/chain/status` | Public | Returns blockchain relayer health, contract address, and network |
 
 ---
 
 ## 🛡️ Security & Anti-Fraud Defenses
 
-SiteVerify applies the **STRIDE** threat model and enforces robust integrity controls:
+**CONSTRA** applies the **STRIDE** threat model and enforces robust integrity controls:
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
@@ -345,9 +347,9 @@ limits:
    ```
 
 2. **Configure environment variables:**
+   The backend uses a single consolidated configuration file at `backend/.env`:
    ```bash
-   cp .env.example .env
-   # Set your VLM API Key (ANTHROPIC_API_KEY or GEMINI_API_KEY) and DB credentials
+   # Ensure backend/.env exists with your API keys (Gemini, Cloudinary, Alchemy Sepolia)
    ```
 
 3. **Launch the platform:**
@@ -375,7 +377,7 @@ Feature 1 implements zero-trust role segregation with Google login powered by Fi
 
 ### Step 1: Firebase Project Setup
 1. In the [Firebase Console](https://console.firebase.google.com/):
-   - Create a Firebase Project.
+   - Create a Firebase Project (e.g. `constra-b561b`).
    - Under **Authentication** -> **Sign-in method**, enable **Google**.
 2. Under **Project Settings** -> **General**:
    - Register a Web App and copy the web configuration keys.
@@ -386,19 +388,39 @@ Feature 1 implements zero-trust role segregation with Google login powered by Fi
 
 1. **Backend (`backend/.env`)**:
    ```env
-   DATABASE_URL=sqlite:///./siteverify.db # Or postgresql://user:password@localhost:5432/siteverify
-   FIREBASE_SERVICE_ACCOUNT_PATH=./secrets/firebase-service-account.json
+   DATABASE_URL=sqlite:///./siteverify.db
    FRONTEND_ORIGIN=http://localhost:5173
+   SECRET_KEY=siteverify-secret-key-2025-constra-apex
+   FIREBASE_PROJECT_ID=constra-b561b
    BOOTSTRAP_ADMIN_EMAIL=your-auditor-google-account@gmail.com
+   FIREBASE_SERVICE_ACCOUNT_PATH=backend/secrets/firebase-service-account.json
+
+   # AI Vision
+   GEMINI_API_KEY=your_gemini_api_key
+   GEMINI_MODEL=gemini-2.5-flash
+
+   # Cloudinary CDN Image Storage
+   CLOUDINARY_CLOUD_NAME=your_cloud_name
+   CLOUDINARY_API_KEY=your_api_key
+   CLOUDINARY_API_SECRET=your_api_secret
+
+   # Blockchain Anchoring (Ethereum Sepolia)
+   CHAIN_MODE=fake                      # fake | real
+   RPC_URL=https://eth-sepolia.g.alchemy.com/v2/your_key
+   CHAIN_ID=11155111
+   CONTRACT_ADDRESS=0x9B4E3d4b62e59B622d5E69cbea0393A6Ee8Fdd14
+   ANCHOR_PRIVATE_KEY=your_testnet_private_key
+   EXPLORER_TX_URL=https://sepolia.etherscan.io/tx/
+   EXPLORER_ADDRESS_URL=https://sepolia.etherscan.io/address/
    ```
 
 2. **Frontend (`frontend/.env`)**:
    ```env
    VITE_API_BASE_URL=http://localhost:8000
    VITE_FIREBASE_API_KEY=AIzaSy...
-   VITE_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
-   VITE_FIREBASE_PROJECT_ID=your-project
-   VITE_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
+   VITE_FIREBASE_AUTH_DOMAIN=constra-b561b.firebaseapp.com
+   VITE_FIREBASE_PROJECT_ID=constra-b561b
+   VITE_FIREBASE_STORAGE_BUCKET=constra-b561b.firebasestorage.app
    VITE_FIREBASE_MESSAGING_SENDER_ID=1234567890
    VITE_FIREBASE_APP_ID=1:1234567890:web:...
    ```
@@ -408,10 +430,6 @@ Feature 1 implements zero-trust role segregation with Google login powered by Fi
 **Backend:**
 ```bash
 cd backend
-# Run Alembic migrations to head
-./.venv/bin/alembic upgrade head
-
-# Start FastAPI server with live reload
 ./.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
@@ -433,14 +451,14 @@ npm run dev
 
 To experience the complete verification lifecycle during a live presentation:
 
-1. **Genuine Stage Upload:** Log in as **Site Supervisor** (`supervisor@siteverify.io`). Upload an authentic site photo for *Column Casting*. All checks (GPS, timestamp, VLM) pass; status updates to `UNDER_REVIEW`.
+1. **Genuine Stage Upload:** Log in as **Site Supervisor** (`supervisor@siteverify.com`). Upload an authentic site photo for *Column Casting*. All checks (GPS, timestamp, VLM) pass; status updates to `UNDER_REVIEW`.
 2. **Fabricated Photo Injection:** Upload a photo of bare ground for *Slab Casting*. VLM identifies missing reinforcement steel ($82\%$ confidence) and raises a `CRITICAL` alert; status transitions to `FLAGGED`.
 3. **Location Tamper Attempt:** Upload a photo taken $410\text{ m}$ away. The EXIF checker flags a `HIGH` alert for geofence violation.
 4. **Duplicate Photo Reuse:** Upload the earlier column photo under a different stage. SHA-256 duplicate detection flags it instantly.
-5. **Inflated Challan Delivery:** Log in as **Store In-Charge** (`store@siteverify.io`). Upload a vendor challan with $24\%$ excess cement. Confirm OCR; BOQ engine flags over-delivery.
+5. **Inflated Challan Delivery:** Log in as **Store In-Charge** (`store@siteverify.com`). Upload a vendor challan with $24\%$ excess cement. Confirm OCR; BOQ engine flags over-delivery.
 6. **Anomalous Material Issue:** Issue 40 bags of cement when only 15 are expected for current verified work. Anomaly engine flags consumption deviation.
-7. **Certificate Gate Enforcement:** Log in as **Project Auditor** (`auditor@siteverify.io`). Attempt to approve the flagged stage. System **blocks certificate issuance** with explicit blocker tooltips.
-8. **Resolution & Certificate Generation:** Auditor reviews evidence panel, documents override comments, resolves alerts, and approves the stage. The system clears the stage and generates the verified PDF certificate.
+7. **Certificate Gate Enforcement:** Log in as **Project Auditor** (`auditor@siteverify.com`). Attempt to approve the flagged stage. System **blocks certificate issuance** with explicit blocker tooltips.
+8. **Resolution & Certificate Generation:** Auditor reviews evidence panel, documents override comments, resolves alerts, and approves the stage. The system clears the stage, generates the verified PDF certificate, and anchors the proof to the Ethereum Sepolia blockchain registry.
 
 ---
 

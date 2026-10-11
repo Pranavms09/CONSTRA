@@ -308,7 +308,8 @@ async def submit_evidence(
         distance_to_site_m=round(distance_to_site_m, 2) if distance_to_site_m is not None else None,
         is_within_radius=is_within_radius,
         radius_warning=radius_warning,
-        blockchain_status="pending",
+        blockchain_status="queued",
+        ai_status="pending",
         status="VERIFIED_SUBMITTED" if hash_matched else "HASH_MISMATCH_SUSPICIOUS",
         notes=notes
     )
@@ -388,10 +389,26 @@ async def submit_evidence(
             project_id=project_id
         )
         if anchor_id != -1:
-            evidence_record.blockchain_status = "pending"
+            evidence_record.blockchain_status = "queued"
             db.commit()
     except Exception as exc:
         logger.warning(f"Blockchain anchoring failed to enqueue: {exc}")
+
+    # 11. Launch Asynchronous Gemini VLM Construction Progress Analysis
+    try:
+        import asyncio
+        from app.services.construction_vision import run_evidence_ai_analysis_async
+        asyncio.create_task(
+            run_evidence_ai_analysis_async(
+                evidence_id=evidence_record.id,
+                file_bytes=file_bytes,
+                mime_type=mime_type,
+                stage_name=stage.name if stage else None,
+                project_name=project.name if project else None,
+            )
+        )
+    except Exception as ai_err:
+        logger.warning(f"Failed to launch background AI vision analysis: {ai_err}")
 
     return EvidenceResponse(**evidence_record.to_dict())
 
@@ -437,6 +454,115 @@ def get_evidence_detail(
             detail="Evidence record not found"
         )
     return EvidenceResponse(**evidence.to_dict())
+
+
+@router.post("/evidence/{evidence_id}/retry-ai", response_model=EvidenceResponse)
+async def retry_evidence_ai_analysis(
+    evidence_id: int,
+    user: User = Depends(require_role("supervisor")),
+    db: Session = Depends(get_db)
+):
+    """
+    Retries Gemini construction vision analysis for a previously submitted evidence photo.
+    """
+    evidence = db.query(Evidence).filter(
+        Evidence.id == evidence_id,
+        Evidence.supervisor_id == user.id
+    ).first()
+    if not evidence:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Evidence record not found")
+
+    if not os.path.exists(evidence.file_path):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Physical evidence file not found for re-analysis")
+
+    with open(evidence.file_path, "rb") as f:
+        file_bytes = f.read()
+
+    evidence.ai_status = "pending"
+    db.commit()
+
+    import asyncio
+    from app.services.construction_vision import run_evidence_ai_analysis_async
+    stage_name = evidence.stage.name if evidence.stage else None
+    project_name = evidence.project.name if evidence.project else None
+    asyncio.create_task(
+        run_evidence_ai_analysis_async(
+            evidence_id=evidence.id,
+            file_bytes=file_bytes,
+            mime_type=evidence.mime_type or "image/jpeg",
+            stage_name=stage_name,
+            project_name=project_name,
+        )
+    )
+
+    return EvidenceResponse(**evidence.to_dict())
+
+
+@router.post("/evidence/{evidence_id}/retry-anchor", response_model=EvidenceResponse)
+def retry_evidence_anchor(
+    evidence_id: int,
+    user: User = Depends(require_role("supervisor")),
+    db: Session = Depends(get_db)
+):
+    """
+    Safely retries blockchain anchoring for an unconfirmed or failed evidence record.
+    """
+    evidence = db.query(Evidence).filter(
+        Evidence.id == evidence_id,
+        Evidence.supervisor_id == user.id
+    ).first()
+    if not evidence:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Evidence record not found")
+
+    from app.services.chain_hooks import enqueue_anchor
+    from app.services.firestore_db import get_firestore_client
+    from datetime import datetime, timezone
+
+    # Reset Firestore chain_anchors document if present
+    try:
+        client = get_firestore_client()
+        doc_ref = client.collection("chain_anchors").document(evidence.server_sha256)
+        doc_ref.set({
+            "status": "pending",
+            "attempts": 0,
+            "next_attempt_at": datetime.now(timezone.utc),
+            "claimed_by": None,
+            "lease_until": None,
+            "last_error": None,
+        }, merge=True)
+    except Exception as fs_err:
+        logger.warning(f"Resetting Firestore anchor doc failed: {fs_err}")
+        enqueue_anchor(
+            db,
+            entity="photo",
+            entity_id=evidence.id,
+            sha256=evidence.server_sha256,
+            project_id=evidence.project_id
+        )
+
+    evidence.blockchain_status = "queued"
+    db.commit()
+    return EvidenceResponse(**evidence.to_dict())
+
+
+@router.get("/evidence/{evidence_id}/anchor")
+def get_evidence_anchor_detail(
+    evidence_id: int,
+    user: User = Depends(require_role("supervisor")),
+    db: Session = Depends(get_db)
+):
+    """
+    Returns verified blockchain anchoring details for an evidence record.
+    """
+    evidence = db.query(Evidence).filter(
+        Evidence.id == evidence_id,
+        Evidence.supervisor_id == user.id
+    ).first()
+    if not evidence:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Evidence record not found")
+
+    return evidence.to_dict()["blockchain"]
+
 
 
 @router.get("/evidence/{evidence_id}/file")

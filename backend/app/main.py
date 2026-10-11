@@ -62,13 +62,37 @@ def bootstrap_admin():
 
 
 import os
+from sqlalchemy import text
 from fastapi.staticfiles import StaticFiles
 from app.workers.anchor_worker import anchor_worker
+
+def ensure_db_columns():
+    """Ensures newly introduced evidence table columns exist in relational database."""
+    with engine.connect() as conn:
+        new_cols = [
+            ("blockchain_block_number", "INTEGER"),
+            ("blockchain_network", "VARCHAR(50) DEFAULT 'sepolia'"),
+            ("blockchain_chain_id", "INTEGER DEFAULT 11155111"),
+            ("ai_status", "VARCHAR(50) DEFAULT 'pending'"),
+            ("ai_summary", "TEXT"),
+            ("ai_report", "TEXT"),
+            ("ai_structured_result", "TEXT"),
+            ("ai_analyzed_at", "DATETIME"),
+            ("ai_model", "VARCHAR(100) DEFAULT 'gemini-2.5-flash'"),
+        ]
+        for col_name, col_type in new_cols:
+            try:
+                conn.execute(text(f"ALTER TABLE evidence ADD COLUMN {col_name} {col_type}"))
+                conn.commit()
+            except Exception:
+                # Column already exists
+                pass
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Ensure database schema is initialized
     Base.metadata.create_all(bind=engine)
+    ensure_db_columns()
     bootstrap_admin()
     try:
         from scripts.seed_store_demo import seed_store_demo
@@ -78,6 +102,7 @@ async def lifespan(app: FastAPI):
     # Start blockchain anchor background worker
     anchor_worker.start()
     yield
+
     anchor_worker.stop()
 
 

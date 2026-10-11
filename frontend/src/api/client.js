@@ -2,24 +2,50 @@ import { auth } from "../auth/firebase";
 
 const defaultBaseUrl =
   typeof window !== "undefined" &&
-  window.location.hostname !== "localhost" &&
-  window.location.hostname !== "127.0.0.1"
+    window.location.hostname !== "localhost" &&
+    window.location.hostname !== "127.0.0.1"
     ? "https://constra-backend.onrender.com"
     : "http://localhost:8000";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || defaultBaseUrl;
 
-export async function apiFetch(endpoint, options = {}) {
-  const demoToken = localStorage.getItem("siteverify_token");
-  let token = demoToken;
-
+export async function getAuthToken() {
+  let token = localStorage.getItem("siteverify_token");
   if (!token && auth?.currentUser) {
     try {
       token = await auth.currentUser.getIdToken();
+      if (token) {
+        localStorage.setItem("siteverify_token", token);
+      }
     } catch {
       // ignore if firebase not logged in
     }
   }
+
+  // Automatic recovery for stored sessions (e.g. demo mode or previously logged in user)
+  if (!token) {
+    try {
+      const savedUserStr = localStorage.getItem("siteverify_user");
+      if (savedUserStr) {
+        const savedUser = JSON.parse(savedUserStr);
+        if (savedUser?.token) {
+          token = savedUser.token;
+          localStorage.setItem("siteverify_token", token);
+        } else if (savedUser?.role) {
+          token = `demo-${savedUser.role}`;
+          localStorage.setItem("siteverify_token", token);
+        }
+      }
+    } catch {
+      // ignore json parse error
+    }
+  }
+
+  return token;
+}
+
+export async function apiFetch(endpoint, options = {}) {
+  const token = await getAuthToken();
 
   const headers = {
     "Content-Type": "application/json",
@@ -210,16 +236,7 @@ export async function analyzeImage(file) {
   const formData = new FormData();
   formData.append("file", file);
 
-  const demoToken = localStorage.getItem("siteverify_token");
-  let token = demoToken;
-  if (!token && auth?.currentUser) {
-    try {
-      token = await auth.currentUser.getIdToken();
-    } catch {
-      // ignore
-    }
-  }
-
+  const token = await getAuthToken();
   const headers = {};
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;

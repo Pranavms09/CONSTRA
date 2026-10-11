@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { getAuthToken } from "../../api/client";
 
 export const ImageViewer = ({ fileUrl, fileName, isPdf = false }) => {
   const [zoom, setZoom] = useState(1);
@@ -20,7 +21,7 @@ export const ImageViewer = ({ fileUrl, fileName, isPdf = false }) => {
       try {
         setLoading(true);
         setError(null);
-        const token = localStorage.getItem("siteverify_token");
+        const token = await getAuthToken();
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
         const res = await fetch(fileUrl, { headers });

@@ -294,11 +294,10 @@ export const AuditorHome = () => {
         <div className="flex items-center gap-2 border-b border-[#101010] pb-3 overflow-x-auto">
           <button
             onClick={() => setActiveTab("desk")}
-            className={`px-4 py-2 font-label-code text-label-code uppercase tracking-wider font-bold transition-all border cursor-pointer flex items-center gap-2 ${
-              activeTab === "desk"
+            className={`px-4 py-2 font-label-code text-label-code uppercase tracking-wider font-bold transition-all border cursor-pointer flex items-center gap-2 ${activeTab === "desk"
                 ? "bg-[#FCBC18] text-[#101010] border-[#101010] shadow-[2px_2px_0px_#101010]"
                 : "bg-[#F2ECE6] text-[#5F5E5E] border-[#A39B8F]/40 hover:text-[#101010] hover:border-[#101010]"
-            }`}
+              }`}
           >
             <span className="material-symbols-outlined text-[15px]">assignment</span>
             <span>01 // CLAIM AUDIT DESK</span>
@@ -308,11 +307,10 @@ export const AuditorHome = () => {
               setActiveTab("deliveries");
               loadChallans();
             }}
-            className={`px-4 py-2 font-label-code text-label-code uppercase tracking-wider font-bold transition-all border cursor-pointer flex items-center gap-2 ${
-              activeTab === "deliveries"
+            className={`px-4 py-2 font-label-code text-label-code uppercase tracking-wider font-bold transition-all border cursor-pointer flex items-center gap-2 ${activeTab === "deliveries"
                 ? "bg-[#FCBC18] text-[#101010] border-[#101010] shadow-[2px_2px_0px_#101010]"
                 : "bg-[#F2ECE6] text-[#5F5E5E] border-[#A39B8F]/40 hover:text-[#101010] hover:border-[#101010]"
-            }`}
+              }`}
           >
             <span className="material-symbols-outlined text-[15px]">local_shipping</span>
             <span>02 // STORE CHALLANS ({challansList.length})</span>
@@ -322,33 +320,30 @@ export const AuditorHome = () => {
               setActiveTab("alerts");
               loadAlerts();
             }}
-            className={`px-4 py-2 font-label-code text-label-code uppercase tracking-wider font-bold transition-all border cursor-pointer flex items-center gap-2 ${
-              activeTab === "alerts"
+            className={`px-4 py-2 font-label-code text-label-code uppercase tracking-wider font-bold transition-all border cursor-pointer flex items-center gap-2 ${activeTab === "alerts"
                 ? "bg-[#FCBC18] text-[#101010] border-[#101010] shadow-[2px_2px_0px_#101010]"
                 : "bg-[#F2ECE6] text-[#5F5E5E] border-[#A39B8F]/40 hover:text-[#101010] hover:border-[#101010]"
-            }`}
+              }`}
           >
             <span className="material-symbols-outlined text-[15px]">warning</span>
             <span>03 // AUDIT ALERTS ({alertsList.filter((a) => a.status !== "resolved").length})</span>
           </button>
           <button
             onClick={() => setActiveTab("exif")}
-            className={`px-4 py-2 font-label-code text-label-code uppercase tracking-wider font-bold transition-all border cursor-pointer flex items-center gap-2 ${
-              activeTab === "exif"
+            className={`px-4 py-2 font-label-code text-label-code uppercase tracking-wider font-bold transition-all border cursor-pointer flex items-center gap-2 ${activeTab === "exif"
                 ? "bg-[#FCBC18] text-[#101010] border-[#101010] shadow-[2px_2px_0px_#101010]"
                 : "bg-[#F2ECE6] text-[#5F5E5E] border-[#A39B8F]/40 hover:text-[#101010] hover:border-[#101010]"
-            }`}
+              }`}
           >
             <span className="material-symbols-outlined text-[15px]">location_on</span>
             <span>04 // EXIF &amp; GPS</span>
           </button>
           <button
             onClick={() => setActiveTab("users")}
-            className={`px-4 py-2 font-label-code text-label-code uppercase tracking-wider font-bold transition-all border cursor-pointer flex items-center gap-2 ${
-              activeTab === "users"
+            className={`px-4 py-2 font-label-code text-label-code uppercase tracking-wider font-bold transition-all border cursor-pointer flex items-center gap-2 ${activeTab === "users"
                 ? "bg-[#FCBC18] text-[#101010] border-[#101010] shadow-[2px_2px_0px_#101010]"
                 : "bg-[#F2ECE6] text-[#5F5E5E] border-[#A39B8F]/40 hover:text-[#101010] hover:border-[#101010]"
-            }`}
+              }`}
           >
             <span className="material-symbols-outlined text-[15px]">manage_accounts</span>
             <span>05 // USER ACCESS</span>
@@ -436,11 +431,10 @@ export const AuditorHome = () => {
                         </td>
                         <td className="py-3 px-3 border-r border-[#101010]">
                           <span
-                            className={`px-2 py-0.5 border font-bold uppercase text-xs ${
-                              c.status === "confirmed"
+                            className={`px-2 py-0.5 border font-bold uppercase text-xs ${c.status === "confirmed"
                                 ? "bg-[#93d5ad]/30 text-[#296a49] border-[#296a49]"
                                 : "bg-[#ffdea2] text-[#7a5900] border-[#7a5900]"
-                            }`}
+                              }`}
                           >
                             {c.status || "DRAFT"}
                           </span>
@@ -522,15 +516,14 @@ export const AuditorHome = () => {
                 {alertsList.map((a) => (
                   <div
                     key={a.id}
-                    className={`p-4 border-2 transition-all ${
-                      a.status === "resolved"
+                    className={`p-4 border-2 transition-all ${a.status === "resolved"
                         ? "bg-[#E6E2DD] border-[#296a49]/40 opacity-75"
                         : a.severity === "CRITICAL"
-                        ? "bg-[#ffdad6]/40 border-[#ba1a1a]"
-                        : a.severity === "HIGH"
-                        ? "bg-[#ffdea2]/40 border-[#7a5900]"
-                        : "bg-[#E6E2DD] border-[#101010]"
-                    }`}
+                          ? "bg-[#ffdad6]/40 border-[#ba1a1a]"
+                          : a.severity === "HIGH"
+                            ? "bg-[#ffdea2]/40 border-[#7a5900]"
+                            : "bg-[#E6E2DD] border-[#101010]"
+                      }`}
                   >
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-[#A39B8F]/30">
                       <div className="flex items-center gap-2 flex-wrap">
@@ -538,24 +531,22 @@ export const AuditorHome = () => {
                           ALERT #{a.id}
                         </span>
                         <span
-                          className={`px-2 py-0.5 text-xs font-bold uppercase border ${
-                            a.severity === "CRITICAL"
+                          className={`px-2 py-0.5 text-xs font-bold uppercase border ${a.severity === "CRITICAL"
                               ? "bg-[#ffdad6] text-[#ba1a1a] border-[#ba1a1a]"
                               : a.severity === "HIGH"
-                              ? "bg-[#ffdea2] text-[#7a5900] border-[#7a5900]"
-                              : "bg-[#E6E2DD] text-[#504533] border-[#827560]"
-                          }`}
+                                ? "bg-[#ffdea2] text-[#7a5900] border-[#7a5900]"
+                                : "bg-[#E6E2DD] text-[#504533] border-[#827560]"
+                            }`}
                         >
                           {a.severity} SEVERITY
                         </span>
                         <span
-                          className={`px-2 py-0.5 text-xs font-bold uppercase border ${
-                            a.status === "resolved"
+                          className={`px-2 py-0.5 text-xs font-bold uppercase border ${a.status === "resolved"
                               ? "bg-[#93d5ad]/30 text-[#296a49] border-[#296a49]"
                               : a.status === "escalated"
-                              ? "bg-[#ffdad6] text-[#ba1a1a] border-[#ba1a1a]"
-                              : "bg-[#ffdea2] text-[#7a5900] border-[#7a5900]"
-                          }`}
+                                ? "bg-[#ffdad6] text-[#ba1a1a] border-[#ba1a1a]"
+                                : "bg-[#ffdea2] text-[#7a5900] border-[#7a5900]"
+                            }`}
                         >
                           STATUS: {a.status}
                         </span>
@@ -1065,3 +1056,4 @@ export const AuditorHome = () => {
 };
 
 export default AuditorHome;
+

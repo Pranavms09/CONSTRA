@@ -189,28 +189,30 @@ def test_anchor_worker_process_batch_and_fake_mode(setup_mock_firestore):
     client = setup_mock_firestore
     test_hash = "4" * 64
 
-    enqueue_anchor(
-        entity="certificate",
-        entity_id="303",
-        sha256=test_hash,
-        project_id="1",
-    )
+    with patch.object(settings, "CHAIN_MODE", "fake"):
+        enqueue_anchor(
+            entity="certificate",
+            entity_id="303",
+            sha256=test_hash,
+            project_id="1",
+        )
 
-    worker = AnchorWorker()
-    worker.process_batch()
+        worker = AnchorWorker()
+        worker.process_batch()
 
-    doc = client.collection("chain_anchors").document(test_hash).get()
-    data = doc.to_dict()
-    assert data["status"] == "anchored"
-    assert data["tx_hash"].startswith("0xFAKE")
-    assert data["simulated"] is True
-    assert data["block_number"] > 0
-    assert data["anchored_at"] is not None
+        doc = client.collection("chain_anchors").document(test_hash).get()
+        data = doc.to_dict()
+        assert data["status"] in ("anchored", "confirmed")
+        assert data["tx_hash"].startswith("0xFAKE")
+        assert data["simulated"] is True
+        assert data["block_number"] > 0
+        assert data["anchored_at"] is not None
 
-    # Check fake ledger verification
-    t_val, k_val = chain_service.check_hash(test_hash, client)
-    assert t_val > 0
-    assert k_val == 3
+        # Check fake ledger verification
+        t_val, k_val = chain_service.check_hash(test_hash, client)
+        assert t_val > 0
+        assert k_val == 3
+
 
 
 def test_anchor_worker_recovery_of_expired_lease(setup_mock_firestore):
@@ -242,66 +244,66 @@ def test_anchor_worker_recovery_of_expired_lease(setup_mock_firestore):
 
 
 def test_api_public_verify_endpoints(setup_mock_firestore):
-    client = setup_mock_firestore
-    test_client = TestClient(app)
+    with patch.object(settings, "CHAIN_MODE", "fake"):
+        client = setup_mock_firestore
+        test_client = TestClient(app)
 
-    # 1. Unknown hash returns not_found
-    res = test_client.get(f"/chain/verify/{'0' * 64}")
-    assert res.status_code == 200
-    assert res.json()["status"] == "not_found"
+        # 1. Unknown hash returns not_found
+        res = test_client.get(f"/chain/verify/{'0' * 64}")
+        assert res.status_code == 200
+        assert res.json()["status"] == "not_found"
 
-    # 2. Anchored hash returns authentic
-    known_hash = "6" * 64
-    enqueue_anchor(
-        entity="photo",
-        entity_id="505",
-        sha256=known_hash,
-        project_id="1",
-    )
-    worker = AnchorWorker()
-    worker.process_batch()
+        # 2. Anchored hash returns authentic
+        known_hash = "6" * 64
+        enqueue_anchor(
+            entity="photo",
+            entity_id="505",
+            sha256=known_hash,
+            project_id="1",
+        )
+        worker = AnchorWorker()
+        worker.process_batch()
 
-    res2 = test_client.get(f"/chain/verify/{known_hash}")
-    assert res2.status_code == 200
-    body = res2.json()
-    assert body["status"] == "authentic"
-    assert body["sha256"] == known_hash
-    assert body["kind"] == "photo"
-    assert body["simulated"] is True
-    assert body["tx_hash"].startswith("0xFAKE")
+        res2 = test_client.get(f"/chain/verify/{known_hash}")
+        assert res2.status_code == 200
+        body = res2.json()
+        assert body["status"] == "authentic"
+        assert body["sha256"] == known_hash
+        assert body["kind"] == "photo"
+        assert body["simulated"] is True
+        assert body["tx_hash"].startswith("0xFAKE")
 
-    # 3. File upload verify
-    file_bytes = b"CONSTRA test document content for verification"
-    import hashlib
-    file_hash = hashlib.sha256(file_bytes).hexdigest()
+        # 3. File upload verify
+        file_bytes = b"CONSTRA test document content for verification"
+        import hashlib
+        file_hash = hashlib.sha256(file_bytes).hexdigest()
 
-    enqueue_anchor(
-        entity="challan",
-        entity_id="606",
-        sha256=file_hash,
-        project_id="1",
-    )
-    worker.process_batch()
+        enqueue_anchor(
+            entity="challan",
+            entity_id="606",
+            sha256=file_hash,
+            project_id="1",
+        )
+        worker.process_batch()
 
-    upload_res = test_client.post(
-        "/chain/verify",
-        files={"file": ("challan.pdf", io.BytesIO(file_bytes), "application/pdf")}
-    )
-    assert upload_res.status_code == 200
-    assert upload_res.json()["status"] == "authentic"
-    assert upload_res.json()["sha256"] == file_hash
-    assert upload_res.json()["kind"] == "challan"
+        upload_res = test_client.post(
+            "/chain/verify",
+            files={"file": ("challan.pdf", io.BytesIO(file_bytes), "application/pdf")}
+        )
+        assert upload_res.status_code == 200
+        assert upload_res.json()["status"] == "authentic"
+        assert upload_res.json()["sha256"] == file_hash
+        assert upload_res.json()["kind"] == "challan"
 
-    # 4. Tamper test: modify one byte
-    tampered_bytes = bytearray(file_bytes)
-    tampered_bytes[0] ^= 0x01
-    tamper_res = test_client.post(
-        "/chain/verify",
-        files={"file": ("challan.pdf", io.BytesIO(tampered_bytes), "application/pdf")}
-    )
-    assert tamper_res.status_code == 200
-    assert tamper_res.json()["status"] == "not_found"
-
+        # 4. Tamper test: modify one byte
+        tampered_bytes = bytearray(file_bytes)
+        tampered_bytes[0] ^= 0x01
+        tamper_res = test_client.post(
+            "/chain/verify",
+            files={"file": ("challan.pdf", io.BytesIO(tampered_bytes), "application/pdf")}
+        )
+        assert tamper_res.status_code == 200
+        assert tamper_res.json()["status"] == "not_found"
 
 def test_api_status_and_retry_permissions(setup_mock_firestore):
     client = setup_mock_firestore

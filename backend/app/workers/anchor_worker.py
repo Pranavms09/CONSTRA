@@ -188,24 +188,48 @@ class AnchorWorker:
 
         try:
             tx_hash = chain_service.send_batch(hashes, kinds)
+
+            # Record SUBMITTED status immediately
+            is_sim = chain_service.is_fake_mode()
+            for item in claimed_items:
+                ref = item["doc_ref"]
+                try:
+                    ref.update({
+                        "status": "submitted",
+                        "tx_hash": tx_hash,
+                        "chain_id": settings.CHAIN_ID or 11155111,
+                        "simulated": is_sim,
+                    })
+                    _sync_sql_evidence(item.get("entity"), item.get("entity_id"), "submitted", tx_hash)
+                except Exception as sub_err:
+                    logger.debug("Failed updating submitted state: %s", sub_err)
+
             block_number, block_timestamp = chain_service.wait_for_receipt(tx_hash, timeout=120)
 
             anchored_dt = datetime.fromtimestamp(block_timestamp, tz=timezone.utc)
             for item in claimed_items:
                 ref = item["doc_ref"]
+                # Use 'confirmed' status while supporting queries
                 ref.update({
-                    "status": "anchored",
+                    "status": "confirmed",
                     "tx_hash": tx_hash,
                     "block_number": block_number,
                     "anchored_at": anchored_dt,
-                    "chain_id": settings.CHAIN_ID or 0,
-                    "simulated": chain_service.is_fake_mode(),
+                    "chain_id": settings.CHAIN_ID or 11155111,
+                    "simulated": is_sim,
                     "claimed_by": None,
                     "lease_until": None,
                     "last_error": None,
                 })
+                _sync_sql_evidence(
+                    item.get("entity"),
+                    item.get("entity_id"),
+                    "confirmed" if not is_sim else "simulated",
+                    tx_hash=tx_hash,
+                    block_number=block_number
+                )
 
-            logger.info("Successfully anchored %d item(s) in tx %s (block %s)", len(claimed_items), tx_hash, block_number)
+            logger.info("Successfully confirmed %d item(s) on-chain in tx %s (block %s)", len(claimed_items), tx_hash, block_number)
 
         except Exception as batch_exc:
             logger.error("Failed anchoring batch of %d items: %s", len(claimed_items), batch_exc)
@@ -238,6 +262,42 @@ class AnchorWorker:
                     "lease_until": None,
                     "last_error": err_msg,
                 })
+                _sync_sql_evidence(
+                    item.get("entity"),
+                    item.get("entity_id"),
+                    status if status == "failed" else "queued"
+                )
+
+
+def _sync_sql_evidence(
+    entity: Optional[str],
+    entity_id: Optional[Any],
+    status: str,
+    tx_hash: Optional[str] = None,
+    block_number: Optional[int] = None
+):
+    """Synchronizes blockchain status from worker back to SQLite/PostgreSQL Evidence record."""
+    if not entity or entity.lower() != "photo" or not entity_id:
+        return
+    try:
+        from app.database import SessionLocal
+        from app.models.evidence import Evidence
+        db = SessionLocal()
+        try:
+            ev_id = int(entity_id)
+            ev = db.query(Evidence).filter(Evidence.id == ev_id).first()
+            if ev:
+                ev.blockchain_status = status
+                if tx_hash:
+                    ev.blockchain_tx = tx_hash
+                if block_number is not None:
+                    ev.blockchain_block_number = block_number
+                db.commit()
+        finally:
+            db.close()
+    except Exception as exc:
+        logger.debug("Could not sync SQL evidence entity_id=%s: %s", entity_id, exc)
+
 
 
 # Global worker instance

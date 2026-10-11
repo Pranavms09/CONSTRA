@@ -1,9 +1,9 @@
-import { apiFetch } from "./client";
+import { apiFetch, getAuthToken } from "./client";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
-function getAuthHeader() {
-  const token = localStorage.getItem("siteverify_token");
+async function getAuthHeader() {
+  const token = await getAuthToken();
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
@@ -51,7 +51,7 @@ export async function uploadChallan(projectId, file) {
   const formData = new FormData();
   formData.append("file", file);
 
-  const headers = getAuthHeader();
+  const headers = await getAuthHeader();
   const url = `${API_BASE_URL}/store/projects/${projectId}/challans`;
 
   const res = await fetch(url, {
@@ -97,7 +97,18 @@ export async function confirmChallan(id, payload = {}) {
 }
 
 export function getChallanFileUrl(id) {
-  const token = localStorage.getItem("siteverify_token");
+  let token = localStorage.getItem("siteverify_token");
+  if (!token) {
+    try {
+      const u = localStorage.getItem("siteverify_user");
+      if (u) {
+        const parsed = JSON.parse(u);
+        token = parsed.token || (parsed.role ? `demo-${parsed.role}` : null);
+      }
+    } catch {
+      // ignore
+    }
+  }
   const base = `${API_BASE_URL}/store/files/${id}`;
   return token ? `${base}?token=${encodeURIComponent(token)}` : base;
 }

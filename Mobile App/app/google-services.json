@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "328961609707",
+    "project_id": "constra-b561b",
+    "storage_bucket": "constra-b561b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:328961609707:android:d1fa1a5338d6341e8093ae",
+        "android_client_info": {
+          "package_name": "constra.ai"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "328961609707-75ruu0811a0c1akhoib3hg0jcesdfk7t.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBcxlZyr4wCximz4RLDjq5EbErcDQQZNEk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "328961609707-75ruu0811a0c1akhoib3hg0jcesdfk7t.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

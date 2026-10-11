@@ -42,10 +42,13 @@ export const LoginPage = () => {
   const { user, loginWithGoogle, loginWithEmail, registerWithEmail, loginAsDemo } = useAuth();
   const navigate = useNavigate();
 
-  // If already logged in, redirect to user's assigned dashboard
+  // If already logged in with valid token, redirect to user's assigned dashboard
   useEffect(() => {
     if (user) {
-      navigate(getRoleHomeRoute(user.role), { replace: true });
+      const token = localStorage.getItem("siteverify_token");
+      if (token) {
+        navigate(getRoleHomeRoute(user.role), { replace: true });
+      }
     }
   }, [user, navigate]);
 

@@ -31,8 +31,14 @@ export const AuthProvider = ({ children }) => {
   const saveUser = (profile) => {
     if (profile) {
       localStorage.setItem("siteverify_user", JSON.stringify(profile));
+      if (profile.token) {
+        localStorage.setItem("siteverify_token", profile.token);
+      } else if (profile.role && !localStorage.getItem("siteverify_token")) {
+        localStorage.setItem("siteverify_token", `demo-${profile.role}`);
+      }
     } else {
       localStorage.removeItem("siteverify_user");
+      localStorage.removeItem("siteverify_token");
     }
     setUser(profile);
   };
@@ -49,6 +55,8 @@ export const AuthProvider = ({ children }) => {
 
           if (firebaseUser) {
             try {
+              const idToken = await firebaseUser.getIdToken();
+              localStorage.setItem("siteverify_token", idToken);
               const profile = await fetchMe();
               if (isSubscribed && profile) {
                 saveUser(profile);
@@ -63,12 +71,36 @@ export const AuthProvider = ({ children }) => {
               try {
                 const profile = await fetchMe();
                 if (isSubscribed && profile) saveUser(profile);
-              } catch {
-                localStorage.removeItem("siteverify_token");
-                if (isSubscribed) saveUser(null);
+              } catch (err) {
+                if (err?.status === 401 || err?.status === 403) {
+                  localStorage.removeItem("siteverify_token");
+                  if (isSubscribed) saveUser(null);
+                }
               }
             } else {
-              if (isSubscribed) saveUser(null);
+              const savedUserStr = localStorage.getItem("siteverify_user");
+              if (savedUserStr) {
+                try {
+                  const parsed = JSON.parse(savedUserStr);
+                  if (parsed?.role) {
+                    const recoveredToken = parsed.token || `demo-${parsed.role}`;
+                    localStorage.setItem("siteverify_token", recoveredToken);
+                    try {
+                      const profile = await fetchMe();
+                      if (isSubscribed && profile) saveUser(profile);
+                    } catch (err) {
+                      if (err?.status === 401 || err?.status === 403) {
+                        localStorage.removeItem("siteverify_token");
+                        if (isSubscribed) saveUser(null);
+                      }
+                    }
+                  }
+                } catch {
+                  if (isSubscribed) saveUser(null);
+                }
+              } else {
+                if (isSubscribed) saveUser(null);
+              }
             }
           }
           if (isSubscribed) setLoading(false);
@@ -84,12 +116,36 @@ export const AuthProvider = ({ children }) => {
           try {
             const profile = await fetchMe();
             if (isSubscribed && profile) saveUser(profile);
-          } catch {
-            localStorage.removeItem("siteverify_token");
-            if (isSubscribed) saveUser(null);
+          } catch (err) {
+            if (err?.status === 401 || err?.status === 403) {
+              localStorage.removeItem("siteverify_token");
+              if (isSubscribed) saveUser(null);
+            }
           }
         } else {
-          if (isSubscribed) saveUser(null);
+          const savedUserStr = localStorage.getItem("siteverify_user");
+          if (savedUserStr) {
+            try {
+              const parsed = JSON.parse(savedUserStr);
+              if (parsed?.role) {
+                const recoveredToken = parsed.token || `demo-${parsed.role}`;
+                localStorage.setItem("siteverify_token", recoveredToken);
+                try {
+                  const profile = await fetchMe();
+                  if (isSubscribed && profile) saveUser(profile);
+                } catch (err) {
+                  if (err?.status === 401 || err?.status === 403) {
+                    localStorage.removeItem("siteverify_token");
+                    if (isSubscribed) saveUser(null);
+                  }
+                }
+              }
+            } catch {
+              if (isSubscribed) saveUser(null);
+            }
+          } else {
+            if (isSubscribed) saveUser(null);
+          }
         }
         if (isSubscribed) setLoading(false);
       }
@@ -105,6 +161,7 @@ export const AuthProvider = ({ children }) => {
     const result = await signInWithPopup(auth, googleProvider);
     try {
       const idToken = await result.user.getIdToken(true);
+      localStorage.setItem("siteverify_token", idToken);
       let userProfile;
       try {
         userProfile = await loginWithBackend(claimedRole, idToken, false, result.user.displayName);
@@ -158,6 +215,7 @@ export const AuthProvider = ({ children }) => {
 
     try {
       const idToken = await userCredential.user.getIdToken(true);
+      localStorage.setItem("siteverify_token", idToken);
       let userProfile;
       try {
         userProfile = await loginWithBackend(claimedRole, idToken, false);
@@ -186,6 +244,7 @@ export const AuthProvider = ({ children }) => {
     const result = await createUserWithEmailAndPassword(auth, cleanEmail, cleanPassword);
     try {
       const idToken = await result.user.getIdToken(true);
+      localStorage.setItem("siteverify_token", idToken);
       const userProfile = await loginWithBackend(claimedRole, idToken, true);
       saveUser(userProfile);
       return userProfile;

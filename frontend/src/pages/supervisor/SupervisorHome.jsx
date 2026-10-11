@@ -425,33 +425,30 @@ export const SupervisorHome = () => {
               <button
                 type="button"
                 onClick={() => setActiveTab("verification")}
-                className={`h-full px-3 sm:px-4 flex items-center font-label-code text-label-code tracking-wider uppercase transition-colors cursor-pointer ${
-                  activeTab === "verification"
+                className={`h-full px-3 sm:px-4 flex items-center font-label-code text-label-code tracking-wider uppercase transition-colors cursor-pointer ${activeTab === "verification"
                     ? "border-b-2 border-[#fcbc18] text-[#fcbc18] font-bold bg-[#e4e1e8]/10"
                     : "text-[#f2f0f6]/70 hover:text-[#f2f0f6] border-b-2 border-transparent"
-                }`}
+                  }`}
               >
                 01 // AI IMAGE VERIFICATION
               </button>
               <button
                 type="button"
                 onClick={() => setActiveTab("stream")}
-                className={`h-full px-3 sm:px-4 flex items-center font-label-code text-label-code tracking-wider uppercase transition-colors cursor-pointer ${
-                  activeTab === "stream"
+                className={`h-full px-3 sm:px-4 flex items-center font-label-code text-label-code tracking-wider uppercase transition-colors cursor-pointer ${activeTab === "stream"
                     ? "border-b-2 border-[#fcbc18] text-[#fcbc18] font-bold bg-[#e4e1e8]/10"
                     : "text-[#f2f0f6]/70 hover:text-[#f2f0f6] border-b-2 border-transparent"
-                }`}
+                  }`}
               >
                 02 // EVIDENCE CAPTURE STREAM ({recentClaims.length})
               </button>
               <button
                 type="button"
                 onClick={() => setActiveTab("telemetry")}
-                className={`h-full px-3 sm:px-4 flex items-center font-label-code text-label-code tracking-wider uppercase transition-colors cursor-pointer ${
-                  activeTab === "telemetry"
+                className={`h-full px-3 sm:px-4 flex items-center font-label-code text-label-code tracking-wider uppercase transition-colors cursor-pointer ${activeTab === "telemetry"
                     ? "border-b-2 border-[#fcbc18] text-[#fcbc18] font-bold bg-[#e4e1e8]/10"
                     : "text-[#f2f0f6]/70 hover:text-[#f2f0f6] border-b-2 border-transparent"
-                }`}
+                  }`}
               >
                 03 // STAGE TELEMETRY &amp; DIAGNOSTIC
               </button>
@@ -660,11 +657,10 @@ export const SupervisorHome = () => {
                         onDragOver={handleDragOver}
                         onDragLeave={handleDragLeave}
                         onDrop={handleDrop}
-                        className={`relative group cursor-pointer border-2 border-dashed transition-colors p-6 flex flex-col items-center justify-center text-center min-h-[260px] ${
-                          isDragging
+                        className={`relative group cursor-pointer border-2 border-dashed transition-colors p-6 flex flex-col items-center justify-center text-center min-h-[260px] ${isDragging
                             ? "border-[#fcbc18] bg-[#fcbc18]/10"
                             : "border-[#d4c5ac] hover:border-[#101010] bg-[#f5f2f9]"
-                        }`}
+                          }`}
                       >
                         <input
                           ref={fileInputRef}
@@ -1046,9 +1042,8 @@ export const SupervisorHome = () => {
                           {recentClaims.map((claim, idx) => (
                             <tr
                               key={claim.id + idx}
-                              className={`hover:bg-[#f5f2f9] transition-colors ${
-                                idx % 2 === 1 ? "bg-[#f5f2f9]/50" : ""
-                              }`}
+                              className={`hover:bg-[#f5f2f9] transition-colors ${idx % 2 === 1 ? "bg-[#f5f2f9]/50" : ""
+                                }`}
                             >
                               <td className="py-2.5 px-3 font-label-code text-label-code font-bold text-[#1b1b20] border-r border-[#d4c5ac]/20">
                                 {claim.id}

@@ -21,6 +21,29 @@ class SupervisorStageResponse(BaseModel):
     verified_progress: float
 
 
+class AiAnalysisBlock(BaseModel):
+    status: str = "pending"  # pending, analyzing, completed, failed
+    summary: Optional[str] = None
+    report: Optional[str] = None
+    structured_result: Optional[dict] = None
+    analyzed_at: Optional[str] = None
+    model: Optional[str] = "gemini-flash-latest"
+    version: Optional[str] = "1.0.0"
+    error: Optional[str] = None
+
+
+class BlockchainBlock(BaseModel):
+    status: str = "queued"  # queued, submitted, confirmed, failed, simulated
+    network: str = "sepolia"
+    chain_id: int = 11155111
+    transaction_hash: Optional[str] = None
+    block_number: Optional[int] = None
+    explorer_url: Optional[str] = None
+    anchored_at: Optional[str] = None
+    contract_address: Optional[str] = None
+    last_error: Optional[str] = None
+
+
 class EvidenceResponse(BaseModel):
     id: int
     device_evidence_id: str
@@ -49,6 +72,9 @@ class EvidenceResponse(BaseModel):
     blockchain_status: str
     status: str
     notes: Optional[str] = None
+    ai_analysis: Optional[AiAnalysisBlock] = None
+    blockchain: Optional[BlockchainBlock] = None
+
 
 
 class SupervisorDashboardResponse(BaseModel):
