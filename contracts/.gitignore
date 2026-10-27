@@ -1,0 +1,18 @@
+# Hardhat artifacts & cache
+artifacts/
+cache/
+typechain-types/
+
+# Hardhat Ignition deployment state & journals
+ignition/deployments/
+
+# Node modules
+node_modules/
+
+# Local environment & secret files
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log

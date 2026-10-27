@@ -1,0 +1,61 @@
+# Environment variables & secrets
+.env
+.env.*
+!.env.example
+*.env
+*.env.*
+!*.env.example
+*.local
+backend/.env
+backend/.env.*
+!backend/.env.example
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+backend/secrets/
+secrets/
+*.pem
+*.key
+uploads/
+backend/uploads/
+test_assets/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+backend/.venv/
+.venv/
+venv/
+.pytest_cache/
+*.db
+*.sqlite
+*.sqlite3
+
+# Node / Frontend / Contracts
+frontend/node_modules/
+contracts/node_modules/
+node_modules/
+frontend/dist/
+dist/
+contracts/artifacts/
+contracts/cache/
+contracts/typechain-types/
+contracts/ignition/deployments/
+ignition/deployments/
+contracts/.env
+contracts/.env.*
+!contracts/.env.example
+.DS_Store
+*.log
+.vscode/
+.idea/
+pyrefly.toml
+
+# Firebase/Google client config (contains API keys)
+google-services.json
+GoogleService-Info.plist
+
+# Build output
+build/
+.gradle/

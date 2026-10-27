@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">CONSTRA</string>
+    <string name="camera_permission_rationale">CONSTRA requires camera access exclusively to capture live, trusted site construction evidence. Gallery uploads and file pickers are strictly disabled.</string>
+    <string name="location_permission_rationale">CONSTRA requires high-accuracy GPS coordinates to verify physical site presence within the authorized construction project perimeter.</string>
+</resources>
