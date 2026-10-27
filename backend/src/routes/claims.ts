@@ -1,8 +1,9 @@
 import { Hono } from "hono";
-import { optionalUser, requireRole } from "../auth";
+import { requireRole, requireUser } from "../auth";
 import { all, audit, first, nowIso, parseJson, run, stmt } from "../db";
 import { fail, jsonBody } from "../errors";
 import { analyzeStoredExif } from "../lib/exif";
+import { analyzeConstruction } from "../lib/gemini";
 import { canonicalJson, sha256Hex } from "../lib/util";
 import { enqueueAnchor, explorerTx, isRealChain, processAnchors } from "../services/chain";
 import type { AppEnv } from "../types";
@@ -12,6 +13,9 @@ const claims = new Hono<AppEnv>();
 
 const SITE = { siteLatitude: 20.03639, siteLongitude: 73.79959 };
 const COMMANDS = ["run_ocr", "run_vlm", "run_exif", "run_all", "rerun_field"];
+// Which engine re-extracts a field for `rerun_field`.
+const FIELD_ENGINE: Record<string, string> = { damage_severity: "run_vlm", gps_distance_m: "run_exif", stated_total: "run_ocr" };
+const VLM_CONFIDENCE: Record<string, number> = { high: 0.9, medium: 0.7, low: 0.5 };
 
 const loadClaim = async (db: D1Database, id: string) =>
   parseJson<any>((await first<{ data: string }>(db, "SELECT data FROM claims WHERE id = ?", id))?.data);
@@ -34,6 +38,13 @@ const photoKey = (claim: any) => {
   return photo.name ? `uploads/${String(photo.name).split("/").pop()}` : null;
 };
 
+/** The claim's project and stage, or 422: claims never fall back to another project's stage. */
+async function claimTarget(db: D1Database, projectId: unknown, stageId: unknown) {
+  const project = (await first<any>(db, "SELECT * FROM projects WHERE id = ?", Number(projectId))) ?? fail(422, "Claim project not found.");
+  const stage = (await first<any>(db, "SELECT * FROM stages WHERE id = ? AND project_id = ?", Number(stageId), project.id)) ?? fail(422, "Claim stage not found in its project.");
+  return { project, stage };
+}
+
 async function photoExif(env: AppEnv["Bindings"], claim: any) {
   const key = photoKey(claim);
   if (!key) return null;
@@ -44,7 +55,7 @@ async function photoExif(env: AppEnv["Bindings"], claim: any) {
   }
 }
 
-claims.get("/claims", async (c) => {
+claims.get("/claims", requireUser, async (c) => {
   const rows = await all<{ data: string }>(c.env.DB, "SELECT data FROM claims ORDER BY created_at ASC");
   return c.json(rows.map((r) => {
     const cl = JSON.parse(r.data);
@@ -57,23 +68,24 @@ claims.get("/claims", async (c) => {
   }));
 });
 
-claims.post("/claims", async (c) => {
+claims.post("/claims", requireRole("supervisor"), async (c) => {
   const db = c.env.DB;
   const p = await jsonBody<any>(c.req);
-  const user = await optionalUser(c);
-  const count = (await first<{ n: number }>(db, "SELECT COUNT(*) AS n FROM claims"))!.n;
-  const claimId = typeof p.id === "string" && p.id ? p.id : `CLM-2026-${String(count + 1).padStart(3, "0")}`;
-  const subId = user ? user.id : p.submitter_id ?? null;
-  const subName = user ? user.full_name : p.claimant;
+  const user = c.get("user");
+  const { project, stage } = await claimTarget(db, p.project_id, p.stage_id);
+  // Server-made id + plain INSERT: a client cannot overwrite an existing claim, and parallel creates never collide.
+  const claimId = `CLM-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
+  const subId = user.id;
+  const subName = user.full_name;
 
   const claim = {
     id: claimId,
-    claimant: subName || p.claimant || "PVGCOE Nashik Project Operations",
+    claimant: subName || user.email,
     submitter_id: subId,
-    submitter_email: user ? user.email : p.submitter_email ?? null,
+    submitter_email: user.email,
     policy_no: p.policy_no || "POL-INSP-LOT81",
-    project_id: p.project_id || "1",
-    stage_id: p.stage_id ?? null,
+    project_id: String(project.id),
+    stage_id: stage.id,
     type: p.type || "Stage #02: Structural Slab Concrete Casting & Rebar Binding",
     filed_at: p.filed_at || nowIso(),
     risk: p.risk || "LOW",
@@ -84,57 +96,54 @@ claims.post("/claims", async (c) => {
     line_items: p.line_items || [],
     report: p.report ?? null,
   };
-  await saveClaim(db, claim);
-
-  // Sync the matching stage to UNDER_REVIEW.
-  try {
-    const project = await first<{ id: number }>(db, "SELECT id FROM projects WHERE id = 1 OR name LIKE '%Apex%' ORDER BY id LIMIT 1");
-    if (project) {
-      const stage = (p.stage_id ? await first<{ id: number }>(db, "SELECT id FROM stages WHERE project_id = ? AND id = ?", project.id, p.stage_id) : null)
-        ?? (await first<{ id: number }>(db, 'SELECT id FROM stages WHERE project_id = ? AND "order" = 3', project.id));
-      if (stage) await run(db, "UPDATE stages SET status = 'UNDER_REVIEW' WHERE id = ?", stage.id);
-      await audit(db, { actorId: subId, action: "claim_submitted", entity: "claim", entityId: claimId,
-        detail: { claim_id: claimId, project_id: project.id, file_count: claim.files.length, submitter: subName } });
-    }
-  } catch (err) {
-    console.warn("Claim stage sync failed:", err);
-  }
+  await run(db, "INSERT INTO claims (id, data) VALUES (?, ?)", claim.id, JSON.stringify(claim));
+  await run(db, "UPDATE stages SET status = 'UNDER_REVIEW' WHERE id = ?", stage.id);
+  await audit(db, { actorId: subId, action: "claim_submitted", entity: "claim", entityId: claimId,
+    detail: { claim_id: claimId, project_id: project.id, stage_id: stage.id, file_count: claim.files.length, submitter: subName } });
 
   return c.json({ status: "success", message: `Claim ${claimId} created and transmitted to Auditor Queue.`, claim });
 });
 
-claims.get("/claims/:id", async (c) => {
+claims.get("/claims/:id", requireUser, async (c) => {
   const claim = await claimOr404(c.env.DB, c.req.param("id"));
   return c.json({ ...claim, exif_report: await photoExif(c.env, claim) });
 });
 
-claims.post("/claims/:id/commands", async (c) => {
+claims.post("/claims/:id/commands", requireRole("auditor"), async (c) => {
   const db = c.env.DB;
   const claim = await claimOr404(db, c.req.param("id"));
   const req = await jsonBody<{ command?: string; params?: any }>(c.req);
   if (!COMMANDS.includes(req.command ?? "")) fail(400, "Invalid agent command");
-  const command = req.command!;
-  const jobId = `job_${Date.now()}`;
-  const job: any = { jobId, claimId: claim.id, command, state: "running", step: "Initializing agent tools...", created_at: nowIso() };
+  const fieldKey = req.params?.fieldKey;
+  if (req.command === "rerun_field" && !FIELD_ENGINE[fieldKey]) fail(400, `No extraction engine re-runs field '${fieldKey}'.`);
+  const command = req.command === "rerun_field" ? FIELD_ENGINE[fieldKey] : req.command!;
+  const jobId = `job_${crypto.randomUUID()}`;
+  const job: any = { jobId, claimId: claim.id, command: req.command, state: "running", step: "Initializing agent tools...", created_at: nowIso() };
 
   try {
     const results: Record<string, any> = {};
+    const notes: string[] = [];
     const ai = (claim.ai ??= {});
     if (command === "run_ocr" || command === "run_all") {
-      results.stated_total = { fieldKey: "stated_total", value: ai.stated_total?.value ?? 50000.0, confidence: 0.98, source: "OCR Engine (Live Inspection)", source_ref: "Document extraction" };
+      // Claims carry site photos only; there is no document for OCR to read, so no value is invented.
+      if (command === "run_ocr") throw new Error("OCR needs a document file; this claim has only site photos.");
+      notes.push("OCR skipped: no document attached.");
     }
     if (command === "run_vlm" || command === "run_all") {
-      results.damage_severity = { fieldKey: "damage_severity", value: "VERIFIED_COMPLIANT_STRUCTURAL_CAST", confidence: 0.96, source: "VLM Gemini Vision (Site Photo Analysis)", source_ref: "Milestone photo specimen" };
+      const key = photoKey(claim);
+      const obj = key ? await c.env.FILES.get(key) : null;
+      if (!obj) throw new Error("Site photo not found in storage for VLM analysis.");
+      const analysis = await analyzeConstruction(c.env, await obj.arrayBuffer(), obj.httpMetadata?.contentType ?? "image/jpeg", claim.type, null);
+      const level = String((analysis.stage_assessment as any)?.confidence ?? "").toLowerCase();
+      results.damage_severity = { fieldKey: "damage_severity", value: analysis.summary, confidence: VLM_CONFIDENCE[level] ?? 0.5, source: "Gemini Vision (Site Photo Analysis)", source_ref: key };
+      // Set only here, never from the client payload: approval reads it as "the server ran the VLM".
+      claim.vlm_verified_at = nowIso();
     }
     if (command === "run_exif" || command === "run_all") {
       const report = await photoExif(c.env, claim);
       const gps = report?.checks.find((ch) => ch.name === "gps_geofence");
       const photo = (claim.files ?? []).find((f: any) => f.kind === "photo");
       results.gps_distance_m = { fieldKey: "gps_distance_m", value: (gps?.details as any)?.distance_from_site_m ?? 0.0, confidence: 0.99, source: "EXIF GPS Geofence Check", source_ref: photo?.name || "Site Photo" };
-    }
-    const fieldKey = req.params?.fieldKey;
-    if (command === "rerun_field" && fieldKey) {
-      results[fieldKey] = { fieldKey, value: ai[fieldKey]?.value ?? "VERIFIED", confidence: 0.99, source: "Re-run Agent Extraction", source_ref: "Field telemetry" };
     }
 
     claim.decisions ??= {};
@@ -145,7 +154,7 @@ claims.post("/claims/:id/commands", async (c) => {
       if (d?.dec && prev && prev.value !== r.value) d.stale = true;
     }
     await saveClaim(db, claim);
-    Object.assign(job, { state: "succeeded", step: "Extraction completed successfully.", results });
+    Object.assign(job, { state: "succeeded", step: "Extraction completed successfully.", results, notes });
   } catch (err) {
     Object.assign(job, { state: "failed", error: String((err as Error).message ?? err) });
   }
@@ -153,10 +162,10 @@ claims.post("/claims/:id/commands", async (c) => {
   return c.json({ jobId, state: job.state });
 });
 
-claims.get("/jobs/:id", async (c) =>
+claims.get("/jobs/:id", requireUser, async (c) =>
   c.json(parseJson((await first<{ data: string }>(c.env.DB, "SELECT data FROM jobs WHERE id = ?", c.req.param("id")))?.data) ?? fail(404, "Job not found")));
 
-claims.post("/claims/:id/decisions", async (c) => {
+claims.post("/claims/:id/decisions", requireRole("auditor"), async (c) => {
   const claim = await claimOr404(c.env.DB, c.req.param("id"));
   const body = await jsonBody<{ decisions?: Record<string, any> }>(c.req);
   if (!body.decisions || typeof body.decisions !== "object") fail(422, "decisions object is required");
@@ -183,11 +192,8 @@ claims.post("/claims/:id/submit", requireRole("auditor"), async (c) => {
   if (selfApproval) fail(403, "Self-approval violation: The approver cannot be the milestone submitter.");
   if (claim.status === "CLEARED") fail(400, "Milestone is already CLEARED. Conflicting concurrent approval detected.");
 
-  const wantedPid = Number.parseInt(claim.project_id, 10) || 1;
-  const project = await first<any>(db, "SELECT * FROM projects WHERE id = ? OR id = 1 ORDER BY id = ? DESC LIMIT 1", wantedPid, wantedPid);
-  const pid = project?.id ?? 1;
-  const stage = (claim.stage_id ? await first<any>(db, "SELECT * FROM stages WHERE project_id = ? AND id = ?", pid, claim.stage_id) : null)
-    ?? (await first<any>(db, `SELECT * FROM stages WHERE project_id = ? AND ("order" = 3 OR status != 'COMPLETED') ORDER BY id LIMIT 1`, pid));
+  const { project, stage } = await claimTarget(db, claim.project_id, claim.stage_id);
+  const pid = project.id;
 
   const decs = Object.values(decisions);
   const amended = decs.filter((d: any) => d?.dec === "amend");
@@ -200,8 +206,8 @@ claims.post("/claims/:id/submit", requireRole("auditor"), async (c) => {
     const report = { claim_id: claim.id, verdict, verdict_note: note, decisions, submitted_at: nowIso(), auditor_id: user.id, auditor_email: user.email, status: "FLAGGED" };
     Object.assign(claim, { report, status: "FLAGGED" });
     await saveClaim(db, claim);
-    if (stage) await run(db, "UPDATE stages SET status = 'FLAGGED' WHERE id = ?", stage.id);
-    await audit(db, { actorId: user.id, action: "milestone_rejected", entity: "stage", entityId: String(stage?.id ?? claim.id), detail: { claim_id: claim.id, verdict, reason: note } });
+    await run(db, "UPDATE stages SET status = 'FLAGGED' WHERE id = ?", stage.id);
+    await audit(db, { actorId: user.id, action: "milestone_rejected", entity: "stage", entityId: String(stage.id), detail: { claim_id: claim.id, verdict, reason: note } });
     return c.json({ status: "success", message: "Milestone rejected and flagged with mandatory written reason recorded in audit trail.", report });
   }
 
@@ -219,7 +225,9 @@ claims.post("/claims/:id/submit", requireRole("auditor"), async (c) => {
   if (openAlerts!.n) blockers.push(`Unresolved ${openAlerts!.n} critical/high severity alert(s) remain on this project. Resolve all critical alerts before approval.`);
   const photos = (claim.files ?? []).filter((f: any) => f.kind === "photo");
   if (!photos.length) blockers.push("Required photo verification evidence is missing from this submission.");
-  const geofence = claim.exif_report?.checks?.find((ch: any) => ch.name === "gps_geofence");
+  // Computed from the stored photo now; the client never supplies the EXIF verdict.
+  const exif = await photoExif(c.env, claim);
+  const geofence = exif?.checks.find((ch) => ch.name === "gps_geofence");
   if (geofence?.status === "FAILED" || geofence?.status === "FAIL") {
     blockers.push("Photo EXIF GPS geofence check failed: Photo coordinates are outside permitted project boundary.");
   }
@@ -228,22 +236,22 @@ claims.post("/claims/:id/submit", requireRole("auditor"), async (c) => {
 
   // All checks passed: clear the stage and issue a certificate.
   const issuedAt = nowIso();
-  const stageId = stage?.id ?? 1;
+  const stageId = stage.id;
   const certNumber = `CERT-SV-${pid}-${stageId}-${Math.floor(Date.now() / 1000)}`;
   const photoHashes = await Promise.all(photos.map(async (f: any) => f.sha256 || claim.ai?.fileHash || (await sha256Hex(String(f.name ?? "")))));
   const challanHashes = confirmed.map((r) => r.sha256);
   const certHash = await sha256Hex(canonicalJson({
-    certificate_number: certNumber, project_name: project?.name ?? "Apex Tower", stage_name: stage?.name ?? claim.type,
+    certificate_number: certNumber, project_name: project.name, stage_name: stage.name,
     auditor: user.full_name || user.email, auditor_id: user.id, verdict, photo_hashes: photoHashes, challan_hashes: challanHashes, issued_at: issuedAt,
   }));
 
   const [, certRow] = await db.batch([
-    stmt(db, "UPDATE stages SET status = 'CLEARED', verified_progress = 1.0 WHERE id = ?", stage?.id ?? null),
+    stmt(db, "UPDATE stages SET status = 'CLEARED', verified_progress = 1.0 WHERE id = ?", stage.id),
     stmt(db,
       `INSERT INTO clearance_certificates (certificate_number, project_id, stage_id, claim_id, auditor_id, verdict, verdict_note, evidence_hashes, verification_summary, certificate_hash, issued_at)
        VALUES (?, ?, ?, ?, ?, 'CLEARED', ?, ?, ?, ?, ?) RETURNING id`,
       certNumber, pid, stageId, claim.id, user.id, body.verdictNote ?? "", JSON.stringify(photoHashes),
-      JSON.stringify({ photos_verified: photos.length, challans_reconciled: challanHashes.length, exif_geofence_verified: true, ai_vlm_verified: true }),
+      JSON.stringify({ photos_verified: photos.length, challans_reconciled: challanHashes.length, exif_geofence_verified: geofence?.status === "PASS", ai_vlm_verified: !!claim.vlm_verified_at }),
       certHash, issuedAt),
   ]);
   const certId = (certRow.results[0] as { id: number }).id;
@@ -274,7 +282,7 @@ claims.post("/claims/:id/submit", requireRole("auditor"), async (c) => {
   });
 });
 
-claims.get("/claims/:id/certificate", async (c) => {
+claims.get("/claims/:id/certificate", requireUser, async (c) => {
   const cert = await first(c.env.DB, `${CERT_SELECT} WHERE cc.claim_id = ? ORDER BY cc.id DESC LIMIT 1`, c.req.param("id"));
   if (cert) return c.json(certResponse(cert));
   const claim = await loadClaim(c.env.DB, c.req.param("id"));
@@ -282,7 +290,7 @@ claims.get("/claims/:id/certificate", async (c) => {
   return fail(404, "Clearance certificate not found");
 });
 
-claims.get("/stages/:id/certificate", async (c) => {
+claims.get("/stages/:id/certificate", requireUser, async (c) => {
   const cert = await first(c.env.DB, `${CERT_SELECT} WHERE cc.stage_id = ? ORDER BY cc.id DESC LIMIT 1`, Number(c.req.param("id")));
   return cert ? c.json(certResponse(cert)) : fail(404, "No clearance certificate issued for this stage.");
 });
