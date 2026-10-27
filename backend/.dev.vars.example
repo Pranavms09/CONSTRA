@@ -9,3 +9,5 @@ ANCHOR_PRIVATE_KEY=
 CONTRACT_ADDRESS=
 # Set CHAIN_MODE=fake to develop without a wallet (anchors are simulated).
 # CHAIN_MODE=fake
+# Local only: fixed demo-<role> tokens. Production keeps DEMO_MODE=false (wrangler.json).
+DEMO_MODE=true

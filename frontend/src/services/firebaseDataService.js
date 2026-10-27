@@ -34,21 +34,12 @@ function setLocal(key, data) {
    ========================================================================= */
 
 export async function saveClaimToFirestore(claimData) {
-  const claimId = claimData.id || `CLM-2026-${Date.now().toString().slice(-4)}`;
-  const record = {
-    ...claimData,
-    id: claimId,
-    updatedAt: new Date().toISOString(),
-  };
-
-  try {
-    await createClaimApi(record);
-  } catch (err) {
-    console.warn("[API] Backend claims API sync note:", err.message);
-  }
+  // The server assigns the claim id; a failed create throws so the caller shows the error instead of a false success.
+  const { claim } = await createClaimApi(claimData);
+  const record = { ...claim, updatedAt: new Date().toISOString() };
 
   const current = getLocal(LOCAL_STORAGE_CLAIMS_KEY);
-  const filtered = current.filter((c) => c.id !== claimId);
+  const filtered = current.filter((c) => c.id !== record.id);
   setLocal(LOCAL_STORAGE_CLAIMS_KEY, [record, ...filtered]);
 
   return record;

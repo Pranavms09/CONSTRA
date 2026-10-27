@@ -4,7 +4,7 @@ import { all, audit, first, run, stmt } from "../db";
 import { fail, intParam, jsonBody } from "../errors";
 import { formFile, randomHex, sha256Hex, sniffMime, EXT_BY_MIME } from "../lib/util";
 import {
-  alertResponse, assessIssue, boqStatus, challanResponse, loadChallan, materialsWithUnits, processChallanOcr,
+  alertResponse, assessIssue, boqStatus, challanResponse, loadChallan, loadChallans, materialsWithUnits, processChallanOcr,
   raiseAlert, reconcileChallan, stockSummary, toBase,
 } from "../services/store";
 import { enqueueAnchor, processAnchors } from "../services/chain";
@@ -148,6 +148,7 @@ store.post("/challans/:id/confirm", storeOnly, async (c) => {
   const db = c.env.DB;
   const challan = await accessibleChallan(c, intParam(c.req.param("id")));
   const body = await c.req.json().catch(() => null);
+  if (challan.status !== "draft") fail(400, `Cannot confirm challan in status '${challan.status}'. Only draft challans can be confirmed.`);
   if (body?.version != null && challan.version !== body.version) fail(409, "Conflict: Challan was modified by another request. Please refresh to continue.");
 
   const errors: string[] = [];
@@ -224,7 +225,7 @@ store.get("/projects/:pid/challans", storeOrAuditor, async (c) => {
   const sqlWhere = where.join(" AND ");
   const total = (await first<{ n: number }>(c.env.DB, `SELECT COUNT(*) AS n FROM challans WHERE ${sqlWhere}`, ...args))!.n;
   const ids = await all<{ id: number }>(c.env.DB, `SELECT id FROM challans WHERE ${sqlWhere} ORDER BY uploaded_at DESC LIMIT ? OFFSET ?`, ...args, p.limit, p.offset);
-  const items = await Promise.all(ids.map(async ({ id }) => challanResponse(await loadChallan(c.env.DB, id))));
+  const items = (await loadChallans(c.env.DB, ids.map((r) => r.id))).map(challanResponse);
   return c.json(paginated(items, total, p));
 });
 
@@ -361,6 +362,8 @@ for (const [method, path] of [["patch", "/alerts/:id"], ["post", "/alerts/:id/ac
     if (justification.length < 5) fail(422, "A mandatory written justification of at least 5 characters is required to resolve or escalate an alert.");
     if (!ALERT_STATUSES.includes(body.status ?? "")) fail(400, "Invalid alert status. Must be resolved, escalated, or acknowledged.");
     const user = c.get("user");
+    // Store staff raise most alerts, so only an auditor may resolve or escalate them (they gate milestone approval).
+    if (user.role !== "auditor" && body.status !== "acknowledged") fail(403, "Only an auditor can resolve, escalate or reopen alerts.");
     const alert = (await first<any>(c.env.DB, "SELECT * FROM alerts WHERE id = ?", intParam(c.req.param("id")))) ?? fail(404, "Alert not found");
     await ensureProjectAccess(c.env.DB, user, alert.project_id);
 

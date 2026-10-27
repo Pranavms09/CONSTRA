@@ -11,6 +11,8 @@ const supervisor = new Hono<AppEnv>();
 const supervisorOnly = requireRole("supervisor");
 
 const MAX_EVIDENCE_BYTES = 20 * 1024 * 1024;
+// Client-reported GPS accuracy widens the site radius by at most this much; a huge value must not disable the check.
+const MAX_ACCURACY_ALLOWANCE_M = 50;
 const EVIDENCE_MIME = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 const EVIDENCE_SELECT = `SELECT e.*, p.name AS project_name, s.name AS stage_name, u.full_name AS supervisor_name
@@ -95,6 +97,7 @@ supervisor.post("/evidence", supervisorOnly, async (c) => {
 
   // 1. Idempotent on device_evidence_id
   const existing = await loadEvidence(db, "e.device_evidence_id = ?", deviceEvidenceId);
+  if (existing && existing.supervisor_id !== user.id) fail(409, "device_evidence_id is already used by another submission");
   if (existing) return c.json(evidenceResponse(existing, c.env), 200);
 
   // 2. Membership and stage
@@ -122,7 +125,7 @@ supervisor.post("/evidence", supervisorOnly, async (c) => {
   let withinRadius = true;
   if (project.centroid_lat != null && project.centroid_lng != null) {
     distance = haversineM(latitude, longitude, project.centroid_lat, project.centroid_lng);
-    withinRadius = distance <= (project.site_radius_m || 200) + Math.max(0, accuracyM);
+    withinRadius = distance <= (project.site_radius_m || 200) + Math.min(Math.max(0, accuracyM), MAX_ACCURACY_ALLOWANCE_M);
   }
 
   // 6. Private storage in R2
@@ -154,7 +157,7 @@ supervisor.post("/evidence", supervisorOnly, async (c) => {
       JSON.stringify({ device_evidence_id: deviceEvidenceId, evidence_id: evidenceId }));
   }
   if (!withinRadius) {
-    await run(db, `INSERT INTO alerts (project_id, stage_id, photo_id, type, severity, status, explanation, evidence) VALUES (?, ?, ?, 'GEOFENCE_VIOLATION', 'medium', 'open', ?, ?)`,
+    await run(db, `INSERT INTO alerts (project_id, stage_id, photo_id, type, severity, status, explanation, evidence) VALUES (?, ?, ?, 'GEOFENCE_VIOLATION', 'high', 'open', ?, ?)`,
       projectId, stageId, evidenceId,
       `Site photo captured ${distance!.toFixed(1)}m from site centroid (site radius ${project.site_radius_m}m, accuracy ±${accuracyM.toFixed(1)}m).`,
       JSON.stringify({ latitude, longitude, distance_m: distance, accuracy_m: accuracyM, evidence_id: evidenceId }));

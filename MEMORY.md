@@ -14,7 +14,8 @@ CONSTRA: construction milestone verification (evidence photos, challan OCR, BOQ 
 - `mst-mcp` OAuth metadata is http/https-mismatched; use the bearer-token setup in docs/MST-BLOCKCHAIN.md. Its doc store is empty; read docs.mstblockchain.com (`/llms.txt`, `.md` pages).
 - Wrangler finds-up `wrangler.json` before a local `.jsonc`; keep `backend/wrangler.json`.
 - D1 rejects `undefined` binds; booleans are 0/1.
-- `DEMO_MODE` tokens bypass auth; disable for real data.
+- `DEMO_MODE` tokens bypass auth: `false` in `wrangler.json`, `true` only in `.dev.vars`. Demo auditor could otherwise authorize an on-chain anchorer wallet.
+- Never trust client-sent submitter, ids, AI or EXIF verdicts on claims; the server sets them.
 - `contracts/src/EvidenceRegistry.sol` is a symlink to `contracts/EvidenceRegistry.sol`.
 
 ## Docs

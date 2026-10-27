@@ -10,7 +10,7 @@
     "FIREBASE_PROJECT_ID": "constra-b561b",
     "GEMINI_MODEL": "gemini-flash-latest",
     "FRONTEND_ORIGINS": "https://constra.pranavms09.workers.dev,http://localhost:5173,http://127.0.0.1:5173",
-    "DEMO_MODE": "true",
+    "DEMO_MODE": "false",
     "OCR_MODE": "real",
     "MAX_UPLOAD_MB": "10",
     "SHOW_CHAIN_COPY": "false",

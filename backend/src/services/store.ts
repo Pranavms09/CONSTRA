@@ -54,6 +54,8 @@ export async function toBase(db: D1Database, materialId: number, unit: string, q
   if (qty == null || qty === "") fail(422, "Quantity cannot be empty");
   const n = Number(qty);
   if (!Number.isFinite(n)) fail(422, `Invalid numeric quantity '${qty}'`);
+  // Zero or negative quantities would lower issued totals and hide consumption.
+  if (n <= 0) fail(422, "Quantity must be greater than 0");
   const material = await first<{ name: string; base_unit: string }>(db, "SELECT name, base_unit FROM materials WHERE id = ?", materialId);
   if (!material) fail(404, `Material with ID ${materialId} not found`);
 
@@ -267,22 +269,24 @@ export async function reconcileChallan(db: D1Database, challan: any) {
 
 // ---------- Challan detail ----------
 
-export async function loadChallan(db: D1Database, id: number) {
-  const challan = await first<any>(
-    db,
-    `SELECT c.*, v.name AS vendor_name, u.full_name AS uploader_name FROM challans c
-     LEFT JOIN vendors v ON v.id = c.vendor_id LEFT JOIN users u ON u.id = c.uploaded_by WHERE c.id = ?`,
-    id
-  );
-  if (!challan) return null;
-  challan.items = await all<any>(
-    db,
-    `SELECT ci.*, m.name AS material_name, s.name AS stage_name FROM challan_items ci
-     LEFT JOIN materials m ON m.id = ci.material_id LEFT JOIN stages s ON s.id = ci.stage_id WHERE ci.challan_id = ? ORDER BY ci.id`,
-    id
-  );
-  return challan;
+/** Challans with their items in two queries total (D1 caps queries per request), in the order of `ids`. */
+export async function loadChallans(db: D1Database, ids: number[]) {
+  if (!ids.length) return [];
+  const marks = ids.map(() => "?").join(",");
+  const [challans, items] = await Promise.all([
+    all<any>(db,
+      `SELECT c.*, v.name AS vendor_name, u.full_name AS uploader_name FROM challans c
+       LEFT JOIN vendors v ON v.id = c.vendor_id LEFT JOIN users u ON u.id = c.uploaded_by WHERE c.id IN (${marks})`, ...ids),
+    all<any>(db,
+      `SELECT ci.*, m.name AS material_name, s.name AS stage_name FROM challan_items ci
+       LEFT JOIN materials m ON m.id = ci.material_id LEFT JOIN stages s ON s.id = ci.stage_id WHERE ci.challan_id IN (${marks}) ORDER BY ci.id`, ...ids),
+  ]);
+  const byId = new Map(challans.map((ch) => [ch.id, { ...ch, items: [] as any[] }]));
+  for (const it of items) byId.get(it.challan_id)?.items.push(it);
+  return ids.map((id) => byId.get(id)).filter(Boolean);
 }
+
+export const loadChallan = async (db: D1Database, id: number) => (await loadChallans(db, [id]))[0] ?? null;
 
 export const challanResponse = (c: any) => ({
   id: c.id, project_id: c.project_id, vendor_id: c.vendor_id, vendor_name: c.vendor_name ?? null, vendor_name_raw: c.vendor_name_raw,

@@ -228,7 +228,7 @@ claims.post("/claims/:id/submit", requireRole("auditor"), async (c) => {
   // Computed from the stored photo now; the client never supplies the EXIF verdict.
   const exif = await photoExif(c.env, claim);
   const geofence = exif?.checks.find((ch) => ch.name === "gps_geofence");
-  if (geofence?.status === "FAILED" || geofence?.status === "FAIL") {
+  if (geofence?.status === "FAIL") {
     blockers.push("Photo EXIF GPS geofence check failed: Photo coordinates are outside permitted project boundary.");
   }
   if (processing!.n) blockers.push(`${processing!.n} delivery challan(s) remain in processing state. Confirm material challans before milestone clearance.`);

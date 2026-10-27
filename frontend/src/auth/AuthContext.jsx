@@ -3,11 +3,9 @@ import {
   onAuthStateChanged,
   signOut,
   signInWithPopup,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
 } from "firebase/auth";
 import { auth, googleProvider } from "./firebase";
-import { fetchMe, loginWithBackend, demoLoginApi } from "../api/client";
+import { fetchMe, loginWithBackend, demoLoginApi, passwordLoginApi } from "../api/client";
 
 const AuthContext = createContext(undefined);
 
@@ -181,78 +179,15 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const formatFirebasePassword = (pwd) => {
-    if (!pwd) return "";
-    return pwd.length < 6 ? pwd.padEnd(6, "0") : pwd;
-  };
-
+  // Email/password accounts are created by the auditor and verified by the backend (not unverified Firebase accounts).
   const loginWithEmail = async (email, password, claimedRole) => {
-    if (!auth) {
-      throw new Error("Firebase Authentication is not initialized. Please check configuration.");
-    }
-    const cleanEmail = email.trim().toLowerCase();
-    const cleanPassword = formatFirebasePassword(password);
-
-    let userCredential;
-    try {
-      userCredential = await signInWithEmailAndPassword(auth, cleanEmail, cleanPassword);
-    } catch (signInErr) {
-      // If user does not exist in Firebase yet, auto-register them
-      if (
-        signInErr.code === "auth/user-not-found" ||
-        signInErr.code === "auth/invalid-credential" ||
-        signInErr.code === "auth/invalid-login-credentials"
-      ) {
-        try {
-          userCredential = await createUserWithEmailAndPassword(auth, cleanEmail, cleanPassword);
-        } catch {
-          throw signInErr;
-        }
-      } else {
-        throw signInErr;
-      }
-    }
-
-    try {
-      const idToken = await userCredential.user.getIdToken(true);
-      localStorage.setItem("siteverify_token", idToken);
-      let userProfile;
-      try {
-        userProfile = await loginWithBackend(claimedRole, idToken, false);
-      } catch (backendErr) {
-        if (backendErr?.message?.includes("not registered") || backendErr?.status === 403) {
-          userProfile = await loginWithBackend(claimedRole, idToken, true);
-        } else {
-          throw backendErr;
-        }
-      }
-      saveUser(userProfile);
-      return userProfile;
-    } catch (err) {
-      await signOut(auth);
-      saveUser(null);
-      throw err;
-    }
+    const userProfile = await passwordLoginApi(email.trim().toLowerCase(), password, claimedRole);
+    saveUser(userProfile);
+    return userProfile;
   };
 
-  const registerWithEmail = async (email, password, claimedRole) => {
-    if (!auth) {
-      throw new Error("Firebase Authentication is not initialized. Please check configuration.");
-    }
-    const cleanEmail = email.trim().toLowerCase();
-    const cleanPassword = formatFirebasePassword(password);
-    const result = await createUserWithEmailAndPassword(auth, cleanEmail, cleanPassword);
-    try {
-      const idToken = await result.user.getIdToken(true);
-      localStorage.setItem("siteverify_token", idToken);
-      const userProfile = await loginWithBackend(claimedRole, idToken, true);
-      saveUser(userProfile);
-      return userProfile;
-    } catch (err) {
-      await signOut(auth);
-      saveUser(null);
-      throw err;
-    }
+  const registerWithEmail = async () => {
+    throw new Error("Accounts are created by your Project Auditor. Ask them to add your email, then sign in.");
   };
 
   const loginAsDemo = async (claimedRole) => {

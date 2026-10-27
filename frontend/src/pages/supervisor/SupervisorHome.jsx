@@ -251,7 +251,6 @@ export const SupervisorHome = () => {
     setIsSubmittingClaim(true);
     try {
       const claimRecord = {
-        id: `CLM-2026-${Date.now().toString().slice(-4)}`,
         claimant: user?.full_name || "Alice Supervisor",
         submitter_id: user?.id || user?.uid || 1,
         submitter_email: user?.email || "supervisor@siteverify.com",
@@ -317,10 +316,10 @@ export const SupervisorHome = () => {
       };
 
       // Save to Firebase Firestore & backend
-      await saveClaimToFirestore(claimRecord);
+      const savedClaim = await saveClaimToFirestore(claimRecord);
 
       setQueueStatus("TRANSMITTED TO AUDITOR QUEUE // AWAITING AUDITOR CLEARANCE");
-      showToast(`Evidence ${claimRecord.id} transmitted to Auditor Desk & saved to Firebase.`);
+      showToast(`Evidence ${savedClaim.id} transmitted to Auditor Desk & saved to Firebase.`);
       await loadClaimsHistory();
     } catch (err) {
       setErrorMessage(`Failed to transmit evidence: ${err.message}`);

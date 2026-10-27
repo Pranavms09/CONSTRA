@@ -10,8 +10,9 @@ const defaultBaseUrl =
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || defaultBaseUrl;
 
 export async function getAuthToken() {
-  let token = localStorage.getItem("siteverify_token");
-  if (!token && auth?.currentUser) {
+  let token = null;
+  // Firebase ID tokens expire after 1 hour; the SDK caches and refreshes them, so ask it first.
+  if (auth?.currentUser) {
     try {
       token = await auth.currentUser.getIdToken();
       if (token) {
@@ -21,6 +22,7 @@ export async function getAuthToken() {
       // ignore if firebase not logged in
     }
   }
+  token ||= localStorage.getItem("siteverify_token");
 
   // Automatic recovery for stored sessions (e.g. demo mode or previously logged in user)
   if (!token) {
@@ -149,6 +151,15 @@ export async function demoLoginApi(role) {
   if (data.token) {
     localStorage.setItem("siteverify_token", data.token);
   }
+  return data;
+}
+
+export async function passwordLoginApi(email, password, claimedRole) {
+  const data = await apiFetch("/auth/login-password", {
+    method: "POST",
+    body: JSON.stringify({ email, password, claimed_role: claimedRole }),
+  });
+  localStorage.setItem("siteverify_token", data.token);
   return data;
 }
 

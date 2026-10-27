@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { clientIp, optionalUser } from "../auth";
+import { clientIp, requireUser } from "../auth";
 import { all, audit, first } from "../db";
 import { fail } from "../errors";
 import { analyzeExifGps, analyzeStoredExif, EXIF_PREFIX_BYTES } from "../lib/exif";
@@ -21,7 +21,10 @@ const analyzeImage = async (c: any) => {
   const upload = form.get("file") ?? form.get("image");
   if (!(upload instanceof File)) fail(400, "No image file provided. Please upload an image using the 'file' or 'image' field.");
   const file = upload as File;
-  const user = await optionalUser(c);
+  const user = c.get("user");
+  // Each call spends Gemini quota: 10 per minute per user (separate key space on the verify limiter).
+  const { success } = await c.env.VERIFY_LIMITER.limit({ key: `analyze:${user.id}` });
+  if (!success) fail(429, "Rate limit exceeded: 10 image analyses per minute");
 
   if (file.size === 0) fail(400, "Uploaded file is empty. Please select a valid image file.");
   if (file.size > MAX_FILE_SIZE) fail(400, `Image file exceeds maximum allowed size of ${MAX_FILE_SIZE / (1024 * 1024)}MB.`);
@@ -47,9 +50,9 @@ const analyzeImage = async (c: any) => {
   const record = await first<any>(c.env.DB,
     `INSERT INTO image_analyses (filename, content_type, file_size, file_hash, description, model, source, uploaded_by_id)
      VALUES (?, ?, ?, ?, ?, ?, 'backend_gemini_vision', ?) RETURNING id, created_at`,
-    file.name || "unknown_image.jpg", mime, file.size, hash, description, c.env.GEMINI_MODEL, user?.id ?? null);
+    file.name || "unknown_image.jpg", mime, file.size, hash, description, c.env.GEMINI_MODEL, user.id);
   await audit(c.env.DB, {
-    actorId: user?.id ?? null, action: "image_analysis", entity: "image_analysis", entityId: hash.slice(0, 16), ip: clientIp(c),
+    actorId: user.id, action: "image_analysis", entity: "image_analysis", entityId: hash.slice(0, 16), ip: clientIp(c),
     detail: { filename: file.name, saved_filename: savedName, file_size: file.size, is_duplicate: !!duplicate, model: c.env.GEMINI_MODEL, source: "backend_gemini_vision" },
   });
 
@@ -59,16 +62,16 @@ const analyzeImage = async (c: any) => {
     exif_gps: exif, model: c.env.GEMINI_MODEL, source: "backend_gemini_vision", created_at: record?.created_at ?? null,
   });
 };
-analysis.post("/api/analyze-image", analyzeImage);
-analysis.post("/analyze-image", analyzeImage);
+analysis.post("/api/analyze-image", requireUser, analyzeImage);
+analysis.post("/analyze-image", requireUser, analyzeImage);
 
 const listAnalyses = async (c: any) => {
   const limit = Math.min(Math.max(Number(c.req.query("limit") ?? 20) || 20, 1), 200);
   const rows = await all(c.env.DB, "SELECT * FROM image_analyses ORDER BY id DESC LIMIT ?", limit);
   return c.json(rows);
 };
-analysis.get("/api/analyses", listAnalyses);
-analysis.get("/analyses", listAnalyses);
+analysis.get("/api/analyses", requireUser, listAnalyses);
+analysis.get("/analyses", requireUser, listAnalyses);
 
 // AI-generated descriptions are immutable.
 for (const path of ["/api/analyze-image/:id", "/analyze-image/:id"]) {
