@@ -229,7 +229,7 @@ stateDiagram-v2
 The system follows a clean modular architecture:
 
 ```
-Hack-A-Night/
+CONSTRA/
 ├── backend/                            # FastAPI backend services & AI pipelines
 │   ├── app/
 │   │   ├── main.py                     # FastAPI entry point & middleware registration
@@ -342,8 +342,8 @@ limits:
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/pranavms09/Hack-A-Night.git
-   cd Hack-A-Night
+   git clone https://github.com/Pranavms09/CONSTRA.git
+   cd CONSTRA
    ```
 
 2. **Configure environment variables:**
@@ -468,14 +468,14 @@ For in-depth technical specifications, browse the accompanying documentation sui
 
 | Document | Description |
 | :--- | :--- |
-| [1. PRD - Multi-Stage Construction Milestone Verifier.md](file:///home/pranavms09/Hackathons/Hack-A-Night/1.%20PRD%20-%20Multi-Stage%20Construction%20Milestone%20Verifier.md) | **Product Requirements Document:** User personas, functional requirements (FR-1 to FR-9), user stories, and acceptance criteria. |
-| [2. TRD - Multi-Stage Construction Milestone Verifier.md](file:///home/pranavms09/Hackathons/Hack-A-Night/2.%20TRD%20-%20Multi-Stage%20Construction%20Milestone%20Verifier.md) | **Technical Requirements Document:** Architecture diagrams, module specifications, algorithms, and test plans. |
-| [3. UI UX Design Document.md](file:///home/pranavms09/Hackathons/Hack-A-Night/3.%20UI%20UX%20Design%20Document.md) | **UI/UX Design Document:** User journeys, text wireframes, design tokens, responsive breakpoints, and microcopy guidelines. |
-| [5. Security Document.md](file:///home/pranavms09/Hackathons/Hack-A-Night/5.%20Security%20Document.md) | **Security Document:** Threat model (STRIDE), insider fraud defenses (F1–F14), cryptographic audit chains, and upload safety. |
-| [6. System Design Document.md](file:///home/pranavms09/Hackathons/Hack-A-Night/6.%20System%20Design%20Document.md) | **System Design Document:** Modular monolith breakdown, extensible check pipelines, sequence diagrams, and trade-off rationales. |
+| [1. PRD - Multi-Stage Construction Milestone Verifier.md](./1.%20PRD%20-%20Multi-Stage%20Construction%20Milestone%20Verifier.md) | **Product Requirements Document:** User personas, functional requirements (FR-1 to FR-9), user stories, and acceptance criteria. |
+| [2. TRD - Multi-Stage Construction Milestone Verifier.md](./2.%20TRD%20-%20Multi-Stage%20Construction%20Milestone%20Verifier.md) | **Technical Requirements Document:** Architecture diagrams, module specifications, algorithms, and test plans. |
+| [3. UI UX Design Document.md](./3.%20UI%20UX%20Design%20Document.md) | **UI/UX Design Document:** User journeys, text wireframes, design tokens, responsive breakpoints, and microcopy guidelines. |
+| [5. Security Document.md](./5.%20Security%20Document.md) | **Security Document:** Threat model (STRIDE), insider fraud defenses (F1–F14), cryptographic audit chains, and upload safety. |
+| [6. System Design Document.md](./6.%20System%20Design%20Document.md) | **System Design Document:** Modular monolith breakdown, extensible check pipelines, sequence diagrams, and trade-off rationales. |
 
 ---
 
 ## 👥 Contributors & Acknowledgements
 
-Developed for **Hack-A-Night 2026**. Designed to bring transparency, accountability, and automated rigor to construction milestone auditing.
+Developed for **MST Buildathon 2026**. Designed to bring transparency, accountability, and automated rigor to construction milestone auditing.

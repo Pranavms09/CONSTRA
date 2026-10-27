@@ -1,0 +1,6 @@
+# Copy to .dev.vars for `wrangler dev`. Production: `npx wrangler secret put <NAME>`.
+SECRET_KEY=
+GEMINI_API_KEY=
+ANTHROPIC_API_KEY=
+BOOTSTRAP_ADMIN_EMAIL=
+BOOTSTRAP_ADMIN_PASSWORD=

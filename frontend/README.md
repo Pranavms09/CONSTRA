@@ -272,4 +272,4 @@ npm run lint
 
 ## 👥 Contributors & License
 
-Built with ❤️ for **Hack-A-Night**. All civil verification specs, VLM prompt chains, and certificate gating rules conform to the project technical requirements.
+Built with ❤️ for **MST Buildathon**. All civil verification specs, VLM prompt chains, and certificate gating rules conform to the project technical requirements.
