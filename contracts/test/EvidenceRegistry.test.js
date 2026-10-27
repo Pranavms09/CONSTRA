@@ -35,13 +35,19 @@ describe("EvidenceRegistry", function () {
 
       await expect(tx)
         .to.emit(registry, "Anchored")
-        .withArgs(sampleHash1, 1, block.timestamp);
+        .withArgs(sampleHash1, 1, block.timestamp, owner.address);
+      expect(await registry.anchoredBy(sampleHash1)).to.equal(owner.address);
     });
 
-    it("should revert if non-owner tries to anchor", async function () {
+    it("should revert if non-anchorer tries to anchor", async function () {
       await expect(
         registry.connect(nonOwner).anchor(sampleHash1, 1)
-      ).to.be.revertedWith("Only owner");
+      ).to.be.revertedWith("Not an anchorer");
+    });
+
+    it("should revert on invalid kind", async function () {
+      await expect(registry.anchor(sampleHash1, 0)).to.be.revertedWith("Invalid kind");
+      await expect(registry.anchor(sampleHash1, 4)).to.be.revertedWith("Invalid kind");
     });
 
     it("should revert if hash is zero", async function () {
@@ -71,10 +77,10 @@ describe("EvidenceRegistry", function () {
       expect(kind2).to.equal(2);
     });
 
-    it("should revert if non-owner calls anchorMany", async function () {
+    it("should revert if non-anchorer calls anchorMany", async function () {
       await expect(
         registry.connect(nonOwner).anchorMany([sampleHash1], [1])
-      ).to.be.revertedWith("Only owner");
+      ).to.be.revertedWith("Not an anchorer");
     });
 
     it("should revert if lengths mismatch", async function () {
@@ -133,6 +139,33 @@ describe("EvidenceRegistry", function () {
     });
   });
 
+  describe("Anchorer authorization", function () {
+    it("lets an authorized auditor wallet anchor a certificate and records it as anchoredBy", async function () {
+      await expect(registry.setAnchorer(nonOwner.address, true))
+        .to.emit(registry, "AnchorerUpdated")
+        .withArgs(nonOwner.address, true);
+      await registry.connect(nonOwner).anchor(sampleHash3, 3);
+      const [time, kind, by] = await registry.verify(sampleHash3);
+      expect(time).to.be.gt(0);
+      expect(kind).to.equal(3);
+      expect(by).to.equal(nonOwner.address);
+    });
+
+    it("blocks revoked anchorers and non-owners managing anchorers", async function () {
+      await registry.setAnchorer(nonOwner.address, true);
+      await registry.setAnchorer(nonOwner.address, false);
+      await expect(registry.connect(nonOwner).anchor(sampleHash1, 1)).to.be.revertedWith("Not an anchorer");
+      await expect(registry.connect(nonOwner).setAnchorer(newOwner.address, true)).to.be.revertedWith("Only owner");
+      await expect(registry.setAnchorer(ethers.ZeroAddress, true)).to.be.revertedWith("Zero address");
+    });
+
+    it("skips invalid kinds inside a batch", async function () {
+      await registry.anchorMany([sampleHash1, sampleHash2], [9, 2]);
+      expect((await registry.verify(sampleHash1))[0]).to.equal(0);
+      expect((await registry.verify(sampleHash2))[1]).to.equal(2);
+    });
+  });
+
   describe("Ownership transfer", function () {
     it("should allow owner to transfer ownership", async function () {
       await expect(registry.transferOwnership(newOwner.address))
@@ -144,7 +177,7 @@ describe("EvidenceRegistry", function () {
       // Previous owner can no longer anchor
       await expect(
         registry.anchor(sampleHash1, 1)
-      ).to.be.revertedWith("Only owner");
+      ).to.be.revertedWith("Not an anchorer");
 
       // New owner can anchor
       await expect(

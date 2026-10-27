@@ -203,7 +203,7 @@ VITE_FIREBASE_APP_ID=your_firebase_app_id_here
 ### Prerequisites
 - **Node.js**: `v18.0.0` or higher
 - **Package Manager**: `npm` (v9+) or `yarn` / `pnpm`
-- **Backend Service**: Running FastAPI backend at `http://localhost:8000` (see `../backend/`)
+- **Backend Service**: Cloudflare Worker API at `http://localhost:8787` (`npm run dev` in `../backend/`)
 
 ### Installation
 Navigate to the frontend directory and install dependencies:

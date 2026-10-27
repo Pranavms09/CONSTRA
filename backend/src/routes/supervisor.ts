@@ -4,7 +4,7 @@ import { all, audit, first, nowIso, parseJson, run } from "../db";
 import { fail, intParam } from "../errors";
 import { analyzeConstruction, GeminiError } from "../lib/gemini";
 import { formFile, haversineM, sha256Hex, sniffMime } from "../lib/util";
-import { enqueueAnchor } from "../services/chain";
+import { chainConfig, enqueueAnchor, explorerTx, isRealChain, processAnchors } from "../services/chain";
 import type { AppEnv, Env, User } from "../types";
 
 const supervisor = new Hono<AppEnv>();
@@ -32,9 +32,9 @@ export function evidenceResponse(e: any, env: Env) {
       analyzed_at: e.ai_analyzed_at, model: e.ai_model || env.GEMINI_MODEL, version: "1.0.0", error: e.ai_status === "failed" ? e.ai_report : null,
     },
     blockchain: {
-      status: e.blockchain_status || "queued", network: e.blockchain_network || "sepolia", chain_id: e.blockchain_chain_id || 11155111,
+      status: e.blockchain_status || "queued", network: e.blockchain_network || `mst-${env.MST_NETWORK}`, chain_id: e.blockchain_chain_id || Number(env.MST_CHAIN_ID),
       transaction_hash: isRealTx || e.blockchain_status === "simulated" ? tx : null, block_number: e.blockchain_block_number,
-      explorer_url: null, anchored_at: null, contract_address: null, last_error: null,
+      explorer_url: isRealTx ? explorerTx(env, tx) : null, anchored_at: null, contract_address: chainConfig(env).contract_address, last_error: null,
     },
   };
 }
@@ -164,9 +164,11 @@ supervisor.post("/evidence", supervisorOnly, async (c) => {
   await audit(db, { actorId: user.id, action: "EVIDENCE_CAPTURED", entity: "evidence", entityId: String(evidenceId), ip: clientIp(c) ?? "unknown",
     detail: { device_evidence_id: deviceEvidenceId, project_id: projectId, stage_id: stageId, sha256: serverSha, hash_matched: hashMatched, radius_warning: !withinRadius, distance_to_site_m: distance } });
 
-  // 10. Simulated anchor
-  const anchor = await enqueueAnchor(db, { entity: "photo", entityId: evidenceId, sha256: serverSha, projectId });
-  if (anchor) await run(db, "UPDATE evidence SET blockchain_status = 'simulated', blockchain_tx = ? WHERE id = ?", anchor.tx_hash, evidenceId);
+  // 10. Queue the evidence hash for anchoring on MST (relayer sends it now and the cron retries)
+  const anchor = await enqueueAnchor(c.env, { entity: "photo", entityId: evidenceId, sha256: serverSha, projectId });
+  await run(db, "UPDATE evidence SET blockchain_status = ?, blockchain_tx = ?, blockchain_network = ?, blockchain_chain_id = ? WHERE id = ?",
+    !anchor ? "failed" : isRealChain(c.env) ? "queued" : "simulated", anchor?.tx_hash ?? null, `mst-${c.env.MST_NETWORK}`, Number(c.env.MST_CHAIN_ID), evidenceId);
+  c.executionCtx.waitUntil(processAnchors(c.env));
 
   // 11. Background AI analysis
   c.executionCtx.waitUntil(runEvidenceAnalysis(c.env, evidenceId, bytes, mime!, stage.name, project.name));
@@ -201,10 +203,13 @@ supervisor.post("/evidence/:id/retry-ai", supervisorOnly, async (c) => {
 
 supervisor.post("/evidence/:id/retry-anchor", supervisorOnly, async (c) => {
   const ev = await ownEvidence(c);
-  const anchor = await enqueueAnchor(c.env.DB, { entity: "photo", entityId: ev.id, sha256: ev.server_sha256, projectId: ev.project_id });
-  const status = anchor ? "simulated" : "failed";
-  await run(c.env.DB, "UPDATE evidence SET blockchain_status = ?, blockchain_tx = COALESCE(?, blockchain_tx) WHERE id = ?", status, anchor?.tx_hash ?? null, ev.id);
-  return c.json(evidenceResponse({ ...ev, blockchain_status: status, blockchain_tx: anchor?.tx_hash ?? ev.blockchain_tx }, c.env));
+  await enqueueAnchor(c.env, { entity: "photo", entityId: ev.id, sha256: ev.server_sha256, projectId: ev.project_id });
+  // A failed row is re-queued with a fresh retry budget.
+  await run(c.env.DB, "UPDATE chain_anchors SET status = 'pending', attempts = 0, last_error = NULL WHERE sha256 = ? AND status = 'failed'", ev.server_sha256);
+  const status = isRealChain(c.env) ? "queued" : "simulated";
+  if (isRealChain(c.env)) await run(c.env.DB, "UPDATE evidence SET blockchain_status = 'queued' WHERE id = ? AND blockchain_status = 'failed'", ev.id);
+  c.executionCtx.waitUntil(processAnchors(c.env));
+  return c.json(evidenceResponse({ ...ev, blockchain_status: ev.blockchain_status === "failed" ? status : ev.blockchain_status }, c.env));
 });
 
 supervisor.get("/evidence/:id/anchor", supervisorOnly, async (c) => c.json(evidenceResponse(await ownEvidence(c), c.env).blockchain));

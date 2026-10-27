@@ -206,4 +206,4 @@ export async function autoLinkDemoSupervisor(db: D1Database, user: User, project
   return true;
 }
 
-export const userResponse = (u: User) => ({ id: u.id, full_name: u.full_name, email: u.email, role: u.role, is_active: !!u.is_active });
+export const userResponse = (u: User) => ({ id: u.id, full_name: u.full_name, email: u.email, role: u.role, is_active: !!u.is_active, wallet_address: u.wallet_address ?? null });

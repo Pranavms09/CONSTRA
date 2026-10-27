@@ -9,7 +9,8 @@ import pings from "./routes/pings";
 import store from "./routes/store";
 import supervisor from "./routes/supervisor";
 import users from "./routes/users";
-import type { AppEnv } from "./types";
+import { processAnchors } from "./services/chain";
+import type { AppEnv, Env } from "./types";
 
 const app = new Hono<AppEnv>();
 
@@ -36,4 +37,10 @@ app.onError((err, c) => {
   return c.json({ detail: "Internal Server Error" }, 500);
 });
 
-export default app;
+export default {
+  fetch: app.fetch,
+  // Every minute: confirm sent MST transactions and anchor queued hashes.
+  scheduled(_event: ScheduledController, env: Env, ctx: ExecutionContext) {
+    ctx.waitUntil(processAnchors(env).then((r) => console.log("anchor relayer", JSON.stringify(r))));
+  },
+} satisfies ExportedHandler<Env>;

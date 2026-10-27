@@ -10,6 +10,13 @@ export interface Env {
   OCR_MODE: string;
   MAX_UPLOAD_MB: string;
   SHOW_CHAIN_COPY: string;
+  CHAIN_MODE: string;
+  MST_NETWORK: string;
+  MST_CHAIN_ID: string;
+  MST_RPC_URL: string;
+  MST_EXPLORER_URL: string;
+  CONTRACT_ADDRESS: string;
+  ANCHOR_PRIVATE_KEY?: string;
   SECRET_KEY?: string;
   GEMINI_API_KEY?: string;
   ANTHROPIC_API_KEY?: string;
@@ -29,6 +36,7 @@ export interface User {
   firebase_uid: string | null;
   auth_provider: string;
   is_active: number;
+  wallet_address: string | null;
 }
 
 export type AppEnv = { Bindings: Env; Variables: { user: User } };

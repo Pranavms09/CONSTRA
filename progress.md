@@ -1,26 +1,30 @@
 # Progress
 
 ## Current objective
-Run CONSTRA fully on Cloudflare (Workers + D1 + R2), free plan.
+MST Buildathon Round 2: CONSTRA on Cloudflare (Workers + D1 + R2) with real MST Blockchain anchoring, testnet + mainnet deployment.
 
 ## Completed
-- Python FastAPI backend replaced by Hono Worker in `backend/` (all routes ported, same JSON shapes and `{detail}` errors).
-- SQLAlchemy/Alembic + Firestore replaced by D1 migrations; local `uploads/` + Cloudinary replaced by R2.
-- Blockchain anchoring simulated in D1; anchor worker removed.
-- Frontend: Firestore removed (Firebase Auth kept); API base URL centralized in `frontend/src/api/client.js`.
-- Render config, Vercel config, Python code, Firestore rules removed. Mobile app local port 8000 → 8787.
+- Cloudflare port (Hono Worker, D1, R2); Firestore/Render/Python removed.
+- `mst-mcp` MCP server connected in Claude Code (bearer token workaround; server's doc store is empty). Docs read from docs.mstblockchain.com. Notes: `docs/MST-BLOCKCHAIN.md`.
+- `EvidenceRegistry` v2: authorized anchorers, `anchoredBy`, kind validation; Hardhat networks `mstTestnet`/`mstMainnet` (legacy gasPrice), `scripts/deploy.js` → `deployments.json`.
+- Worker relayer: D1 queue → `anchorMany` on MST, cron + `waitUntil`, receipts, retries, tamper detection, wallet link (`setAnchorer`), auditor-signed certificate verification.
+- Frontend: BridgeKey (EIP-6963) wallet link + certificate signing in the certificate modal; public `/verify` page reading the contract directly.
 
 ## Verified
-- `npm test` (backend): 16/16 unit tests pass (EXIF, fuzzy parity, anomaly, utils, PBKDF2).
-- `tsc --noEmit` clean; `wrangler deploy --dry-run` bundles (~311 KiB).
-- Local `wrangler dev` smoke tests: auth (demo, password, session), users, supervisor evidence (idempotency, hash mismatch, geofence alerts, private file access), store (upload, manual draft, optimistic lock, confirm + reconcile, issues + anomaly, stock/BOQ, alerts), claims (create, EXIF, commands, blockers, reject, approve, certificate), chain verify, CORS.
+- Contracts: 19/19 Hardhat tests.
+- Backend: `tsc` clean, 16/16 vitest, dry-run bundle 238 KiB gzip.
+- Local E2E (Hardhat chain + `wrangler dev`, CHAIN_MODE=mst): evidence anchored and confirmed; `/chain/verify` authentic; wallet link + `setAnchorer`; unauthorized wallet reverted; auditor certificate tx accepted.
+- Live MST RPCs: chain IDs 91562037 / 4646, CORS `*`.
 - Frontend `vite build` passes.
 
 ## Not verified
-- Real Gemini calls (no API key locally), Firebase ID-token login, production deploy, Android app build.
+- Deployment to MST testnet/mainnet (needs funded wallet), real BridgeKey extension, Gemini, Firebase login, Cloudflare deploy.
+
+## Blockers
+- Need deployer/relayer private key funded with tMSTC (faucet) and organizer-provided MSTC for mainnet.
 
 ## Next actions
-1. Run `wrangler login`, create D1 + R2, set secrets, `npm run deploy` (see README).
-2. Set `DEMO_MODE` to `"false"` before real use.
-3. Test Gemini analysis/OCR with a real key; watch CPU-limit errors in Workers logs.
-4. If `waitUntil` jobs time out, move AI/OCR to Cloudflare Queues.
+1. `contracts/`: set `PRIVATE_KEY`, `npm run deploy:testnet`, then mainnet.
+2. Put address in `backend/wrangler.json` `CONTRACT_ADDRESS`; `wrangler secret put ANCHOR_PRIVATE_KEY`; deploy.
+3. Submit one evidence photo, collect the testnet tx hash; fill README + `contracts/README.md` tables.
+4. Test BridgeKey extension end-to-end; record 2–3 min demo video.

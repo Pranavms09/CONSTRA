@@ -1,92 +1,50 @@
-# CONSTRA EvidenceRegistry Smart Contract
+# CONSTRA EvidenceRegistry (MST Blockchain)
 
-`EvidenceRegistry` is a minimal, tamper-evident smart contract for CONSTRA that anchors cryptographic SHA-256 fingerprints of confirmed photos, delivery challans, and issued audit certificates alongside immutable block timestamps.
+Tamper-evident registry of SHA-256 fingerprints for site photos (kind 1), delivery challans (2) and clearance certificates (3). Stores block time and the anchoring account. No personal data on-chain. Integration details: [../docs/CHAIN_INTEGRATION.md](../docs/CHAIN_INTEGRATION.md).
 
-**Guarantees & Non-Goals:**
-- **Zero Personal / Sensitive Data**: No photos, filenames, amounts, user IDs, or challan contents are ever submitted on-chain.
-- **Proof of Existence**: Anchoring proves that an exact file existed in that exact bitwise state at a specific time and has not changed since. It does not claim that a physical photo is genuine—only that the record is immutable and tamper-evident.
-- **No Tokenomics**: No tokens, cryptocurrencies, NFTs, or user transaction fees.
+## Deployments
 
----
+| Network | Chain ID | Address | Deploy tx |
+|---|---|---|---|
+| MST Testnet | 91562037 | _pending — run `npm run deploy:testnet`_ | |
+| MST Mainnet | 4646 | _pending — run `npm run deploy:mainnet`_ | |
 
-## 1. Contract Specifications
-- **Solidity Version**: `^0.8.24`
-- **Source File**: `contracts/EvidenceRegistry.sol`
-- **ABI Artifact**: `backend/app/abi/EvidenceRegistry.json`
+`scripts/deploy.js` also writes these to `deployments.json`. Copy them here after deploying.
 
-### Key Functions
-- `anchor(bytes32 h, uint8 kind)`: Anchors a single SHA-256 hash. Reverts if zero or already anchored.
-- `anchorMany(bytes32[] calldata hs, uint8[] calldata kinds)`: Batches up to 50 hashes. Idempotent: skips duplicates and zero hashes so individual collisions do not revert the batch.
-- `verify(bytes32 h)`: Public view returning `(uint256 time, uint8 kind)`. Returns `time = 0` if not anchored.
-- `transferOwnership(address newOwner)`: Safely rotates contract owner to a non-zero address.
+## Setup
 
-Kind mapping:
-- `1`: Photo evidence
-- `2`: Delivery challan
-- `3`: Audit certificate
+```bash
+cd contracts
+npm install
+cp .env.example .env        # PRIVATE_KEY of a dedicated deployer wallet (never commit)
+npm test                    # 19 tests
+npm run compile
+```
 
----
+Get testnet tMSTC from https://faucet.mstblockchain.com.
 
-## 2. Deploying via Remix (Step-by-Step)
+## Deploy
 
-### Step 1: Open Remix Ethereum IDE
-1. Open [https://remix.ethereum.org](https://remix.ethereum.org) in a Web3-enabled browser.
-2. In the File Explorer workspace, create a new file named `EvidenceRegistry.sol` under `contracts/`.
-3. Paste the contents of `contracts/EvidenceRegistry.sol`.
+```bash
+npm run deploy:testnet
+CONFIRM_MAINNET="yes, deploy to mainnet" npm run deploy:mainnet
+npm run verify:testnet -- <address>     # MSTScan (Blockscout)
+```
 
-### Step 2: Compile the Contract
-1. Switch to the **Solidity Compiler** tab (left sidebar).
-2. Set the **Compiler Version** to `0.8.24` (or any compatible `0.8.24+`).
-3. Under **Advanced Configurations**, ensure EVM Version is `default` or `cancun`/`shanghai`.
-4. Click **Compile EvidenceRegistry.sol**.
-5. Once compilation succeeds, click **ABI** at the bottom of the compilation panel to copy the ABI JSON. Verify that it matches `backend/app/abi/EvidenceRegistry.json`.
+Hardhat networks `mstTestnet` / `mstMainnet` send legacy `gasPrice` transactions (MST has no EIP-1559 fees). Override RPCs with `MST_TESTNET_RPC_URL`, `MST_MAINNET_RPC_URL`, gas with `MST_GAS_PRICE_GWEI`.
 
-### Step 3: Deploy to Testnet (e.g. Sepolia, Polygon Amoy, Arbitrum Sepolia)
-1. In MetaMask, switch your network to your desired testnet (e.g., Sepolia or Polygon Amoy).
-2. Ensure your deploying wallet has testnet faucet tokens.
-3. Switch to the **Deploy & Run Transactions** tab in Remix.
-4. Set **Environment** to `Injected Provider - MetaMask`.
-5. Verify your account address matches your throwaway testnet wallet.
-6. Select contract `EvidenceRegistry - contracts/EvidenceRegistry.sol`.
-7. Click **Deploy** and confirm the transaction in MetaMask.
+The deployer becomes `owner`. Use the same key as the backend relayer (`ANCHOR_PRIVATE_KEY`) or call `transferOwnership(relayer)` afterwards: only the owner can `setAnchorer` for auditor wallets.
 
-### Step 4: Save Deployment Details
-1. Once confirmed, copy the newly deployed contract address from Remix's "Deployed Contracts" section.
-2. Update your backend configuration:
-   ```env
-   CHAIN_MODE=real
-   RPC_URL=https://sepolia.infura.io/v3/<YOUR_INFURA_KEY>
-   CHAIN_ID=11155111
-   CONTRACT_ADDRESS=0x<DEPLOYED_CONTRACT_ADDRESS>
-   ANCHOR_PRIVATE_KEY=<THROWAWAY_WALLET_PRIVATE_KEY>
-   EXPLORER_TX_URL=https://sepolia.etherscan.io/tx/
-   EXPLORER_ADDRESS_URL=https://sepolia.etherscan.io/address/
-   ```
+## Functions
 
----
+| Function | Access | Notes |
+|---|---|---|
+| `anchor(bytes32 h, uint8 kind)` | owner / anchorer | Reverts on zero hash, invalid kind, duplicate |
+| `anchorMany(bytes32[] hs, uint8[] kinds)` | owner / anchorer | 1–50 items; skips zero/invalid/duplicates |
+| `verify(bytes32 h)` | view | `(time, kind, by)`; `time = 0` if unknown |
+| `setAnchorer(address, bool)` | owner | Authorizes auditor wallets (BridgeKey) |
+| `transferOwnership(address)` | owner | |
 
-## 3. Reading the Contract on the Block Explorer
+Events: `Anchored(hash, kind, time, by)`, `AnchorerUpdated(account, allowed)`, `OwnershipTransferred`.
 
-1. Navigate to your testnet block explorer (e.g. `https://sepolia.etherscan.io/address/<CONTRACT_ADDRESS>`).
-2. Go to the **Contract** tab (verify the contract code if desired using Remix standard JSON or Hardhat verify).
-3. Under **Read Contract**:
-   - Query `verify(bytes32 h)` by entering the `0x`-prefixed 64-character hex SHA-256 string.
-   - If anchored, it returns the Unix epoch timestamp in `time` and the entity kind in `kind`.
-   - Query `owner()` to confirm the active authorized anchoring address.
-4. Under **Events**:
-   - Inspect `Anchored(bytes32 indexed hash, uint8 kind, uint256 time)` events emitted for each anchored evidence file.
-
----
-
-## 4. Key Management & Production Security
-
-> [!WARNING]
-> For hackathon, testing, and staging environments, use a **throwaway testnet wallet** funded solely with faucet tokens. Never use a wallet holding mainnet assets.
-
-### Transitioning to Production:
-1. **Multi-Signature Ownership (Safe / Gnosis Safe)**:
-   - For mainnet deployment, call `transferOwnership(safeAddress)` to transfer contract ownership to a multi-signature Safe requiring multiple signers (e.g., Lead Auditor + Head of Engineering).
-2. **KMS / Hardware Security Module (HSM)**:
-   - The automated anchoring worker wallet should be managed by AWS KMS, Google Cloud KMS, or HashiCorp Vault with strict least-privilege IAM policies, automated transaction rate limiting, and balance monitors.
-3. **Emergency Key Rotation**:
-   - If the anchoring worker private key is ever suspected of compromise, the multi-sig owner immediately calls `transferOwnership(newOperatorAddress)` to sever the compromised key's permissions without having to redeploy or migrate anchored state.
+`src/EvidenceRegistry.sol` is a symlink to `./EvidenceRegistry.sol`.

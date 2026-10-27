@@ -11,6 +11,7 @@ import {
   fetchClaimById,
   submitClaimVerdict,
 } from "../../services/firebaseDataService";
+import { MstCertificatePanel } from "../../components/MstCertificatePanel";
 
 export const ClaimAuditDesk = () => {
   const [claimsList, setClaimsList] = useState([]);
@@ -812,6 +813,8 @@ export const ClaimAuditDesk = () => {
                 </p>
               </div>
             </div>
+
+            <MstCertificatePanel certificate={certificateModal} />
 
             <div className="flex items-center justify-between pt-2">
               <button

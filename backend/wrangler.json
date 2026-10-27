@@ -3,7 +3,9 @@
   "name": "constra-api",
   "main": "src/index.ts",
   "compatibility_date": "2026-10-27",
-  "observability": { "enabled": true },
+  "observability": {
+    "enabled": true
+  },
   "vars": {
     "FIREBASE_PROJECT_ID": "constra-b561b",
     "GEMINI_MODEL": "gemini-flash-latest",
@@ -11,7 +13,13 @@
     "DEMO_MODE": "true",
     "OCR_MODE": "real",
     "MAX_UPLOAD_MB": "10",
-    "SHOW_CHAIN_COPY": "false"
+    "SHOW_CHAIN_COPY": "false",
+    "CHAIN_MODE": "mst",
+    "MST_NETWORK": "testnet",
+    "MST_CHAIN_ID": "91562037",
+    "MST_RPC_URL": "https://testnetrpc.mstblockchain.com",
+    "MST_EXPLORER_URL": "https://testnet.mstscan.com",
+    "CONTRACT_ADDRESS": ""
   },
   "d1_databases": [
     {
@@ -21,9 +29,33 @@
       "migrations_dir": "migrations"
     }
   ],
-  "r2_buckets": [{ "binding": "FILES", "bucket_name": "constra-files" }],
+  "r2_buckets": [
+    {
+      "binding": "FILES",
+      "bucket_name": "constra-files"
+    }
+  ],
   "ratelimits": [
-    { "name": "LOGIN_LIMITER", "namespace_id": "1001", "simple": { "limit": 10, "period": 60 } },
-    { "name": "VERIFY_LIMITER", "namespace_id": "1002", "simple": { "limit": 10, "period": 60 } }
-  ]
+    {
+      "name": "LOGIN_LIMITER",
+      "namespace_id": "1001",
+      "simple": {
+        "limit": 10,
+        "period": 60
+      }
+    },
+    {
+      "name": "VERIFY_LIMITER",
+      "namespace_id": "1002",
+      "simple": {
+        "limit": 10,
+        "period": 60
+      }
+    }
+  ],
+  "triggers": {
+    "crons": [
+      "* * * * *"
+    ]
+  }
 }

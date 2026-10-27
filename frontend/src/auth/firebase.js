@@ -7,7 +7,7 @@ const firebaseConfig = {
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "constra-b561b",
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "constra-b561b.firebasestorage.app",
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "328961609707",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:328961609707:web:841fdcb96e2e544c8093a",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:328961609707:web:841fdcb96e2e544c8093ae",
 };
 
 const rawApiKey = firebaseConfig.apiKey;

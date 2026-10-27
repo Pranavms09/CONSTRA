@@ -22,6 +22,7 @@
   - [4. Material Consumption Anomaly Engine](#4-material-consumption-anomaly-engine)
   - [5. Milestone Clearance & Certificate Gating](#5-milestone-clearance--certificate-gating)
   - [6. Evidence Storage & Anchoring](#6-evidence-storage--anchoring)
+- [MST Blockchain Integration](#-mst-blockchain-integration)
 - [User Personas & Role-Based Access Control](#-user-personas--role-based-access-control)
 - [Milestone State Machine](#-milestone-state-machine)
 - [Technology Stack](#-technology-stack)
@@ -45,7 +46,7 @@ General contractors and infrastructure developers routinely lose up to 10–15% 
 - **OCR & Unit Normalization** extract line items from vendor delivery slips (challans) and reconcile them with the Bill of Quantities (BOQ).
 - **Progress-Tied Anomaly Detection** flags abnormal consumption ratios and statistical $z$-score deviations.
 - **Private R2 Evidence Storage** serves media only through authorized API routes.
-- **SHA-256 Anchor Registry** (simulated chain anchoring) records proof-of-existence for evidence and challans.
+- **MST Blockchain anchoring** records every evidence photo, challan and clearance certificate fingerprint in the `EvidenceRegistry` contract; auditors sign certificates with their BridgeKey wallet.
 - **Cryptographically Gated Certificates** strictly prevent milestone certificate issuance whenever open critical alerts exist.
 
 ---
@@ -100,7 +101,7 @@ flowchart TD
     BG --> D1
 ```
 
-Blockchain anchoring is **simulated** (formerly `CHAIN_MODE=fake`): anchors are recorded in D1 with a `0xFAKE…` transaction hash. See [architecture.md](architecture.md) for details.
+Evidence fingerprints are anchored on **MST Blockchain** by a relayer inside the API Worker (Cron Trigger + `waitUntil`); auditors sign clearance certificates from **BridgeKey**. See [MST Blockchain Integration](#-mst-blockchain-integration) and [architecture.md](architecture.md).
 
 ---
 
@@ -135,7 +136,7 @@ Blockchain anchoring is **simulated** (formerly `CHAIN_MODE=fake`): anchors are 
 
 ### 6. Evidence Storage & Anchoring
 - **R2 storage:** Evidence photos and challans are stored privately in R2 and served only through authorized API routes (`/supervisor/evidence/{id}/file`, `/store/files/{id}`). Analysis images are served from `/uploads/{name}`.
-- **Simulated anchoring:** Each evidence/challan SHA-256 is recorded in the `chain_anchors` D1 table. `/chain/verify/{sha256}` and `POST /chain/verify` confirm a fingerprint was registered (results are marked `simulated: true`).
+- **MST anchoring:** Each evidence/challan/certificate SHA-256 is queued in D1 and anchored in `EvidenceRegistry` on MST. `/chain/verify/{sha256}`, `POST /chain/verify` and the public `/verify` page read the contract directly; a D1/chain mismatch is logged as tampering.
 
 ---
 
@@ -185,6 +186,27 @@ stateDiagram-v2
 
 ---
 
+## ⛓️ MST Blockchain Integration
+
+| Item | Value |
+| :--- | :--- |
+| Contract | `EvidenceRegistry` ([contracts/](contracts/)) |
+| MST Testnet address | _pending deploy — fill from `contracts/deployments.json`_ |
+| MST Mainnet address | _pending deploy_ |
+| Testnet tx hashes | _relayer `anchorMany` / auditor certificate txs — add after first run_ |
+| Networks | Testnet chain `91562037` (`testnetrpc.mstblockchain.com`), Mainnet chain `4646` (`mariorpc.mstblockchain.com`) |
+| Explorer | https://testnet.mstscan.com · https://mstscan.com |
+| Wallet | BridgeKey (EIP-6963/EIP-1193) |
+
+How MST is used (not a bolt-on):
+1. **Evidence & challans:** every supervisor photo and confirmed delivery challan hash is queued and anchored by the CONSTRA relayer with `anchorMany` (batches ≤ 50, legacy `gasPrice`, retries, receipt confirmation).
+2. **Clearance certificates:** the auditor links a BridgeKey wallet (signed message → on-chain `setAnchorer`) and signs `anchor(certificateHash, 3)` themselves; the backend accepts it only after checking the MST receipt and `Anchored` event.
+3. **Verification:** anyone can check a file on `/verify` (browser hashes it, reads the contract over the public RPC). The API cross-checks D1 against the chain and flags tampering.
+
+Details: [docs/CHAIN_INTEGRATION.md](docs/CHAIN_INTEGRATION.md), [docs/MST-BLOCKCHAIN.md](docs/MST-BLOCKCHAIN.md).
+
+---
+
 ## 💻 Technology Stack
 
 | Layer | Choice | Notes |
@@ -197,6 +219,7 @@ stateDiagram-v2
 | **AI / Multimodal** | Gemini (Files API) / optional Claude vision | Construction analysis, image descriptions, challan OCR |
 | **Forensics** | exifr + Haversine + z-scores | EXIF GPS/timestamp/software checks; consumption anomalies |
 | **Auth** | Firebase Auth (ID tokens verified with `jose`) + HMAC session tokens + PBKDF2 | Roles always loaded from D1 |
+| **Blockchain** | MST Blockchain + Solidity 0.8.24 + Hardhat + viem + BridgeKey | Evidence/certificate anchoring and trustless verification |
 
 ---
 
@@ -216,7 +239,7 @@ CONSTRA/
 ├── frontend/                # React 19 + Vite portal
 ├── wrangler.json            # Frontend Worker (static assets from frontend/dist)
 ├── Mobile App/              # Android field capture app
-├── contracts/               # EvidenceRegistry Solidity contract (not used by the API)
+├── contracts/               # EvidenceRegistry (Solidity, Hardhat) deployed on MST testnet/mainnet
 └── docs/
 ```
 
@@ -250,8 +273,12 @@ Errors use FastAPI-compatible bodies: `{"detail": ...}`.
 | `GET/POST` | `/api/v1/claims[/{id}[/commands, /decisions]]`, `/api/v1/jobs/{id}` | Public | Claims audit desk |
 | `POST` | `/api/v1/claims/{id}/submit` | Auditor | Approve/reject with clearance gate and certificate |
 | `GET` | `/api/v1/claims/{id}/certificate`, `/api/v1/stages/{id}/certificate` | Public | Clearance certificates |
-| `POST/GET` | `/chain/verify`, `/chain/verify/{sha256}` | Public (rate limited) | Fingerprint lookup (simulated anchors) |
-| `GET/POST` | `/chain/anchors/{entity}/{id}`, `/chain/status`, `/chain/anchors/{sha}/retry` | Any / Auditor | Anchor status |
+| `GET` | `/chain/config` | Public | MST network, RPC, explorer, contract address |
+| `POST/GET` | `/chain/verify`, `/chain/verify/{sha256}` | Public (rate limited) | On-chain fingerprint verification |
+| `GET/POST` | `/chain/wallet/message`, `/chain/wallet` | Auditor | Link BridgeKey wallet (signature) → on-chain `setAnchorer` |
+| `POST` | `/chain/certificates/{id}/onchain` | Auditor | Submit wallet-signed certificate tx (receipt verified) |
+| `POST` | `/chain/process` | Auditor | Run the MST relayer now |
+| `GET/POST` | `/chain/anchors/{entity}/{id}`, `/chain/status`, `/chain/anchors/{sha}/retry` | Any / Auditor | Anchor status, relayer health, retry |
 
 --- | :--- | :--- | :--- |
 | `POST` | `/api/v1/auth/login` | Public | Authenticates user; returns JWT bearer token |
@@ -352,12 +379,17 @@ npx wrangler secret put SECRET_KEY         # long random string; signs sv- sessi
 npx wrangler secret put GEMINI_API_KEY
 npx wrangler secret put BOOTSTRAP_ADMIN_EMAIL      # optional: first auditor account
 npx wrangler secret put BOOTSTRAP_ADMIN_PASSWORD   # optional
+npx wrangler secret put ANCHOR_PRIVATE_KEY         # MST relayer wallet = EvidenceRegistry owner
+cd ../contracts && cp .env.example .env            # PRIVATE_KEY (same wallet), fund it from the faucet
+npm install && npm run deploy:testnet              # put the printed address in backend/wrangler.json CONTRACT_ADDRESS
 cd ..
 npm run deploy                              # applies D1 migrations, deploys the API, builds + deploys the frontend
 ```
 - The frontend calls `https://constra-api.pranavms09.workers.dev` by default in production; override with `VITE_API_BASE_URL` at build time.
 - Add any custom frontend domain to `FRONTEND_ORIGINS` in `backend/wrangler.json` (exact origins only; CORS has no wildcard).
 - Set `DEMO_MODE` to `"false"` in `backend/wrangler.json` before using real data: demo tokens bypass authentication.
+- Mainnet: `CONFIRM_MAINNET="yes, deploy to mainnet" npm run deploy:mainnet` in `contracts/`, then set `MST_NETWORK=mainnet`, `MST_CHAIN_ID=4646`, `MST_RPC_URL=https://mariorpc.mstblockchain.com`, `MST_EXPLORER_URL=https://mstscan.com`, `CONTRACT_ADDRESS` in `backend/wrangler.json`.
+- Local dev without a wallet: add `CHAIN_MODE=fake` to `backend/.dev.vars` (simulated anchors).
 
 ### Free-plan limits to know
 - ~100k requests/day and ~10 ms CPU per request. Large uploads are hashed natively and sent to Gemini through the Files API (no base64), but very large photos can still exceed the CPU budget.

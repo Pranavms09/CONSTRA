@@ -4,6 +4,7 @@ import { all, audit, first, nowIso, parseJson, run, stmt } from "../db";
 import { fail, jsonBody } from "../errors";
 import { analyzeStoredExif } from "../lib/exif";
 import { canonicalJson, sha256Hex } from "../lib/util";
+import { enqueueAnchor, explorerTx, isRealChain, processAnchors } from "../services/chain";
 import type { AppEnv } from "../types";
 
 // Claims Audit Desk. Claims were a JSON file + in-memory jobs; both now live in D1 as JSON documents.
@@ -248,6 +249,16 @@ claims.post("/claims/:id/submit", requireRole("auditor"), async (c) => {
   const certId = (certRow.results[0] as { id: number }).id;
   const certificate = certResponse(await first(db, `${CERT_SELECT} WHERE cc.id = ?`, certId));
 
+  // Anchor the certificate seal on MST. An auditor with a linked BridgeKey wallet signs it themselves;
+  // otherwise the relayer anchors it.
+  const awaitSigner = isRealChain(c.env) && !!user.wallet_address;
+  const anchor = await enqueueAnchor(c.env, { entity: "certificate", entityId: certId, sha256: certHash, projectId: pid, awaitSigner });
+  if (!awaitSigner) c.executionCtx.waitUntil(processAnchors(c.env));
+  const chain = {
+    status: anchor?.status ?? "failed", awaiting_wallet_signature: awaitSigner, contract_address: c.env.CONTRACT_ADDRESS || null,
+    chain_id: Number(c.env.MST_CHAIN_ID), tx_hash: anchor?.tx_hash ?? null, explorer_url: explorerTx(c.env, anchor?.tx_hash),
+  };
+
   const report = { claim_id: claim.id, verdict, verdict_note: body.verdictNote, decisions, ai_snapshot: claim.ai ?? {}, submitted_at: issuedAt, sha256: certHash, certificate };
   Object.assign(claim, { report, status: "CLEARED" });
   await saveClaim(db, claim);
@@ -259,6 +270,7 @@ claims.post("/claims/:id/submit", requireRole("auditor"), async (c) => {
     message: `Milestone CLEARED! Clearance certificate #${certNumber} issued with cryptographic SHA-256 seal ${certHash.slice(0, 12)}...`,
     report,
     certificate,
+    chain,
   });
 });
 

@@ -4,3 +4,8 @@ GEMINI_API_KEY=
 ANTHROPIC_API_KEY=
 BOOTSTRAP_ADMIN_EMAIL=
 BOOTSTRAP_ADMIN_PASSWORD=
+# MST relayer wallet (owner of EvidenceRegistry). Use a dedicated wallet funded from https://faucet.mstblockchain.com
+ANCHOR_PRIVATE_KEY=
+CONTRACT_ADDRESS=
+# Set CHAIN_MODE=fake to develop without a wallet (anchors are simulated).
+# CHAIN_MODE=fake

@@ -2,64 +2,51 @@ import "@nomicfoundation/hardhat-toolbox";
 import fs from "fs";
 import path from "path";
 
-// Helper to safely load environment variables from .env files without external dependencies
+// Load contracts/.env without extra dependencies (never commit it).
 function loadEnvFile(envPath) {
   if (!fs.existsSync(envPath)) return;
-  try {
-    const lines = fs.readFileSync(envPath, "utf-8").split("\n");
-    for (const rawLine of lines) {
-      const line = rawLine.trim();
-      if (!line || line.startsWith("#")) continue;
-      const eqIdx = line.indexOf("=");
-      if (eqIdx > 0) {
-        const key = line.slice(0, eqIdx).trim();
-        let val = line.slice(eqIdx + 1).trim();
-        if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
-          val = val.slice(1, -1);
-        }
-        if (process.env[key] === undefined) {
-          process.env[key] = val;
-        }
-      }
-    }
-  } catch {
-    // Ignore read errors
+  for (const rawLine of fs.readFileSync(envPath, "utf-8").split("\n")) {
+    const line = rawLine.trim();
+    const eq = line.indexOf("=");
+    if (!line || line.startsWith("#") || eq < 1) continue;
+    const key = line.slice(0, eq).trim();
+    const val = line.slice(eq + 1).trim().replace(/^(['"])(.*)\1$/, "$2");
+    if (process.env[key] === undefined) process.env[key] = val;
   }
 }
-
-// Load env from contracts/.env, backend/.env, or root .env if present
 loadEnvFile(path.resolve(".env"));
-loadEnvFile(path.resolve("../backend/.env"));
-loadEnvFile(path.resolve("../.env"));
 
-const SEPOLIA_RPC_URL = process.env.SEPOLIA_RPC_URL || process.env.RPC_URL || "";
-const SEPOLIA_PRIVATE_KEY = process.env.SEPOLIA_PRIVATE_KEY || process.env.ANCHOR_PRIVATE_KEY || "";
-const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || "";
-
-const accounts = [];
-if (SEPOLIA_PRIVATE_KEY && SEPOLIA_PRIVATE_KEY.trim()) {
-  const pk = SEPOLIA_PRIVATE_KEY.trim();
-  accounts.push(pk.startsWith("0x") ? pk : `0x${pk}`);
-}
+const pk = (process.env.PRIVATE_KEY || "").trim();
+const accounts = pk ? [pk.startsWith("0x") ? pk : `0x${pk}`] : [];
+// MST uses the legacy single gasPrice model; a numeric gasPrice makes Hardhat send legacy (type 0) txs.
+const gasPrice = Math.round(Number(process.env.MST_GAS_PRICE_GWEI || "1") * 1e9);
 
 /** @type import('hardhat/config').HardhatUserConfig */
 export default {
-  solidity: "0.8.24",
+  solidity: { version: "0.8.24", settings: { optimizer: { enabled: true, runs: 200 } } },
   networks: {
     hardhat: {},
-    sepolia: {
-      url: SEPOLIA_RPC_URL || "https://rpc.sepolia.org",
-      chainId: 11155111,
-      accounts: accounts.length > 0 ? accounts : []
-    }
+    mstTestnet: {
+      url: process.env.MST_TESTNET_RPC_URL || "https://testnetrpc.mstblockchain.com",
+      chainId: 91562037,
+      accounts,
+      gasPrice,
+    },
+    mstMainnet: {
+      url: process.env.MST_MAINNET_RPC_URL || "https://mariorpc.mstblockchain.com",
+      chainId: 4646,
+      accounts,
+      gasPrice,
+    },
   },
+  // MSTScan is Blockscout-based; it does not need a real API key.
   etherscan: {
-    apiKey: ETHERSCAN_API_KEY
+    apiKey: { mstTestnet: "blockscout", mstMainnet: "blockscout" },
+    customChains: [
+      { network: "mstTestnet", chainId: 91562037, urls: { apiURL: "https://testnet.mstscan.com/api", browserURL: "https://testnet.mstscan.com" } },
+      { network: "mstMainnet", chainId: 4646, urls: { apiURL: "https://mstscan.com/api", browserURL: "https://mstscan.com" } },
+    ],
   },
-  paths: {
-    sources: "./src",
-    tests: "./test",
-    cache: "./cache",
-    artifacts: "./artifacts"
-  }
+  sourcify: { enabled: false },
+  paths: { sources: "./src", tests: "./test", cache: "./cache", artifacts: "./artifacts" },
 };

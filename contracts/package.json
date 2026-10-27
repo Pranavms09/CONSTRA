@@ -1,12 +1,15 @@
 {
   "name": "contracts",
   "version": "1.0.0",
-  "description": "",
+  "description": "CONSTRA EvidenceRegistry on MST Blockchain",
   "main": "index.js",
   "scripts": {
     "test": "hardhat test",
     "compile": "hardhat compile",
-    "deploy:sepolia": "hardhat ignition deploy ignition/modules/EvidenceRegistry.js --network sepolia"
+    "deploy:testnet": "hardhat run scripts/deploy.js --network mstTestnet",
+    "deploy:mainnet": "hardhat run scripts/deploy.js --network mstMainnet",
+    "verify:testnet": "hardhat verify --network mstTestnet",
+    "verify:mainnet": "hardhat verify --network mstMainnet"
   },
   "keywords": [],
   "author": "",

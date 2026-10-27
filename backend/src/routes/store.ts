@@ -7,7 +7,7 @@ import {
   alertResponse, assessIssue, boqStatus, challanResponse, loadChallan, materialsWithUnits, processChallanOcr,
   raiseAlert, reconcileChallan, stockSummary, toBase,
 } from "../services/store";
-import { enqueueAnchor } from "../services/chain";
+import { enqueueAnchor, processAnchors } from "../services/chain";
 import type { AppEnv } from "../types";
 
 const store = new Hono<AppEnv>();
@@ -193,7 +193,11 @@ store.post("/challans/:id/confirm", storeOnly, async (c) => {
     fail(400, `Challan #${challan.challan_no} already exists for this vendor.`);
   }
 
-  await enqueueAnchor(db, { entity: "challan", entityId: challan.id, sha256: challan.sha256, projectId: challan.project_id });
+  // Manual drafts have no file, so their placeholder hash is not anchored.
+  if (/^[0-9a-f]{64}$/.test(challan.sha256)) {
+    await enqueueAnchor(c.env, { entity: "challan", entityId: challan.id, sha256: challan.sha256, projectId: challan.project_id });
+    c.executionCtx.waitUntil(processAnchors(c.env));
+  }
   const reconcileSummary = await reconcileChallan(db, challan);
   const alerts = await all(db, "SELECT * FROM alerts WHERE challan_id = ? ORDER BY id", challan.id);
   await audit(db, { actorId: c.get("user").id, action: "confirm_challan", entity: "challan", entityId: String(challan.id), detail: { items_count: challan.items.length } });
