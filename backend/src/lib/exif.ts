@@ -62,7 +62,7 @@ export async function analyzeExifGps(bytes: ArrayBuffer, opts: ExifOptions) {
 
   let tags: Record<string, any> | null = null;
   try {
-    tags = (await exifr.parse(bytes, { tiff: true, ifd0: true, exif: true, gps: true, reviveValues: false, translateValues: false })) ?? {};
+    tags = (await exifr.parse(bytes, { tiff: true, exif: true, gps: true, reviveValues: false, translateValues: false })) ?? {};
   } catch (exc) {
     checks.push(check("image_metadata", "NOT_CHECKED", "Could not read image metadata.", { error_type: (exc as Error)?.name ?? "Error" }));
   }
@@ -131,3 +131,17 @@ export async function analyzeExifGps(bytes: ArrayBuffer, opts: ExifOptions) {
 }
 
 export type ExifReport = Awaited<ReturnType<typeof analyzeExifGps>>;
+
+// EXIF lives in the file header; reading only this prefix keeps CPU and R2 egress low.
+export const EXIF_PREFIX_BYTES = 256 * 1024;
+
+const hexOf = (buf: ArrayBuffer) => [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
+
+/** EXIF report for an R2 object, or null when it does not exist. Uses the stored SHA-256 checksum when present. */
+export async function analyzeStoredExif(bucket: R2Bucket, key: string, opts: Omit<ExifOptions, "fileName" | "fileSha256">) {
+  const head = await bucket.get(key, { range: { offset: 0, length: EXIF_PREFIX_BYTES } });
+  if (!head) return null;
+  const stored = head.checksums.sha256;
+  const fileSha256 = stored ? hexOf(stored) : await sha256Hex(await (await bucket.get(key))!.arrayBuffer());
+  return analyzeExifGps(await head.arrayBuffer(), { ...opts, fileName: key.split("/").pop()!, fileSha256 });
+}

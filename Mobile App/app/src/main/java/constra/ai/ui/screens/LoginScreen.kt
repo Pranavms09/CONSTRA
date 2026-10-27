@@ -289,13 +289,13 @@ fun LoginScreen(
                 ) {
                     Button(
                         onClick = {
-                            backendUrl = "http://127.0.0.1:8000"
-                            sessionManager.setBackendUrl("http://127.0.0.1:8000")
+                            backendUrl = "http://127.0.0.1:8787"
+                            sessionManager.setBackendUrl("http://127.0.0.1:8787")
                         },
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = if (backendUrl == "http://127.0.0.1:8000") SignalYellow else SurfaceElevated,
-                            contentColor = if (backendUrl == "http://127.0.0.1:8000") CarbonBlack else PaperGray
+                            containerColor = if (backendUrl == "http://127.0.0.1:8787") SignalYellow else SurfaceElevated,
+                            contentColor = if (backendUrl == "http://127.0.0.1:8787") CarbonBlack else PaperGray
                         ),
                         shape = RoundedCornerShape(2.dp),
                         contentPadding = PaddingValues(horizontal = 4.dp, vertical = 6.dp)
@@ -305,13 +305,13 @@ fun LoginScreen(
 
                     Button(
                         onClick = {
-                            backendUrl = "http://172.16.14.163:8000"
-                            sessionManager.setBackendUrl("http://172.16.14.163:8000")
+                            backendUrl = "http://172.16.14.163:8787"
+                            sessionManager.setBackendUrl("http://172.16.14.163:8787")
                         },
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = if (backendUrl == "http://172.16.14.163:8000") SignalYellow else SurfaceElevated,
-                            contentColor = if (backendUrl == "http://172.16.14.163:8000") CarbonBlack else PaperGray
+                            containerColor = if (backendUrl == "http://172.16.14.163:8787") SignalYellow else SurfaceElevated,
+                            contentColor = if (backendUrl == "http://172.16.14.163:8787") CarbonBlack else PaperGray
                         ),
                         shape = RoundedCornerShape(2.dp),
                         contentPadding = PaddingValues(horizontal = 4.dp, vertical = 6.dp)
@@ -321,13 +321,13 @@ fun LoginScreen(
 
                     Button(
                         onClick = {
-                            backendUrl = "http://10.0.2.2:8000"
-                            sessionManager.setBackendUrl("http://10.0.2.2:8000")
+                            backendUrl = "http://10.0.2.2:8787"
+                            sessionManager.setBackendUrl("http://10.0.2.2:8787")
                         },
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = if (backendUrl == "http://10.0.2.2:8000") SignalYellow else SurfaceElevated,
-                            contentColor = if (backendUrl == "http://10.0.2.2:8000") CarbonBlack else PaperGray
+                            containerColor = if (backendUrl == "http://10.0.2.2:8787") SignalYellow else SurfaceElevated,
+                            contentColor = if (backendUrl == "http://10.0.2.2:8787") CarbonBlack else PaperGray
                         ),
                         shape = RoundedCornerShape(2.dp),
                         contentPadding = PaddingValues(horizontal = 4.dp, vertical = 6.dp)

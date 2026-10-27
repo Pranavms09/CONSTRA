@@ -4,10 +4,10 @@ const defaultBaseUrl =
   typeof window !== "undefined" &&
     window.location.hostname !== "localhost" &&
     window.location.hostname !== "127.0.0.1"
-    ? "https://constra-backend.onrender.com"
-    : "http://localhost:8000";
+    ? "https://constra-api.pranavms09.workers.dev"
+    : "http://localhost:8787";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || defaultBaseUrl;
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || defaultBaseUrl;
 
 export async function getAuthToken() {
   let token = localStorage.getItem("siteverify_token");
@@ -71,11 +71,11 @@ export async function apiFetch(endpoint, options = {}) {
   } catch (networkError) {
     if (networkError.name === "AbortError") {
       throw new Error(
-        `Backend server at ${API_BASE_URL} timed out after 30s. Free cloud instances take ~30s to wake up from idle. Please refresh.`
+        `Backend server at ${API_BASE_URL} timed out after 30s. Please refresh.`
       );
     }
     throw new Error(
-      `Cannot connect to backend server at ${API_BASE_URL}. Please ensure the FastAPI backend is running.`
+      `Cannot connect to backend server at ${API_BASE_URL}. Please ensure the backend Worker is running.`
     );
   }
 
@@ -122,11 +122,11 @@ export async function demoLoginApi(role) {
   } catch (networkError) {
     if (networkError.name === "AbortError") {
       throw new Error(
-        `Backend server at ${API_BASE_URL} timed out after 10s. Please ensure FastAPI is running and responsive.`
+        `Backend server at ${API_BASE_URL} timed out after 30s. Please ensure the backend Worker is running and responsive.`
       );
     }
     throw new Error(
-      `Cannot connect to backend server at ${API_BASE_URL}. Please ensure the FastAPI backend is running.`
+      `Cannot connect to backend server at ${API_BASE_URL}. Please ensure the backend Worker is running.`
     );
   }
 
@@ -252,7 +252,7 @@ export async function analyzeImage(file) {
     });
   } catch (networkError) {
     throw new Error(
-      `Cannot connect to backend server at ${API_BASE_URL}. Please ensure the FastAPI backend is running.`
+      `Cannot connect to backend server at ${API_BASE_URL}. Please ensure the backend Worker is running.`
     );
   }
 

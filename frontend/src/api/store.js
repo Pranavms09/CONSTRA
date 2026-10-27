@@ -1,6 +1,4 @@
-import { apiFetch, getAuthToken } from "./client";
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+import { API_BASE_URL, apiFetch, getAuthToken } from "./client";
 
 async function getAuthHeader() {
   const token = await getAuthToken();

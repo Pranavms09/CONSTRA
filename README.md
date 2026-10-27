@@ -1,12 +1,11 @@
 # CONSTRA: Multi-Stage Construction Milestone Verifier & Anti-Fraud Platform
 
-> **CONSTRA is an automated construction site-audit and civil fraud prevention platform leveraging Vision-Language Models (VLM), delivery challan OCR reconciliation, EXIF geospatial forensics, statistical material anomaly detection, Cloudinary CDN storage, and immutable blockchain anchoring to prevent milestone fraud and gate payment certification.**
+> **CONSTRA is an automated construction site-audit and civil fraud prevention platform leveraging Vision-Language Models (VLM), delivery challan OCR reconciliation, EXIF geospatial forensics, statistical material anomaly detection, and tamper-evident evidence hashing to prevent milestone fraud and gate payment certification.**
 
 [![Domain](https://img.shields.io/badge/Domain-PropTech%20%7C%20Computer%20Vision%20%7C%20Fraud%20Detection-blue)](#)
-[![Backend](https://img.shields.io/badge/Backend-FastAPI%20%7C%20Python%203.11-green)](#)
+[![Backend](https://img.shields.io/badge/Backend-Cloudflare%20Workers%20%7C%20Hono-orange)](#)
 [![Frontend](https://img.shields.io/badge/Frontend-React%20%7C%20Vite%20%7C%20TailwindCSS-cyan)](#)
-[![Database](https://img.shields.io/badge/Database-PostgreSQL%20%7C%20SQLAlchemy-blueviolet)](#)
-[![Blockchain](https://img.shields.io/badge/Blockchain-Ethereum%20Sepolia%20%7C%20Hardhat-orange)](#)
+[![Database](https://img.shields.io/badge/Database-Cloudflare%20D1%20%7C%20R2-blueviolet)](#)
 [![Status](https://img.shields.io/badge/Status-Specification%20%26%20Design%20Complete-success)](#)
 
 ---
@@ -22,7 +21,7 @@
   - [3. Challan OCR & BOQ Reconciliation](#3-challan-ocr--boq-reconciliation)
   - [4. Material Consumption Anomaly Engine](#4-material-consumption-anomaly-engine)
   - [5. Milestone Clearance & Certificate Gating](#5-milestone-clearance--certificate-gating)
-  - [6. Blockchain Evidence Anchoring & Cloudinary CDN](#6-blockchain-evidence-anchoring--cloudinary-cdn)
+  - [6. Evidence Storage & Anchoring](#6-evidence-storage--anchoring)
 - [User Personas & Role-Based Access Control](#-user-personas--role-based-access-control)
 - [Milestone State Machine](#-milestone-state-machine)
 - [Technology Stack](#-technology-stack)
@@ -45,8 +44,8 @@ General contractors and infrastructure developers routinely lose up to 10–15% 
 - **EXIF Forensics & SHA-256 Hashing** catch off-site spoofing, recycled photos, and edited timestamps.
 - **OCR & Unit Normalization** extract line items from vendor delivery slips (challans) and reconcile them with the Bill of Quantities (BOQ).
 - **Progress-Tied Anomaly Detection** flags abnormal consumption ratios and statistical $z$-score deviations.
-- **Cloudinary CDN Distribution** serves evidence media reliably across all authority dashboards.
-- **Ethereum Sepolia Smart Contract Anchoring** creates immutable proof-of-existence for milestone evidence and clearance certificates.
+- **Private R2 Evidence Storage** serves media only through authorized API routes.
+- **SHA-256 Anchor Registry** (simulated chain anchoring) records proof-of-existence for evidence and challans.
 - **Cryptographically Gated Certificates** strictly prevent milestone certificate issuance whenever open critical alerts exist.
 
 ---
@@ -69,58 +68,39 @@ General contractors and infrastructure developers routinely lose up to 10–15% 
 
 ## 🏗️ System Architecture
 
-**CONSTRA** is engineered as a **Modular Monolith** with clear bounded contexts, asynchronous AI task execution, an extensible verification pipeline, Cloudinary CDN delivery, and immutable Ethereum Sepolia blockchain anchoring.
+**CONSTRA** runs entirely on Cloudflare's free plan: a static React frontend (Workers static assets), a Hono API Worker, a D1 (SQLite) database and an R2 bucket for evidence files. Firebase is used only for Google/email sign-in; Gemini provides vision analysis and challan OCR.
 
 ```mermaid
 flowchart TD
-    subgraph Clients["Frontend Clients (React + Vite + TailwindCSS + Android Kotlin)"]
-        SP["Site Supervisor (Mobile App / Web)"]
-        SC["Store In-Charge (Mobile App / Tablet)"]
-        AU["Project Auditor (Desktop Portal)"]
+    subgraph Clients["Clients"]
+        WEB["React + Vite portal (Workers static assets)"]
+        APP["Android app (Kotlin)"]
     end
 
-    subgraph Gateway["Application Layer (FastAPI Backend)"]
-        Auth["Auth & RBAC Middleware (Firebase + JWT)"]
-        UploadAPI["Upload & Ingestion Service (SHA-256)"]
-        AlertEngine["Alert & Triage Engine"]
-        FSM["Stage State Machine & Gatekeeper"]
-        CertService["Certificate Service (PDF + Snapshot)"]
-        ChainWorker["Blockchain Anchor Worker (Web3.py)"]
+    subgraph API["constra-api Worker (Hono)"]
+        Auth["Auth & RBAC (Firebase ID token / sv- session / demo)"]
+        Routes["Routes: auth, users, supervisor, store, claims, analysis, chain"]
+        BG["ctx.waitUntil: Gemini evidence analysis + challan OCR"]
     end
 
-    subgraph Workers["Asynchronous Verification Pipeline"]
-        EXIF["EXIF & Forensic Checker (Haversine + Time + Tags)"]
-        VLM["VLM Audit Worker (Gemini 2.5 Flash / Claude)"]
-        OCR["Challan OCR & Normalizer (Tesseract / VLM)"]
-        BOQ["BOQ Reconciler (Unit Normalization)"]
-        Anomaly["Anomaly Detector (Progress Ratio + Z-Score)"]
+    subgraph CF["Cloudflare storage"]
+        D1[("D1: users, projects, evidence, challans, alerts, claims, certificates, audit_logs")]
+        R2[("R2: evidence/, challans/, uploads/")]
     end
 
-    subgraph Storage["Persistent & Decentralized Layer"]
-        DB[("PostgreSQL / SQLite Database\n+ Audit Chain & Triggers")]
-        Cloudinary[("Cloudinary CDN\n(Evidence Images)")]
-        Firestore[("Firebase Cloud Firestore\n(Live Sync & Mirror)")]
-        Sepolia[("Ethereum Sepolia\nEvidenceRegistry Smart Contract")]
-    end
+    Firebase[("Firebase Auth (JWKS)")]
+    Gemini[("Gemini API (Files API + generateContent)")]
 
-    SP -->|Uploads Site Photos| UploadAPI
-    SC -->|Uploads Challans & Issue Logs| UploadAPI
-    AU -->|Reviews Alerts & Approves| Gateway
-
-    UploadAPI --> Auth
-    UploadAPI --> Cloudinary
-    UploadAPI --> Workers
-
-    Workers --> AlertEngine
-    AlertEngine --> FSM
-    FSM --> DB
-    CertService --> DB
-    CertService --> AU
-
-    UploadAPI --> ChainWorker
-    ChainWorker --> Sepolia
-    ChainWorker --> Firestore
+    WEB --> API
+    APP --> API
+    Auth --> Firebase
+    Routes --> D1
+    Routes --> R2
+    BG --> Gemini
+    BG --> D1
 ```
+
+Blockchain anchoring is **simulated** (formerly `CHAIN_MODE=fake`): anchors are recorded in D1 with a `0xFAKE…` transaction hash. See [architecture.md](architecture.md) for details.
 
 ---
 
@@ -138,7 +118,7 @@ flowchart TD
 - **SHA-256 image fingerprinting:** Instantly detects exact duplicate evidence reused across different stages or projects.
 
 ### 3. Challan OCR & BOQ Reconciliation
-- **Pre-processing pipeline:** Converts scans/photos using grayscale conversion, non-local means denoising, and Otsu adaptive binarization.
+- **Vision OCR:** Challan photos/PDFs are read by Gemini (Claude vision as optional fallback for images); Tesseract/OpenCV cannot run on Workers.
 - **Field extraction:** Pulls vendor name, challan number, date, and line items (material, quantity, unit).
 - **Human-in-the-loop review:** Low-confidence fields are highlighted in amber for Store In-Charge confirmation before database commitment.
 - **BOQ Variance Reconciler:** Normalizes disparate units (bags, kg, metric tonnes) into base units and computes variance against planned BOQ limits with automated over-delivery alerts ($> 5\%$).
@@ -153,10 +133,9 @@ flowchart TD
   $$\text{Can Clear} \iff \text{Photo Verified} \land \text{Metadata Valid} \land \text{Material Reconciled} \land \neg(\text{Open Critical Alerts}) \land (\text{Approver} \ne \text{Submitter})$$
 - Generates a tamper-evident PDF milestone certificate containing a complete snapshot of evidence hashes, verification check outcomes, timestamps, and auditor credentials.
 
-### 6. Blockchain Evidence Anchoring & Cloudinary CDN
-- **Cloudinary CDN Integration:** Evidence photos captured from the Android app or web portal are uploaded directly to Cloudinary CDN, generating immutable secure HTTPS URLs accessible across all three role portals.
-- **Ethereum Sepolia Anchoring:** An automated background worker calculates the SHA-256 evidence fingerprint and anchors it to the `EvidenceRegistry` smart contract on Sepolia testnet (`0x9B4E3d4b62e59B622d5E69cbea0393A6Ee8Fdd14`), recording block number, transaction hash, and timestamp.
-- **Independent Verification:** Any auditor or regulator can verify the authenticity of a photo or completion certificate directly on Etherscan or via the `/api/v1/chain/verify/{fingerprint}` endpoint.
+### 6. Evidence Storage & Anchoring
+- **R2 storage:** Evidence photos and challans are stored privately in R2 and served only through authorized API routes (`/supervisor/evidence/{id}/file`, `/store/files/{id}`). Analysis images are served from `/uploads/{name}`.
+- **Simulated anchoring:** Each evidence/challan SHA-256 is recorded in the `chain_anchors` D1 table. `/chain/verify/{sha256}` and `POST /chain/verify` confirm a fingerprint was registered (results are marked `simulated: true`).
 
 ---
 
@@ -208,65 +187,73 @@ stateDiagram-v2
 
 ## 💻 Technology Stack
 
-| Layer | Component | Choice | Rationale |
-| :--- | :--- | :--- | :--- |
-| **Web Portal** | Framework & Styling | **React 19 + Vite + Tailwind CSS + GSAP + Lenis** | Ultra-responsive, drafting-grade CONSTRA UI with micro-motion and smooth inertia |
-| **Mobile App** | Native Android | **Kotlin + Jetpack Compose + CameraX** | On-site photo capture with unstripped EXIF GPS metadata and offline queueing |
-| **Backend API** | Application Server | **FastAPI (Python 3.12)** | Asynchronous ASGI runtime, native Pydantic v2 schemas, automated OpenAPI documentation |
-| **Database** | Relational & Live Sync | **PostgreSQL / SQLite + Cloud Firestore** | ACID relational integrity with Alembic migrations and real-time Firestore mirror |
-| **Media CDN** | Evidence Storage | **Cloudinary CDN** | Instant cross-dashboard image distribution with secure HTTPS access for all 3 roles |
-| **Blockchain** | Decentralized Anchor | **Ethereum Sepolia + Web3.py + Hardhat** | Immutable proof-of-existence via `EvidenceRegistry.sol` smart contract |
-| **AI / Multimodal** | VLM Audit Service | **Google Gemini 2.5 Flash / Claude Vision** | Deep visual reasoning over structural stage completion checklists |
-| **Computer Vision** | OCR & Preprocessing | **OpenCV (`cv2`) + Tesseract (`pytesseract`)** | Local, zero-latency image filtering, adaptive thresholding, and challan parsing |
-| **Forensics & Math** | Metadata & Anomaly | **Pillow / ExifRead + NumPy + Pandas** | Direct EXIF extraction, Haversine geospatial radius math, and rolling $z$-scores |
-| **Security & Auth** | Cryptography & RBAC | **Firebase Auth + JWT + SHA-256** | Zero-trust token authentication and SHA-256 cryptographic evidence chaining |
-| **Certificates** | Document Generation | **ReportLab / WeasyPrint** | High-fidelity, auditable PDF milestone certificate rendering |
+| Layer | Choice | Notes |
+| :--- | :--- | :--- |
+| **Web Portal** | React 19 + Vite + Tailwind CSS + GSAP + Lenis | Deployed as Cloudflare Workers static assets (SPA fallback) |
+| **Mobile App** | Kotlin + Jetpack Compose + CameraX | On-site capture with EXIF GPS and offline queueing |
+| **Backend API** | Cloudflare Workers + Hono (TypeScript) | No cold starts; ~10 ms CPU per request on the free plan |
+| **Database** | Cloudflare D1 (SQLite) | Schema + demo seed in `backend/migrations/` |
+| **File Storage** | Cloudflare R2 | Private evidence/challan files with stored SHA-256 checksums |
+| **AI / Multimodal** | Gemini (Files API) / optional Claude vision | Construction analysis, image descriptions, challan OCR |
+| **Forensics** | exifr + Haversine + z-scores | EXIF GPS/timestamp/software checks; consumption anomalies |
+| **Auth** | Firebase Auth (ID tokens verified with `jose`) + HMAC session tokens + PBKDF2 | Roles always loaded from D1 |
 
 ---
 
 ## 📁 Project Directory Structure
 
-The system follows a clean modular architecture:
-
 ```
 CONSTRA/
-├── backend/                            # FastAPI backend services & AI pipelines
-│   ├── app/
-│   │   ├── main.py                     # FastAPI entry point & middleware registration
-│   │   ├── config.py                   # Environment settings & threshold loaders
-│   │   ├── api/                        # HTTP Routers (claims, analysis)
-│   │   ├── routers/                    # Domain routers (store, supervisor, chain, auth)
-│   │   ├── checks/                     # Pluggable verification pipeline classes
-│   │   ├── domain/                     # Pure domain logic: state machine, unit conversion
-│   │   ├── models/                     # SQLAlchemy relational models
-│   │   ├── schemas/                    # Pydantic v2 request/response schemas
-│   │   ├── services/                   # Business logic (cloudinary_service, chain, firestore_db)
-│   │   └── workers/                    # Background blockchain anchor worker
-│   ├── .env                            # Consolidated environment secrets & configs
-│   └── requirements.txt                # Python backend dependencies
-├── frontend/                           # React 19 + Vite + Tailwind CSS portal
-│   ├── src/
-│   │   ├── api/                        # Typed API clients
-│   │   ├── auth/                       # Firebase AuthContext & route guards
-│   │   ├── components/                 # CONSTRA design system components
-│   │   └── pages/                      # Role portals (supervisor, store, auditor, analysis)
-│   ├── DESIGN.md                       # CONSTRA technical drafting specification
-│   ├── package.json
-│   └── vite.config.ts
-├── Mobile App/                         # Native Android field evidence capture app (Kotlin)
-├── contracts/                          # Ethereum Sepolia EvidenceRegistry smart contract
-│   ├── contracts/EvidenceRegistry.sol  # Solidity immutable anchoring contract
-│   └── hardhat.config.ts
-├── docs/                               # System design, PRDs, and chain integration guides
-└── README.md                           # Master project guide
+├── backend/                 # Cloudflare Worker API (Hono + D1 + R2)
+│   ├── src/index.ts         # App entry: CORS, routes, error handler
+│   ├── src/auth.ts          # Firebase/session/demo auth, RBAC, project access
+│   ├── src/routes/          # auth, users, pings, supervisor, store, claims, analysis, chain
+│   ├── src/services/        # store domain logic (units, stock, anomaly, reconcile, OCR), chain
+│   ├── src/lib/             # exif, gemini, fuzzy matching, hashing utilities
+│   ├── migrations/          # D1 schema + demo seed
+│   ├── test/                # vitest unit tests
+│   └── wrangler.json        # Worker config + D1/R2/rate-limit bindings
+├── frontend/                # React 19 + Vite portal
+├── wrangler.json            # Frontend Worker (static assets from frontend/dist)
+├── Mobile App/              # Android field capture app
+├── contracts/               # EvidenceRegistry Solidity contract (not used by the API)
+└── docs/
 ```
 
 ---
 
 ## 📡 REST API Reference
 
-| Method | Endpoint | Authorized Roles | Description |
+Errors use FastAPI-compatible bodies: `{"detail": ...}`.
+
+| Method | Endpoint | Roles | Description |
 | :--- | :--- | :--- | :--- |
+| `GET` | `/health`, `/api/health` | Public | Health + whether Gemini is configured |
+| `POST` | `/auth/login` | Firebase token | Sign in with a Firebase ID token (rate limited) |
+| `POST` | `/auth/login-password` | Public | Email/password sign-in; returns `sv-` session token (rate limited) |
+| `POST` | `/auth/demo-login` | Public (`DEMO_MODE`) | Demo sign-in per role |
+| `GET` | `/auth/me` | Any | Current user |
+| `GET/POST/PATCH/DELETE` | `/users`, `/users/{id}` | Auditor | Allowlist management |
+| `GET` | `/supervisor/projects`, `/supervisor/projects/{pid}/stages`, `/supervisor/dashboard` | Supervisor | Assigned projects and stats |
+| `POST` | `/supervisor/evidence` | Supervisor | Camera evidence upload (hash, geofence, alerts, AI analysis) |
+| `GET/POST` | `/supervisor/evidence[/{id}[/retry-ai, /retry-anchor, /anchor, /file]]` | Supervisor (file: + Auditor) | Evidence history, retries, private file |
+| `GET` | `/store/projects`, `/store/materials`, `/store/vendors`, `/store/projects/{pid}/{stages,materials,vendors}` | All roles | Reference data |
+| `POST` | `/store/projects/{pid}/challans`, `/store/projects/{pid}/challans/manual` | Store In-Charge | Challan upload (OCR) or manual draft |
+| `GET/PUT/PATCH` | `/store/challans/{id}`, `/store/deliveries/{id}` | Store, Auditor (edit: Store) | Challan detail and draft edit (optimistic locking) |
+| `POST` | `/store/challans/{id}/confirm` | Store In-Charge | Confirm + BOQ reconciliation + alerts |
+| `GET` | `/store/projects/{pid}/{challans,material-issues,stock-summary,boq-status,alerts}` | Store, Auditor | Lists and stock/BOQ status |
+| `GET` | `/store/files/{id}?token=` | Store, Auditor | Private challan file |
+| `POST` | `/store/issue-preview`, `/store/stages/{sid}/material-issues` | Store In-Charge | Anomaly preview and material issue |
+| `PATCH/POST` | `/store/alerts/{id}`, `/store/alerts/{id}/action` | Auditor, Store | Resolve/escalate with justification |
+| `POST` | `/api/analyze-image` | Public (user optional) | Gemini description + EXIF report |
+| `GET` | `/api/analyses`, `/uploads/{name}` | Public | Past analyses, analysis images |
+| `GET/POST` | `/api/v1/claims[/{id}[/commands, /decisions]]`, `/api/v1/jobs/{id}` | Public | Claims audit desk |
+| `POST` | `/api/v1/claims/{id}/submit` | Auditor | Approve/reject with clearance gate and certificate |
+| `GET` | `/api/v1/claims/{id}/certificate`, `/api/v1/stages/{id}/certificate` | Public | Clearance certificates |
+| `POST/GET` | `/chain/verify`, `/chain/verify/{sha256}` | Public (rate limited) | Fingerprint lookup (simulated anchors) |
+| `GET/POST` | `/chain/anchors/{entity}/{id}`, `/chain/status`, `/chain/anchors/{sha}/retry` | Any / Auditor | Anchor status |
+
+--- | :--- | :--- | :--- |
 | `POST` | `/api/v1/auth/login` | Public | Authenticates user; returns JWT bearer token |
 | `POST` | `/api/v1/projects` | Auditor | Initializes new project with geofence coordinates and radius |
 | `POST` | `/api/v1/projects/{id}/stages` | Auditor | Configures sequential construction stages & specifications |
@@ -333,117 +320,56 @@ limits:
 ## ⚡ Getting Started & Local Setup
 
 ### Prerequisites
-- Docker & Docker Compose (v2.0+)
-- Python 3.11+ (for local backend development)
-- Node.js 18+ & npm (for local frontend development)
-- Tesseract OCR (`sudo apt-get install tesseract-ocr` on Debian/Ubuntu)
+- Node.js 20+ and npm
+- A Cloudflare account (free plan) for deployment
 
-### Quickstart with Docker Compose
-
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/Pranavms09/CONSTRA.git
-   cd CONSTRA
-   ```
-
-2. **Configure environment variables:**
-   The backend uses a single consolidated configuration file at `backend/.env`:
-   ```bash
-   # Ensure backend/.env exists with your API keys (Gemini, Cloudinary, Alchemy Sepolia)
-   ```
-
-3. **Launch the platform:**
-   ```bash
-   docker compose up --build
-   ```
-
-4. **Access the applications:**
-   - **Frontend UI:** `http://localhost:5173`
-   - **Backend API & Swagger Docs:** `http://localhost:8000/docs`
-   - **PostgreSQL Database:** `localhost:5432`
-
----
-
-## 🔐 Feature 1: Role-Segregated Portal with Firebase Authentication
-
-Feature 1 implements zero-trust role segregation with Google login powered by Firebase Authentication and the Firebase Admin SDK.
-
-### Architecture & Security Guarantees
-1. **Zero Frontend Trust**: Frontend never decides user permissions. Roles are loaded and verified strictly from the database using the verified Firebase token.
-2. **Claimed Role Validation**: On login, the backend matches the requested operational role against `users.role`. Discrepancies immediately return `403 Forbidden` and cancel authentication.
-3. **Allowlist Gating**: Unregistered Google accounts cannot access any system endpoint (`403: Your account is not registered. Contact your Auditor.`).
-4. **Verified Emails Only**: Tokens with `email_verified=False` are rejected with `403`.
-5. **Audit Logging**: Successful and rejected logins are recorded with timestamps, actions (`login`, `login_denied`), and reasons without storing sensitive tokens.
-
-### Step 1: Firebase Project Setup
-1. In the [Firebase Console](https://console.firebase.google.com/):
-   - Create a Firebase Project (e.g. `constra-b561b`).
-   - Under **Authentication** -> **Sign-in method**, enable **Google**.
-2. Under **Project Settings** -> **General**:
-   - Register a Web App and copy the web configuration keys.
-3. Under **Project Settings** -> **Service accounts**:
-   - Click **Generate new private key** and save the JSON file as `backend/secrets/firebase-service-account.json`.
-
-### Step 2: Environment Configuration
-
-1. **Backend (`backend/.env`)**:
-   ```env
-   DATABASE_URL=sqlite:///./siteverify.db
-   FRONTEND_ORIGIN=http://localhost:5173
-   SECRET_KEY=siteverify-secret-key-2025-constra-apex
-   FIREBASE_PROJECT_ID=constra-b561b
-   BOOTSTRAP_ADMIN_EMAIL=your-auditor-google-account@gmail.com
-   FIREBASE_SERVICE_ACCOUNT_PATH=backend/secrets/firebase-service-account.json
-
-   # AI Vision
-   GEMINI_API_KEY=your_gemini_api_key
-   GEMINI_MODEL=gemini-2.5-flash
-
-   # Cloudinary CDN Image Storage
-   CLOUDINARY_CLOUD_NAME=your_cloud_name
-   CLOUDINARY_API_KEY=your_api_key
-   CLOUDINARY_API_SECRET=your_api_secret
-
-   # Blockchain Anchoring (Ethereum Sepolia)
-   CHAIN_MODE=fake                      # fake | real
-   RPC_URL=https://eth-sepolia.g.alchemy.com/v2/your_key
-   CHAIN_ID=11155111
-   CONTRACT_ADDRESS=0x9B4E3d4b62e59B622d5E69cbea0393A6Ee8Fdd14
-   ANCHOR_PRIVATE_KEY=your_testnet_private_key
-   EXPLORER_TX_URL=https://sepolia.etherscan.io/tx/
-   EXPLORER_ADDRESS_URL=https://sepolia.etherscan.io/address/
-   ```
-
-2. **Frontend (`frontend/.env`)**:
-   ```env
-   VITE_API_BASE_URL=http://localhost:8000
-   VITE_FIREBASE_API_KEY=AIzaSy...
-   VITE_FIREBASE_AUTH_DOMAIN=constra-b561b.firebaseapp.com
-   VITE_FIREBASE_PROJECT_ID=constra-b561b
-   VITE_FIREBASE_STORAGE_BUCKET=constra-b561b.firebasestorage.app
-   VITE_FIREBASE_MESSAGING_SENDER_ID=1234567890
-   VITE_FIREBASE_APP_ID=1:1234567890:web:...
-   ```
-
-### Step 3: Running Backend & Frontend
-
-**Backend:**
+### Local development
 ```bash
+# 1. Backend Worker (http://localhost:8787)
 cd backend
-./.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+npm install
+cp .dev.vars.example .dev.vars        # fill in SECRET_KEY (any long random string), GEMINI_API_KEY, ...
+npm run db:migrate:local              # creates the local D1 database with demo data
+npm run dev                           # add `-- --ip 0.0.0.0` to reach it from a phone on your LAN
+npm test                              # unit tests
+
+# 2. Frontend (http://localhost:5173)
+cd ../frontend
+cp .env.example .env                  # VITE_API_BASE_URL=http://localhost:8787
+npm install && npm run dev
 ```
 
-**Run Backend Tests:**
+Demo logins (`DEMO_MODE=true`): use the role buttons on the login page, or send `Authorization: Bearer demo-supervisor | demo-store | demo-auditor`.
+
+### Deploy to Cloudflare (free plan)
+Run these yourself (nothing here logs in for you):
 ```bash
+npx wrangler login
 cd backend
-./.venv/bin/pytest -v
+npx wrangler d1 create constra-db         # paste the printed database_id into backend/wrangler.json
+npx wrangler r2 bucket create constra-files
+npx wrangler secret put SECRET_KEY         # long random string; signs sv- session tokens
+npx wrangler secret put GEMINI_API_KEY
+npx wrangler secret put BOOTSTRAP_ADMIN_EMAIL      # optional: first auditor account
+npx wrangler secret put BOOTSTRAP_ADMIN_PASSWORD   # optional
+cd ..
+npm run deploy                              # applies D1 migrations, deploys the API, builds + deploys the frontend
 ```
+- The frontend calls `https://constra-api.pranavms09.workers.dev` by default in production; override with `VITE_API_BASE_URL` at build time.
+- Add any custom frontend domain to `FRONTEND_ORIGINS` in `backend/wrangler.json` (exact origins only; CORS has no wildcard).
+- Set `DEMO_MODE` to `"false"` in `backend/wrangler.json` before using real data: demo tokens bypass authentication.
 
-**Frontend:**
-```bash
-cd frontend
-npm run dev
-```
+### Free-plan limits to know
+- ~100k requests/day and ~10 ms CPU per request. Large uploads are hashed natively and sent to Gemini through the Files API (no base64), but very large photos can still exceed the CPU budget.
+- Background AI analysis and challan OCR run via `ctx.waitUntil` (about 30 s after the response). If they regularly time out, move them to Cloudflare Queues.
+
+## 🔐 Firebase Authentication
+
+1. **Zero frontend trust:** roles are loaded from D1, never from the client or token.
+2. **Token verification:** Firebase ID tokens are verified against Google's public keys (signature, issuer, audience, expiry). Unsigned tokens are rejected.
+3. **Verified emails only** for Google sign-in; logins and denials are written to `audit_logs`.
+
+Setup: create a Firebase project, enable Google sign-in, register a Web App and put its config in `frontend/.env`. The Worker only needs `FIREBASE_PROJECT_ID` (no service-account key).
 
 ---
 
@@ -458,7 +384,7 @@ To experience the complete verification lifecycle during a live presentation:
 5. **Inflated Challan Delivery:** Log in as **Store In-Charge** (`store@siteverify.com`). Upload a vendor challan with $24\%$ excess cement. Confirm OCR; BOQ engine flags over-delivery.
 6. **Anomalous Material Issue:** Issue 40 bags of cement when only 15 are expected for current verified work. Anomaly engine flags consumption deviation.
 7. **Certificate Gate Enforcement:** Log in as **Project Auditor** (`auditor@siteverify.com`). Attempt to approve the flagged stage. System **blocks certificate issuance** with explicit blocker tooltips.
-8. **Resolution & Certificate Generation:** Auditor reviews evidence panel, documents override comments, resolves alerts, and approves the stage. The system clears the stage, generates the verified PDF certificate, and anchors the proof to the Ethereum Sepolia blockchain registry.
+8. **Resolution & Certificate Generation:** Auditor reviews evidence panel, documents override comments, resolves alerts, and approves the stage. The system clears the stage, issues a SHA-256-sealed clearance certificate stored in D1.
 
 ---
 

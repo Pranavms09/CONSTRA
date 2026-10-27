@@ -1,23 +1,10 @@
-import {
-  collection,
-  doc,
-  setDoc,
-  getDocs,
-  getDoc,
-  updateDoc,
-  query,
-  orderBy,
-  onSnapshot,
-  serverTimestamp,
-} from "firebase/firestore";
-import { db } from "../auth/firebase";
+// Data persistence: the Cloudflare Worker API (backed by D1) is the source of truth.
+// localStorage is only an offline cache. Firestore is no longer used; the exported names are kept for existing callers.
 import {
   fetchClaims as apiFetchClaims,
   fetchClaim as apiFetchClaim,
   createClaimApi,
   submitAuditReport as apiSubmitReport,
-  fetchUsers as apiFetchUsers,
-  createUser as apiCreateUser,
 } from "../api/client";
 
 const LOCAL_STORAGE_CLAIMS_KEY = "constra_firestore_claims";
@@ -54,28 +41,12 @@ export async function saveClaimToFirestore(claimData) {
     updatedAt: new Date().toISOString(),
   };
 
-  // 1. Write to Firestore if connected
-  if (db) {
-    try {
-      const claimRef = doc(db, "claims", claimId);
-      await setDoc(claimRef, {
-        ...record,
-        firestoreTimestamp: serverTimestamp(),
-      }, { merge: true });
-      console.info(`[Firebase] Claim ${claimId} successfully synced to Firestore.`);
-    } catch (err) {
-      console.warn("[Firebase] Firestore write failed, using local/backend fallback:", err.message);
-    }
-  }
-
-  // 2. Sync to Backend Claims API
   try {
     await createClaimApi(record);
   } catch (err) {
     console.warn("[API] Backend claims API sync note:", err.message);
   }
 
-  // 3. Update Local Persistence
   const current = getLocal(LOCAL_STORAGE_CLAIMS_KEY);
   const filtered = current.filter((c) => c.id !== claimId);
   setLocal(LOCAL_STORAGE_CLAIMS_KEY, [record, ...filtered]);
@@ -86,37 +57,19 @@ export async function saveClaimToFirestore(claimData) {
 export async function fetchAllClaims() {
   let claims = [];
 
-  // 1. Try Firestore
-  if (db) {
-    try {
-      const q = query(collection(db, "claims"), orderBy("updatedAt", "desc"));
-      const snap = await getDocs(q);
-      if (!snap.empty) {
-        claims = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-      }
-    } catch (err) {
-      // Fallback
+  try {
+    const apiClaims = await apiFetchClaims();
+    if (Array.isArray(apiClaims) && apiClaims.length > 0) {
+      claims = apiClaims;
     }
+  } catch {
+    // ignore
   }
 
-  // 2. Try Backend API if empty
-  if (!claims.length) {
-    try {
-      const apiClaims = await apiFetchClaims();
-      if (Array.isArray(apiClaims) && apiClaims.length > 0) {
-        claims = apiClaims;
-      }
-    } catch {
-      // ignore
-    }
-  }
-
-  // 3. Fallback to Local Storage
   if (!claims.length) {
     claims = getLocal(LOCAL_STORAGE_CLAIMS_KEY);
   }
 
-  // Update local cache
   if (claims.length > 0) {
     setLocal(LOCAL_STORAGE_CLAIMS_KEY, claims);
   }
@@ -125,18 +78,6 @@ export async function fetchAllClaims() {
 }
 
 export async function fetchClaimById(claimId) {
-  if (db) {
-    try {
-      const docRef = doc(db, "claims", claimId);
-      const snap = await getDoc(docRef);
-      if (snap.exists()) {
-        return { id: snap.id, ...snap.data() };
-      }
-    } catch {
-      // fallback
-    }
-  }
-
   try {
     const data = await apiFetchClaim(claimId);
     if (data) return data;
@@ -150,7 +91,7 @@ export async function fetchClaimById(claimId) {
 }
 
 export async function submitClaimVerdict(claimId, verdict, verdictNote, decisions) {
-  // 1. Enforce real backend verification and blocker checks first
+  // Backend enforces verification and blocker checks.
   const apiRes = await apiSubmitReport(claimId, verdict, verdictNote, decisions);
 
   const finalStatus =
@@ -171,17 +112,6 @@ export async function submitClaimVerdict(claimId, verdict, verdictNote, decision
     updatedAt: new Date().toISOString(),
   };
 
-  // 2. Firestore update if configured
-  if (db) {
-    try {
-      const claimRef = doc(db, "claims", claimId);
-      await updateDoc(claimRef, updatePayload);
-    } catch (err) {
-      console.warn("[Firebase] Could not update verdict in Firestore:", err.message);
-    }
-  }
-
-  // 3. Local state synchronization
   const localList = getLocal(LOCAL_STORAGE_CLAIMS_KEY);
   const updated = localList.map((c) => (c.id === claimId ? { ...c, ...updatePayload } : c));
   setLocal(LOCAL_STORAGE_CLAIMS_KEY, updated);
@@ -190,108 +120,38 @@ export async function submitClaimVerdict(claimId, verdict, verdictNote, decision
 }
 
 /* =========================================================================
-   2. STORE CHALLANS & DELIVERIES
+   2-5. LOCAL CACHES (records are already persisted by the backend API)
    ========================================================================= */
 
 export async function saveChallanToFirestore(challanData) {
   const challanId = String(challanData.id || `CH-${Date.now()}`);
-  const record = {
-    ...challanData,
-    id: challanId,
-    updatedAt: new Date().toISOString(),
-  };
-
-  if (db) {
-    try {
-      const docRef = doc(db, "deliveries", challanId);
-      await setDoc(docRef, { ...record, firestoreTimestamp: serverTimestamp() }, { merge: true });
-    } catch (e) {
-      console.warn("[Firebase] Store challan write fallback:", e.message);
-    }
-  }
-
+  const record = { ...challanData, id: challanId, updatedAt: new Date().toISOString() };
   const current = getLocal(LOCAL_STORAGE_DELIVERIES_KEY);
-  const filtered = current.filter((c) => String(c.id) !== challanId);
-  setLocal(LOCAL_STORAGE_DELIVERIES_KEY, [record, ...filtered]);
-
+  setLocal(LOCAL_STORAGE_DELIVERIES_KEY, [record, ...current.filter((c) => String(c.id) !== challanId)]);
   return record;
 }
-
-/* =========================================================================
-   3. MATERIAL ISSUES & DRAWDOWNS
-   ========================================================================= */
 
 export async function saveIssueToFirestore(issueData) {
-  const issueId = String(issueData.id || `ISS-${Date.now()}`);
   const record = {
     ...issueData,
-    id: issueId,
+    id: String(issueData.id || `ISS-${Date.now()}`),
     issued_at: issueData.issued_at || new Date().toISOString(),
   };
-
-  if (db) {
-    try {
-      const docRef = doc(db, "material_issues", issueId);
-      await setDoc(docRef, { ...record, firestoreTimestamp: serverTimestamp() }, { merge: true });
-    } catch (e) {
-      console.warn("[Firebase] Issue write fallback:", e.message);
-    }
-  }
-
-  const current = getLocal(LOCAL_STORAGE_ISSUES_KEY);
-  setLocal(LOCAL_STORAGE_ISSUES_KEY, [record, ...current]);
-
+  setLocal(LOCAL_STORAGE_ISSUES_KEY, [record, ...getLocal(LOCAL_STORAGE_ISSUES_KEY)]);
   return record;
 }
 
-/* =========================================================================
-   4. AUDIT & DISCREPANCY ALERTS
-   ========================================================================= */
-
 export async function saveAlertToFirestore(alertData) {
-  const alertId = String(alertData.id || `ALT-${Date.now()}`);
   const record = {
     ...alertData,
-    id: alertId,
+    id: String(alertData.id || `ALT-${Date.now()}`),
     status: alertData.status || "open",
     created_at: alertData.created_at || new Date().toISOString(),
   };
-
-  if (db) {
-    try {
-      const docRef = doc(db, "alerts", alertId);
-      await setDoc(docRef, { ...record, firestoreTimestamp: serverTimestamp() }, { merge: true });
-    } catch (e) {
-      console.warn("[Firebase] Alert write fallback:", e.message);
-    }
-  }
-
-  const current = getLocal(LOCAL_STORAGE_ALERTS_KEY);
-  setLocal(LOCAL_STORAGE_ALERTS_KEY, [record, ...current]);
-
+  setLocal(LOCAL_STORAGE_ALERTS_KEY, [record, ...getLocal(LOCAL_STORAGE_ALERTS_KEY)]);
   return record;
 }
 
-/* =========================================================================
-   5. USER AUTHORITIES & ACCESS ALLOWLIST
-   ========================================================================= */
-
 export async function saveUserToFirestore(userData) {
-  const userId = String(userData.id || `USR-${Date.now()}`);
-  const record = {
-    ...userData,
-    id: userId,
-    created_at: new Date().toISOString(),
-  };
-
-  if (db) {
-    try {
-      const docRef = doc(db, "users", userId);
-      await setDoc(docRef, { ...record, firestoreTimestamp: serverTimestamp() }, { merge: true });
-    } catch (e) {
-      console.warn("[Firebase] User allowlist write note:", e.message);
-    }
-  }
-
-  return record;
+  return { ...userData, id: String(userData.id || `USR-${Date.now()}`), created_at: new Date().toISOString() };
 }

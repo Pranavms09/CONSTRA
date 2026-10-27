@@ -6,7 +6,14 @@
   ],
   "scripts": {
     "build": "npm run build --workspace=frontend",
-    "dev": "npm run dev --workspace=frontend"
+    "dev": "npm run dev --workspace=frontend",
+    "dev:api": "npm run dev --prefix backend",
+    "deploy:api": "npm run db:migrate:remote --prefix backend && npm run deploy --prefix backend",
+    "deploy:web": "npm run build && wrangler deploy -c wrangler.json",
+    "deploy": "npm run deploy:api && npm run deploy:web"
+  },
+  "devDependencies": {
+    "wrangler": "^4.153.0"
   },
   "optionalDependencies": {
     "@oxlint/binding-linux-x64-gnu": "^1.87.0",

@@ -28,7 +28,7 @@ class SessionManager(context: Context) {
                     android.os.Build.MANUFACTURER.contains("Genymotion") ||
                     android.os.Build.HARDWARE.contains("goldfish") ||
                     android.os.Build.HARDWARE.contains("ranchu"))
-            return if (isEmulator) "http://10.0.2.2:8000" else "http://127.0.0.1:8000"
+            return if (isEmulator) "http://10.0.2.2:8787" else "http://127.0.0.1:8787"
         }
     }
 

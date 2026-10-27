@@ -1,3 +1,5 @@
+> **Legacy:** this guide describes the former FastAPI + Firestore + web3 anchoring worker. The Cloudflare port simulates anchoring in the D1 `chain_anchors` table (`backend/src/services/chain.ts`); the content below is kept for reference only.
+
 # CONSTRA Blockchain Anchoring Integration Guide
 
 This document is the integration guide for teammates working on role modules (Supervisor, Store In-Charge, Auditor).
