@@ -191,7 +191,8 @@ stateDiagram-v2
 | Item | Value |
 | :--- | :--- |
 | Contract | `EvidenceRegistry` ([contracts/](contracts/)) |
-| MST Testnet address | _pending deploy — fill from `contracts/deployments.json`_ |
+| MST Testnet address | [`0x9945391814a414c3cbcc0DDCBe98919Ab75c3F54`](https://testnet.mstscan.com/address/0x9945391814a414c3cbcc0DDCBe98919Ab75c3F54#code) (source verified) |
+| Testnet deploy tx | [`0xb95b48bc3ee2756a…`](https://testnet.mstscan.com/tx/0xb95b48bc3ee2756ab8d9d95b0456f5e5459cd07dc571ba5be2b8fa4c1f485a0d) (block 6617418) |
 | MST Mainnet address | _pending deploy_ |
 | Testnet tx hashes | _relayer `anchorMany` / auditor certificate txs — add after first run_ |
 | Networks | Testnet chain `91562037` (`testnetrpc.mstblockchain.com`), Mainnet chain `4646` (`mariorpc.mstblockchain.com`) |

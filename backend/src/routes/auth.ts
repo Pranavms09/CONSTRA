@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import type { Context } from "hono";
 import {
   clientIp, createSessionToken, ensureDemoUser, findUserByEmail, hashPassword, insertUser, isDemoMode,
-  parseBearer, requireUser, userResponse, verifyFirebaseToken, verifyPassword,
+  parseBearer, requireUser, timingSafeEqual, userResponse, verifyFirebaseToken, verifyPassword,
 } from "../auth";
 import { audit, nowIso, run } from "../db";
 import { fail, jsonBody } from "../errors";
@@ -35,19 +35,22 @@ auth.post("/login", async (c) => {
   const email = (claims.email ?? "").toLowerCase().trim();
   const provider = claims.firebase?.sign_in_provider;
 
-  if (!claims.email_verified && provider !== "password") {
+  if (!claims.email_verified) {
     await audit(c.env.DB, { action: "login_denied", entity: "user", detail: { email, reason: "Email not verified" }, ip });
     fail(403, "Email is not verified. Please verify your email with Google.");
   }
 
   let user = await findUserByEmail(c.env.DB, email);
-  const claimedRole = asRole(body.claimed_role);
   if (!user) {
-    const isBootstrap = !!c.env.BOOTSTRAP_ADMIN_EMAIL && email === c.env.BOOTSTRAP_ADMIN_EMAIL.toLowerCase();
+    // Allowlist: only the bootstrap auditor self-registers; everyone else is created by an auditor.
+    if (!c.env.BOOTSTRAP_ADMIN_EMAIL || email !== c.env.BOOTSTRAP_ADMIN_EMAIL.toLowerCase()) {
+      await audit(c.env.DB, { action: "login_denied", entity: "user", detail: { email, reason: "Account not registered" }, ip });
+      fail(403, "Your account is not registered. Contact your Auditor.");
+    }
     user = await insertUser(c.env.DB, {
       email,
       full_name: body.full_name || claims.name || titleCase(email.split("@")[0].replaceAll(".", " ")),
-      role: claimedRole ?? (isBootstrap ? "auditor" : "supervisor"),
+      role: "auditor",
       firebase_uid: claims.uid,
       auth_provider: provider || "firebase",
     });
@@ -95,7 +98,7 @@ auth.post("/login-password", async (c) => {
   // Bootstrap auditor credentials come from secrets (formerly hardcoded in source).
   const isBootstrap =
     !!c.env.BOOTSTRAP_ADMIN_EMAIL && !!c.env.BOOTSTRAP_ADMIN_PASSWORD && email === c.env.BOOTSTRAP_ADMIN_EMAIL.toLowerCase();
-  const bootstrapOk = isBootstrap && password === c.env.BOOTSTRAP_ADMIN_PASSWORD;
+  const bootstrapOk = isBootstrap && timingSafeEqual(password, c.env.BOOTSTRAP_ADMIN_PASSWORD!);
 
   let user = await findUserByEmail(c.env.DB, email);
   if (!user) {

@@ -6,7 +6,7 @@ Tamper-evident registry of SHA-256 fingerprints for site photos (kind 1), delive
 
 | Network | Chain ID | Address | Deploy tx |
 |---|---|---|---|
-| MST Testnet | 91562037 | _pending — run `npm run deploy:testnet`_ | |
+| MST Testnet | 91562037 | [`0x9945391814a414c3cbcc0DDCBe98919Ab75c3F54`](https://testnet.mstscan.com/address/0x9945391814a414c3cbcc0DDCBe98919Ab75c3F54#code) (source verified) | [`0xb95b48bc3ee2756a…`](https://testnet.mstscan.com/tx/0xb95b48bc3ee2756ab8d9d95b0456f5e5459cd07dc571ba5be2b8fa4c1f485a0d) |
 | MST Mainnet | 4646 | _pending — run `npm run deploy:mainnet`_ | |
 
 `scripts/deploy.js` also writes these to `deployments.json`. Copy them here after deploying.
@@ -30,6 +30,8 @@ npm run deploy:testnet
 CONFIRM_MAINNET="yes, deploy to mainnet" npm run deploy:mainnet
 npm run verify:testnet -- <address>     # MSTScan (Blockscout)
 ```
+
+From the repo root, `npm run deploy:testnet` / `npm run deploy:mainnet` forward to these scripts.
 
 Hardhat networks `mstTestnet` / `mstMainnet` send legacy `gasPrice` transactions (MST has no EIP-1559 fees). Override RPCs with `MST_TESTNET_RPC_URL`, `MST_MAINNET_RPC_URL`, gas with `MST_GAS_PRICE_GWEI`.
 

@@ -1,0 +1,9 @@
+{
+  "mstTestnet": {
+    "chainId": 91562037,
+    "address": "0x9945391814a414c3cbcc0DDCBe98919Ab75c3F54",
+    "deployTxHash": "0xb95b48bc3ee2756ab8d9d95b0456f5e5459cd07dc571ba5be2b8fa4c1f485a0d",
+    "deployer": "0xf1854aE3a9f0BD34f90ec69b2FE7fEB958268d60",
+    "deployedAt": "2026-10-27T16:17:16.901Z"
+  }
+}

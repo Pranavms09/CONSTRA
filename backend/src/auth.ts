@@ -30,7 +30,7 @@ const fromHex = (hex: string) => new Uint8Array(hex.match(/../g)!.map((h) => par
 export const isDemoMode = (env: Env) => env.DEMO_MODE !== "false";
 export const clientIp = (c: Context) => c.req.header("cf-connecting-ip") ?? null;
 
-function timingSafeEqual(a: string, b: string) {
+export function timingSafeEqual(a: string, b: string) {
   if (a.length !== b.length) return false;
   let diff = 0;
   for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
@@ -80,18 +80,24 @@ function requireSecret(env: Env) {
   return env.SECRET_KEY;
 }
 
+const SESSION_TTL_S = 24 * 60 * 60;
+const sessionSig = async (env: Env, userId: number, email: string, exp: number) =>
+  (await hmacHex(requireSecret(env), `${userId}:${email.toLowerCase().trim()}:${exp}`)).slice(0, 32);
+
+/** `sv-<userId>-<expiry unix s>-<hmac>`: the signed expiry keeps a leaked token (e.g. from a ?token= URL) short-lived. */
 export async function createSessionToken(env: Env, userId: number, email: string) {
-  const sig = (await hmacHex(requireSecret(env), `${userId}:${email.toLowerCase().trim()}`)).slice(0, 32);
-  return `sv-${userId}-${sig}`;
+  const exp = Math.floor(Date.now() / 1000) + SESSION_TTL_S;
+  return `sv-${userId}-${exp}-${await sessionSig(env, userId, email, exp)}`;
 }
 
 async function verifySessionToken(env: Env, token: string): Promise<User | null> {
   const parts = token.split("-");
-  if (parts.length !== 3 || !/^\d+$/.test(parts[1])) return null;
+  if (parts.length !== 4 || !/^\d+$/.test(parts[1]) || !/^\d+$/.test(parts[2])) return null;
+  const exp = Number(parts[2]);
+  if (exp < Date.now() / 1000) return null;
   const user = await first<User>(env.DB, "SELECT * FROM users WHERE id = ?", Number(parts[1]));
   if (!user || !user.is_active) return null;
-  const expected = (await hmacHex(requireSecret(env), `${user.id}:${user.email.toLowerCase().trim()}`)).slice(0, 32);
-  return timingSafeEqual(parts[2], expected) ? user : null;
+  return timingSafeEqual(parts[3], await sessionSig(env, user.id, user.email, exp)) ? user : null;
 }
 
 export const findUserByEmail = (db: D1Database, email: string) =>
@@ -142,7 +148,8 @@ export async function resolveUser(env: Env, authorization: string | undefined): 
 
   const claims = await verifyFirebaseToken(token, env.FIREBASE_PROJECT_ID);
   const provider = claims.firebase?.sign_in_provider;
-  if (provider === "google.com" && !claims.email_verified) fail(403, "Email is not verified");
+  // Every provider: an unverified email/password account could otherwise claim someone else's address.
+  if (!claims.email_verified) fail(403, "Email is not verified");
   const email = (claims.email ?? "").toLowerCase().trim();
   if (!email) fail(401, "Token missing email claim");
 

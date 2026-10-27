@@ -16,7 +16,7 @@ Verified facts (live probes):
 - EVM-compatible, Parlia Proof-of-Stake (BSC-style), ~3 s blocks.
 - `eth_gasPrice` = 1 gwei; `baseFeePerGas` = 0. Docs: **legacy single `gasPrice` transactions only (type 0)**. Always send `gasPrice` (Hardhat: numeric `gasPrice`; viem: `type: "legacy"`; wallets: pass `gasPrice` in `eth_sendTransaction`).
 - Both RPCs return `Access-Control-Allow-Origin: *` → browsers can call them directly.
-- MSTScan is Blockscout (`/api`, `/api/v2/...`); contract verification uses Blockscout flow (no real API key).
+- MSTScan is Blockscout (`/api`, `/api/v2/...`); contract verification uses Blockscout flow (no real API key). `npx hardhat verify --network mstTestnet <addr>` works (ignore the Etherscan v2 deprecation warning).
 - Compile target `paris` (Hardhat default for solc 0.8.24 here) works; avoid exotic opcodes.
 
 ## Developer tools
