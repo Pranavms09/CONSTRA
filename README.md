@@ -1,442 +1,369 @@
-# CONSTRA: Multi-Stage Construction Milestone Verifier & Anti-Fraud Platform
+# CONSTRA: Construction Milestone Verifier on MST Blockchain
 
-> **CONSTRA is an automated construction site-audit and civil fraud prevention platform leveraging Vision-Language Models (VLM), delivery challan OCR reconciliation, EXIF geospatial forensics, statistical material anomaly detection, and tamper-evident evidence hashing to prevent milestone fraud and gate payment certification.**
+> Stops construction milestone fraud before money moves. Site photos, delivery challans and material issues are checked automatically (GPS geofence, SHA-256 integrity, AI vision, BOQ reconciliation, consumption anomalies), and every piece of evidence plus every clearance certificate is anchored on **MST Blockchain**, so anyone can prove later that nothing was swapped.
 
-[![Domain](https://img.shields.io/badge/Domain-PropTech%20%7C%20Computer%20Vision%20%7C%20Fraud%20Detection-blue)](#)
-[![Backend](https://img.shields.io/badge/Backend-Cloudflare%20Workers%20%7C%20Hono-orange)](#)
-[![Frontend](https://img.shields.io/badge/Frontend-React%20%7C%20Vite%20%7C%20TailwindCSS-cyan)](#)
-[![Database](https://img.shields.io/badge/Database-Cloudflare%20D1%20%7C%20R2-blueviolet)](#)
-[![Status](https://img.shields.io/badge/Status-Specification%20%26%20Design%20Complete-success)](#)
+[![MST Blockchain](https://img.shields.io/badge/Chain-MST%20Blockchain-6b4d00)](https://testnet.mstscan.com/address/0x9945391814a414c3cbcc0DDCBe98919Ab75c3F54)
+[![Backend](https://img.shields.io/badge/API-Cloudflare%20Workers%20%7C%20Hono-orange)](#technology-stack)
+[![Frontend](https://img.shields.io/badge/Web-React%2019%20%7C%20Vite-blue)](#technology-stack)
+[![Mobile](https://img.shields.io/badge/Mobile-Flutter-02569B)](mobile/README.md)
+[![Status](https://img.shields.io/badge/Status-Live%20on%20MST%20Testnet-success)](#submission-at-a-glance)
 
----
-
-## 📋 Table of Contents
-
-- [Executive Summary](#-executive-summary)
-- [The Problem: Construction Fraud & Disconnects](#-the-problem-construction-fraud--disconnects)
-- [System Architecture](#-system-architecture)
-- [Core Verification Modules](#-core-verification-modules)
-  - [1. Photo Evidence & VLM Stage Audit](#1-photo-evidence--vlm-stage-audit)
-  - [2. Metadata & EXIF Tamper Detection](#2-metadata--exif-tamper-detection)
-  - [3. Challan OCR & BOQ Reconciliation](#3-challan-ocr--boq-reconciliation)
-  - [4. Material Consumption Anomaly Engine](#4-material-consumption-anomaly-engine)
-  - [5. Milestone Clearance & Certificate Gating](#5-milestone-clearance--certificate-gating)
-  - [6. Evidence Storage & Anchoring](#6-evidence-storage--anchoring)
-- [MST Blockchain Integration](#-mst-blockchain-integration)
-- [User Personas & Role-Based Access Control](#-user-personas--role-based-access-control)
-- [Milestone State Machine](#-milestone-state-machine)
-- [Technology Stack](#-technology-stack)
-- [Project Directory Structure](#-project-directory-structure)
-- [REST API Reference](#-rest-api-reference)
-- [Security & Anti-Fraud Defenses](#-security--anti-fraud-defenses)
-- [Configuration & Thresholds](#-configuration--thresholds)
-- [Getting Started & Local Setup](#-getting-started--local-setup)
-- [5-Minute Demo Walkthrough](#-5-minute-demo-walkthrough)
-- [Project Documentation Index](#-project-documentation-index)
+Built for **MST Buildathon 2.0**.
 
 ---
 
-## 🚀 Executive Summary
+## Submission at a glance
 
-General contractors and infrastructure developers routinely lose up to 10–15% of project capital to fabricated progress claims, ghost deliveries, and off-book material diversion. In traditional construction monitoring, milestone payments are approved based on paper challans, self-reported spreadsheets, and easily manipulated photo albums.
-
-**CONSTRA** changes this paradigm by turning milestone verification into an automated, multi-source evidence pipeline:
-- **Vision-Language Models (VLM)** audit stage completion photos against contract stage descriptions.
-- **EXIF Forensics & SHA-256 Hashing** catch off-site spoofing, recycled photos, and edited timestamps.
-- **OCR & Unit Normalization** extract line items from vendor delivery slips (challans) and reconcile them with the Bill of Quantities (BOQ).
-- **Progress-Tied Anomaly Detection** flags abnormal consumption ratios and statistical $z$-score deviations.
-- **Private R2 Evidence Storage** serves media only through authorized API routes.
-- **MST Blockchain anchoring** records every evidence photo, challan and clearance certificate fingerprint in the `EvidenceRegistry` contract; auditors sign certificates with their BridgeKey wallet.
-- **Cryptographically Gated Certificates** strictly prevent milestone certificate issuance whenever open critical alerts exist.
+| Item | Link / value |
+| --- | --- |
+| Live web app | https://constra.pranavms09.workers.dev |
+| Live API (health) | https://constra-api.pranavms09.workers.dev/health |
+| Public proof checker | https://constra.pranavms09.workers.dev/verify (no login) |
+| Source | https://github.com/Pranavms09/CONSTRA |
+| `EvidenceRegistry` (MST testnet) | [`0x9945391814a414c3cbcc0DDCBe98919Ab75c3F54`](https://testnet.mstscan.com/address/0x9945391814a414c3cbcc0DDCBe98919Ab75c3F54#code) (source verified) |
+| `AccessRegistry` (MST testnet) | [`0xBCC31B88E689a077F41a5718C853267262ac3373`](https://testnet.mstscan.com/address/0xBCC31B88E689a077F41a5718C853267262ac3373) |
+| First app transaction | [`0xea286225…0f51`](https://testnet.mstscan.com/tx/0xea286225008721f688860b74d7f418fa126599accd6da5ecf70c798167bb0f51): relayer `anchorMany` for a site photo hash (block 6639012) |
+| Wallet | BridgeKey (browser extension, EIP-6963); WalletConnect or QR pairing on the phone |
+| Mobile app | Flutter supervisor app in [`mobile/`](mobile/README.md) (Android APK build) |
+| MST mainnet | Pending: waiting for mainnet MSTC from organizers (`npm run deploy:mainnet` is ready) |
 
 ---
 
-## 🚨 The Problem: Construction Fraud & Disconnects
+## The problem
 
+Contractors pay subcontractors per completed stage. Today the proof is a WhatsApp photo and a paper delivery slip:
+
+- **Fabricated progress:** a stage is billed before the work is done.
+- **Recycled or off-site photos:** old photos, photos from another site, or edited images.
+- **Ghost and inflated deliveries:** challans that do not match the Bill of Quantities (BOQ).
+- **Material leakage:** cement and steel issued far beyond what verified work needs.
+- **Disputed records:** after payment, anyone with database access can quietly change the evidence.
+
+## The solution
+
+CONSTRA turns a milestone claim into an evidence pipeline with a hard gate at the end:
+
+1. **Supervisor** captures stage photos in the CONSTRA app. The live GPS, time and site tag is burned into the JPEG, then the phone computes its SHA-256.
+2. **API** re-hashes the upload, checks the geofence, stores the file privately in R2, raises alerts, and queues the hash for MST.
+3. **AI vision** (Gemini) describes the construction stage and scores it for the auditor.
+4. **Store In-Charge** uploads vendor challans. The text extractor reads them; a human confirms; the system reconciles against the BOQ and flags duplicates, bad dates, unapproved vendors and over-delivery.
+5. **Material issues** are compared with photo-verified progress and with history (z-score); anomalies raise alerts.
+6. **Auditor** reviews everything on the Claim Audit Desk. Approval is blocked while any blocker remains (open high/critical alert, failed geofence, missing photo, unconfirmed challan, self-approval).
+7. **On approval**, a clearance certificate with a SHA-256 seal is issued and anchored on MST, signed by the auditor's BridgeKey wallet.
+8. **Anyone** can drop a file on `/verify` and check it against the MST contract directly.
+
+---
+
+## How MST Blockchain is used
+
+MST is the trust layer, not a bolt-on. Three things live on-chain:
+
+| On-chain | Contract | What it proves |
+| --- | --- | --- |
+| Evidence photo hashes (kind 1) | `EvidenceRegistry` | This exact photo existed at this block time and was not changed later |
+| Delivery challan hashes (kind 2) | `EvidenceRegistry` | The confirmed challan file is the one that was reconciled |
+| Clearance certificate hashes (kind 3) | `EvidenceRegistry` | The auditor's signed decision, from the auditor's own wallet |
+| Portal role per wallet | `AccessRegistry` | Who is a supervisor, store in-charge or auditor; the source of truth for wallet sign-in |
+
+```mermaid
+flowchart LR
+    APP["Flutter app<br/>stamp + SHA-256"] --> API["constra-api Worker"]
+    WEB["React portal"] --> API
+    API --> D1[("D1 queue<br/>chain_anchors")]
+    D1 -->|cron every minute<br/>+ waitUntil| RELAY["Relayer (viem)<br/>anchorMany ≤50, legacy gasPrice"]
+    RELAY --> ER["EvidenceRegistry<br/>MST"]
+    BK["Auditor BridgeKey"] -->|anchor(certHash, 3)<br/>setRole()| ER
+    BK --> AR["AccessRegistry<br/>MST"]
+    AR -->|RoleSet logs → roleOf| API
+    VERIFY["/verify page"] -->|verify(hash) over public RPC| ER
 ```
-┌────────────────────────────────────────────────────────────────────────────────────────┐
-│                                Traditional Site Audit Reality                           │
-├─────────────────────┬───────────────────────┬───────────────────┬──────────────────────┤
-│ Fabricated Claims   │ Paper Challan Holes   │ Material Leakage  │ Unverified Photos    │
-│ Subcontractors bill │ Delivery slips signed │ Excess material   │ Stock photos, photos │
-│ for finished stages │ without verifying BOQ │ issued & quietly  │ from other sites, or │
-│ before actual work  │ allocation or valid   │ diverted off-site │ stale timestamps     │
-│ has completed.      │ vendor identity.      │ before usage.     │ submitted as proof.  │
-└─────────────────────┴───────────────────────┴───────────────────┴──────────────────────┘
-```
+
+- **Relayer:** the API Worker queues hashes in D1, then sends `anchorMany` batches (up to 50) with legacy `gasPrice` (MST has no EIP-1559), waits for receipts, retries failures and records tx hash and block.
+- **Auditor certificates:** the auditor links a BridgeKey wallet by signature; the backend authorizes it on-chain with `setAnchorer`. The auditor signs `anchor(certificateHash, 3)` personally; the backend accepts it only after checking the receipt, sender and `Anchored` event.
+- **Wallet sign-in:** `POST /auth/wallet/challenge` returns a single-use message bound to site, wallet, MST chain ID and expiry; after `personal_sign`, the server reads `AccessRegistry.roleOf` on MST. No role means no login. Role changes made with BridgeKey `setRole` reach D1 within one cron tick, and revocation deactivates the account.
+- **Tamper detection:** `/chain/verify` compares D1 against the contract; a mismatch is logged as tampering. The `/verify` page reads the contract straight from the browser, so it does not trust our API.
+
+Networks: testnet chain `91562037` (`https://testnetrpc.mstblockchain.com`, explorer https://testnet.mstscan.com); mainnet chain `4646` (`https://mariorpc.mstblockchain.com`, explorer https://mstscan.com). Details: [docs/CHAIN_INTEGRATION.md](docs/CHAIN_INTEGRATION.md), [docs/MST-BLOCKCHAIN.md](docs/MST-BLOCKCHAIN.md), [contracts/README.md](contracts/README.md).
 
 ---
 
-## 🏗️ System Architecture
+## Architecture
 
-**CONSTRA** runs entirely on Cloudflare's free plan: a static React frontend (Workers static assets), a Hono API Worker, a D1 (SQLite) database and an R2 bucket for evidence files. Firebase is used only for Google/email sign-in; Gemini provides vision analysis and challan OCR.
+Everything runs on Cloudflare's free plan: two Workers, one D1 database, one R2 bucket. Firebase is used only for Google sign-in; Gemini for vision and challan text extraction.
 
 ```mermaid
 flowchart TD
-    subgraph Clients["Clients"]
-        WEB["React + Vite portal (Workers static assets)"]
-        APP["Flutter supervisor app (mobile/)"]
+    subgraph Clients
+        WEB["React 19 + Vite portal<br/>(constra Worker, static assets)"]
+        APP["Flutter supervisor app"]
+        BK["BridgeKey wallet"]
     end
-
     subgraph API["constra-api Worker (Hono)"]
-        Auth["Auth & RBAC (Firebase ID token / sv- session / demo)"]
-        Routes["Routes: auth, users, supervisor, store, claims, analysis, chain"]
-        BG["ctx.waitUntil: Gemini evidence analysis + challan OCR"]
+        AUTH["Auth + RBAC<br/>sv- session, Firebase ID token, wallet challenge"]
+        ROUTES["auth · users · supervisor · store · claims · analysis · chain"]
+        BG["waitUntil + cron<br/>AI analysis, challan extraction, MST relayer, role sync"]
     end
-
-    subgraph CF["Cloudflare storage"]
-        D1[("D1: users, projects, evidence, challans, alerts, claims, certificates, audit_logs")]
-        R2[("R2: evidence/, challans/, uploads/")]
-    end
-
-    Firebase[("Firebase Auth (JWKS)")]
-    Gemini[("Gemini API (Files API + generateContent)")]
-
+    D1[("D1 constra-db")]
+    R2[("R2 constra-files<br/>private evidence + challans")]
+    MST[("MST Blockchain<br/>EvidenceRegistry + AccessRegistry")]
+    FB[("Firebase Auth JWKS")]
+    GEM[("Gemini API")]
     WEB --> API
     APP --> API
-    Auth --> Firebase
-    Routes --> D1
-    Routes --> R2
-    BG --> Gemini
-    BG --> D1
+    BK --> MST
+    AUTH --> FB
+    ROUTES --> D1
+    ROUTES --> R2
+    BG --> GEM
+    BG --> MST
 ```
 
-Evidence fingerprints are anchored on **MST Blockchain** by a relayer inside the API Worker (Cron Trigger + `waitUntil`); auditors sign clearance certificates from **BridgeKey**. See [MST Blockchain Integration](#-mst-blockchain-integration) and [architecture.md](architecture.md).
+Component details and flows: [architecture.md](architecture.md).
 
 ---
 
-## 🔍 Core Verification Modules
+## Features
 
-### 1. Photo Evidence & VLM Stage Audit
-- **Role-based prompt injection:** Evaluates site images against stage requirements (e.g., *"Steel mesh laid, shuttering fixed, concrete poured and leveled"*).
-- **Structured JSON contracts:** Returns boolean match verdict, confidence score ($0-100$), checklist of visible elements, missing elements, and human-readable explanation.
-- **Safety guardrail:** Explicit system prompts treat all text found within images as passive data, mitigating physical/visual prompt injection attacks.
+### Site Supervisor (mobile app + web)
+- Camera with live GPS HUD; mock locations blocked; a fresh GPS fix is required.
+- GPS, time and site tag burned into the photo **before** hashing, so the on-chain hash covers the tag.
+- Offline upload queue; idempotent uploads (`device_evidence_id`).
+- Per-photo status: AI analysis and MST anchor (`queued → submitted → confirmed`) with explorer link.
+- Sign in with email/password, BridgeKey on a computer (QR pairing with confirmation code), or a wallet on the phone (WalletConnect).
+- Photos automatically join a per-stage claim on the auditor's Claim Audit Desk.
 
-### 2. Metadata & EXIF Tamper Detection
-- **Geofence validation:** Computes Haversine distance between EXIF GPS coordinates and project site coordinates ($\le 200\text{ m}$ default radius).
-- **Temporal freshness check:** Flags photos captured outside configured project thresholds (default 24 hours from upload) or timestamps set in the future.
-- **Integrity tags:** Detects image-editing software metadata (`Photoshop`, `Canva`, etc.).
-- **SHA-256 image fingerprinting:** Instantly detects exact duplicate evidence reused across different stages or projects.
+### Store In-Charge (web)
+- Challan upload (photo or PDF) with automatic text extraction, fuzzy vendor/material matching and low-confidence fields highlighted for review.
+- Optimistic locking on edits; confirm runs BOQ reconciliation with unit normalization (bags, kg, tonnes).
+- Alerts: `duplicate_challan` (high), `boq_over_delivery` (high), `challan_date_invalid` (medium), `unapproved_vendor` (medium).
+- Material issue with live anomaly preview; stock summary, BOQ progress, issue history.
 
-### 3. Challan OCR & BOQ Reconciliation
-- **Vision OCR:** Challan photos/PDFs are read by Gemini (Claude vision as optional fallback for images); Tesseract/OpenCV cannot run on Workers.
-- **Field extraction:** Pulls vendor name, challan number, date, and line items (material, quantity, unit).
-- **Human-in-the-loop review:** Low-confidence fields are highlighted in amber for Store In-Charge confirmation before database commitment.
-- **BOQ Variance Reconciler:** Normalizes disparate units (bags, kg, metric tonnes) into base units and computes variance against planned BOQ limits with automated over-delivery alerts ($> 5\%$).
+### Project Auditor (web)
+- Claim Audit Desk: per-field agree / amend / flag, photo evidence, AI report, EXIF GPS check, anchor status.
+- Clearance gate with explicit blockers; mandatory reason (≥5 chars) to reject.
+- Certificate with SHA-256 seal, printable, anchored on MST from BridgeKey.
+- Alert triage (only auditors resolve/escalate; justification required), challan review, EXIF & GPS tool.
+- User access: create accounts, assign projects, grant/revoke on-chain roles with BridgeKey `setRole`.
 
-### 4. Material Consumption Anomaly Engine
-- **Method A — Expected-Usage Ratio:** Directly ties allowable material consumption to **photo-verified completed progress**, preventing early material depletion on unverified claims.
-- **Method B — Historical $z$-Score Analysis:** Computes rolling drawdown statistics once baseline history exists ($\ge 5$ records), flagging unusual spikes where $|z| > 2.5$.
-- **Cumulative Threshold Guard:** Evaluates aggregate material issues per stage to stop attackers from avoiding detection through repeated small issues.
-
-### 5. Milestone Clearance & Certificate Gating
-- Clearance is gated by a strict server-side and database-trigger rule:
-  $$\text{Can Clear} \iff \text{Photo Verified} \land \text{Metadata Valid} \land \text{Material Reconciled} \land \neg(\text{Open Critical Alerts}) \land (\text{Approver} \ne \text{Submitter})$$
-- Generates a tamper-evident PDF milestone certificate containing a complete snapshot of evidence hashes, verification check outcomes, timestamps, and auditor credentials.
-
-### 6. Evidence Storage & Anchoring
-- **R2 storage:** Evidence photos and challans are stored privately in R2 and served only through authorized API routes (`/supervisor/evidence/{id}/file`, `/store/files/{id}`). Analysis images are served from `/uploads/{name}`.
-- **MST anchoring:** Each evidence/challan/certificate SHA-256 is queued in D1 and anchored in `EvidenceRegistry` on MST. `/chain/verify/{sha256}`, `POST /chain/verify` and the public `/verify` page read the contract directly; a D1/chain mismatch is logged as tampering.
+### Anyone
+- `/verify`: hash a file in the browser and check it against `EvidenceRegistry` on MST.
 
 ---
 
-## 👥 User Personas & Role-Based Access Control
+## Fraud checks
 
-**CONSTRA** enforces separation of duties across three specialized roles:
+| Threat | Check | Result |
+| --- | --- | --- |
+| Photo taken off-site | Haversine distance vs project radius (default 200 m); GPS accuracy widens it by at most 50 m | `GEOFENCE_VIOLATION` alert (high); approval blocked |
+| Photo altered in transit | Server SHA-256 vs phone SHA-256 | `HASH_MISMATCH` alert (critical) |
+| Old or future-dated photo | EXIF capture time vs upload time (default 24 h) | EXIF check fails |
+| Wrong work in the photo | AI vision report against the stage | Shown to the auditor with confidence |
+| Duplicate or reused challan | Same file hash or same vendor + challan number | `duplicate_challan` alert |
+| Inflated delivery | Delivered vs BOQ, tolerance 5% | `boq_over_delivery` alert |
+| Material diversion | Cumulative issue vs planned × verified progress (+15%); `|z| > 2.5` once 5+ days of history exist | `consumption_anomaly` alert |
+| Self-approval | Approver ≠ submitter (id, email, name) | 403 |
+| Evidence swapped after approval | Hash anchored on MST; D1 vs chain comparison | Tampering logged; `/verify` fails |
+| Role escalation | Roles read from D1 (mirrors `AccessRegistry`), never from the client | 403 |
 
-| Role | Primary User | Core Responsibilities | Interface Focus |
-| :--- | :--- | :--- | :--- |
-| **Site Supervisor** | Field Engineer / Site Foreman | Uploads stage progress photos, reviews automated check results, addresses photo discrepancies | Mobile-first, high contrast, camera-friendly |
-| **Store In-Charge** | Inventory / Warehouse Manager | Scans incoming vendor challans, verifies OCR fields, logs material drawdowns | Tablet / desktop, fast keyboard input |
-| **Project Auditor** | Quality / Financial Controller | Sets up projects and BOQs, investigates flagged alerts, approves/rejects stages, issues certificates | Desktop command center, side-by-side evidence inspection |
-
-### Permissions Matrix
-
-| Capability | Supervisor | Store In-Charge | Auditor |
-| :--- | :---: | :---: | :---: |
-| View Assigned Project Stages | ✅ | ✅ | ✅ |
-| Upload Milestone Photos | ✅ | ❌ | ❌ |
-| Upload Delivery Challans & Issue Material | ❌ | ✅ | ❌ |
-| Configure Projects, Stages & BOQ Limits | ❌ | ❌ | ✅ |
-| Review / Resolve / Escalate Alerts | Submissions Only | Submissions Only | ✅ (All) |
-| Tune Per-Project Alert Thresholds | ❌ | ❌ | ✅ |
-| Approve Stage & Issue Milestone Certificate | ❌ | ❌ | ✅ *(Cannot approve self-submitted stages)* |
-| Access Hash-Chained Audit Trail | ❌ | ❌ | ✅ |
+Thresholds (`boq_tolerance_pct`, `expected_usage_tolerance`, `zscore_limit`, `site_radius_m`) are stored per project in D1.
 
 ---
 
-## 🔄 Milestone State Machine
-
-Every construction stage strictly moves through a deterministic finite state machine (FSM). Stages cannot jump states or clear silently.
+## Milestone state machine
 
 ```mermaid
 stateDiagram-v2
-    [*] --> PENDING: Stage Created
-    PENDING --> UNDER_REVIEW: First Photo Evidence Uploaded
-    UNDER_REVIEW --> FLAGGED: High or Critical Alert Triggered
-    FLAGGED --> UNDER_REVIEW: Auditor Resolves / Documents All Flags
-    UNDER_REVIEW --> CLEARED: Checklist Verified + Gate Passed
-    CLEARED --> [*]: Immutable (Certificate Issued)
+    [*] --> PENDING: stage created
+    PENDING --> UNDER_REVIEW: claim opened (first photo)
+    UNDER_REVIEW --> FLAGGED: auditor rejects with written reason
+    FLAGGED --> UNDER_REVIEW: new evidence submitted
+    UNDER_REVIEW --> CLEARED: auditor approves, all blockers clear
+    CLEARED --> [*]: certificate issued and anchored on MST
 ```
 
-- **PENDING:** Stage initialized with BOQ allocation and textual specifications.
-- **UNDER_REVIEW:** Evidence uploaded; background EXIF, VLM, and reconciliation checks running or passed.
-- **FLAGGED:** At least one high or critical alert has been raised (location deviation, VLM mismatch, over-delivery, consumption anomaly).
-- **CLEARED:** Final immutable state. Achieved only when all checks pass and the Auditor executes a signed approval transaction.
+---
+
+## Roles and permissions
+
+| Capability | Supervisor | Store In-Charge | Auditor |
+| --- | :---: | :---: | :---: |
+| See assigned projects and stages | ✅ | ✅ | ✅ (all) |
+| Upload stage photos | ✅ | | |
+| Upload/confirm challans, issue material | | ✅ | |
+| View challans, stock, BOQ, alerts | | ✅ | ✅ |
+| Acknowledge alerts | | ✅ | ✅ |
+| Resolve/escalate alerts | | | ✅ |
+| Approve/reject claims, issue certificates | | | ✅ (not own submissions) |
+| Manage users, projects, on-chain roles | | | ✅ |
+
+Accounts are created by an auditor only (no self sign-up). Site roles see only projects they are members of; other projects return 404.
 
 ---
 
-## ⛓️ MST Blockchain Integration
+## Technology stack
 
-| Item | Value |
-| :--- | :--- |
-| Contract | `EvidenceRegistry` ([contracts/](contracts/)) |
-| MST Testnet address | [`0x9945391814a414c3cbcc0DDCBe98919Ab75c3F54`](https://testnet.mstscan.com/address/0x9945391814a414c3cbcc0DDCBe98919Ab75c3F54#code) (source verified) |
-| Testnet deploy tx | [`0xb95b48bc3ee2756a…`](https://testnet.mstscan.com/tx/0xb95b48bc3ee2756ab8d9d95b0456f5e5459cd07dc571ba5be2b8fa4c1f485a0d) (block 6617418) |
-| MST Mainnet address | _pending deploy_ |
-| Testnet tx (core flow) | [`0xea286225008721f6…`](https://testnet.mstscan.com/tx/0xea286225008721f688860b74d7f418fa126599accd6da5ecf70c798167bb0f51): relayer `anchorMany` anchoring an evidence photo SHA-256 (block 6639012) |
-| Networks | Testnet chain `91562037` (`testnetrpc.mstblockchain.com`), Mainnet chain `4646` (`mariorpc.mstblockchain.com`) |
-| Explorer | https://testnet.mstscan.com · https://mstscan.com |
-| Wallet | BridgeKey (EIP-6963/EIP-1193) |
-
-How MST is used (not a bolt-on):
-1. **Evidence & challans:** every supervisor photo and confirmed delivery challan hash is queued and anchored by the CONSTRA relayer with `anchorMany` (batches ≤ 50, legacy `gasPrice`, retries, receipt confirmation).
-2. **Clearance certificates:** the auditor links a BridgeKey wallet (signed message → on-chain `setAnchorer`) and signs `anchor(certificateHash, 3)` themselves; the backend accepts it only after checking the MST receipt and `Anchored` event.
-3. **Verification:** anyone can check a file on `/verify` (browser hashes it, reads the contract over the public RPC). The API cross-checks D1 against the chain and flags tampering.
-
-Details: [docs/CHAIN_INTEGRATION.md](docs/CHAIN_INTEGRATION.md), [docs/MST-BLOCKCHAIN.md](docs/MST-BLOCKCHAIN.md).
+| Layer | Choice |
+| --- | --- |
+| Web | React 19, Vite, Tailwind CSS, GSAP, Lenis; served by a Cloudflare Worker (static assets, SPA fallback) |
+| Mobile | Flutter (camera, geolocator, `flutter_secure_storage`, WalletConnect `reown_sign`) |
+| API | Cloudflare Workers + Hono (TypeScript), cron trigger every minute |
+| Data | Cloudflare D1 (SQLite), R2 (private files with SHA-256 checksums) |
+| AI | Gemini `gemini-2.5-flash` via Files API (vision + challan extraction) |
+| Forensics | exifr, Haversine, z-scores, rapidfuzz port for fuzzy matching |
+| Auth | Firebase ID tokens verified with `jose`; HMAC `sv-` sessions (24 h); PBKDF2 passwords; wallet challenge + `AccessRegistry` |
+| Chain | MST Blockchain, Solidity 0.8.24, Hardhat, viem, BridgeKey |
 
 ---
 
-## 💻 Technology Stack
-
-| Layer | Choice | Notes |
-| :--- | :--- | :--- |
-| **Web Portal** | React 19 + Vite + Tailwind CSS + GSAP + Lenis | Deployed as Cloudflare Workers static assets (SPA fallback) |
-| **Mobile App** | Flutter (Dart) + camera + geolocator + WalletConnect (`reown_sign`) | Live GPS-stamped capture, on-device SHA-256, offline queue, BridgeKey sign-in (WalletConnect or QR pairing) |
-| **Backend API** | Cloudflare Workers + Hono (TypeScript) | No cold starts; ~10 ms CPU per request on the free plan |
-| **Database** | Cloudflare D1 (SQLite) | Schema + demo seed in `backend/migrations/` |
-| **File Storage** | Cloudflare R2 | Private evidence/challan files with stored SHA-256 checksums |
-| **AI / Multimodal** | Gemini (Files API) / optional Claude vision | Construction analysis, image descriptions, challan OCR |
-| **Forensics** | exifr + Haversine + z-scores | EXIF GPS/timestamp/software checks; consumption anomalies |
-| **Auth** | Firebase Auth (ID tokens verified with `jose`) + HMAC session tokens + PBKDF2 | Roles always loaded from D1 |
-| **Blockchain** | MST Blockchain + Solidity 0.8.24 + Hardhat + viem + BridgeKey | Evidence/certificate anchoring and trustless verification |
-
----
-
-## 📁 Project Directory Structure
+## Repository layout
 
 ```
 CONSTRA/
-├── backend/                 # Cloudflare Worker API (Hono + D1 + R2)
-│   ├── src/index.ts         # App entry: CORS, routes, error handler
-│   ├── src/auth.ts          # Firebase/session/demo auth, RBAC, project access
-│   ├── src/routes/          # auth, users, pings, supervisor, store, claims, analysis, chain
-│   ├── src/services/        # store domain logic (units, stock, anomaly, reconcile, OCR), chain
-│   ├── src/lib/             # exif, gemini, fuzzy matching, hashing utilities
-│   ├── migrations/          # D1 schema + demo seed
-│   ├── test/                # vitest unit tests
-│   └── wrangler.json        # Worker config + D1/R2/rate-limit bindings
-├── frontend/                # React 19 + Vite portal
-├── wrangler.json            # Frontend Worker (static assets from frontend/dist)
-├── mobile/                  # Flutter site-supervisor app (see mobile/README.md)
-├── contracts/               # EvidenceRegistry (Solidity, Hardhat) deployed on MST testnet/mainnet
-└── docs/
+├── backend/            Cloudflare Worker API (Hono + D1 + R2 + MST relayer)
+│   ├── src/routes/     auth, users, pings, supervisor, store, claims, analysis, chain
+│   ├── src/services/   store domain (units, reconcile, anomaly, extraction), chain relayer
+│   ├── src/lib/        exif, gemini, fuzzy, hashing
+│   ├── migrations/     D1 schema 0001–0008 + demo seed
+│   └── test/           vitest (32 tests)
+├── frontend/           React portal (supervisor, store, auditor, /verify, /wallet-pair)
+├── mobile/             Flutter supervisor app
+├── contracts/          EvidenceRegistry + AccessRegistry (Hardhat, 23 tests)
+├── docs/               PRD, TRD, design, security, schema, chain docs
+├── wrangler.json       frontend Worker (static assets)
+└── architecture.md     system architecture
 ```
 
 ---
 
-## 📡 REST API Reference
+## API overview
 
-Errors use FastAPI-compatible bodies: `{"detail": ...}`.
+Errors return `{"detail": ...}`. All routes except those marked Public need `Authorization: Bearer <token>`.
 
-| Method | Endpoint | Roles | Description |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/health`, `/api/health` | Public | Health + whether Gemini is configured |
-| `POST` | `/auth/login` | Firebase token | Sign in with a Firebase ID token (rate limited) |
-| `POST` | `/auth/login-password` | Public | Email/password sign-in; returns `sv-` session token (rate limited) |
-| `POST` | `/auth/password` | Any user | Set/change own app password (current one required once set; min 8; rate limited) |
-| `POST` | `/auth/demo-login` | Public (`DEMO_MODE`) | Demo sign-in per role |
-| `GET` | `/auth/me` | Any | Current user |
-| `GET/POST/PATCH/DELETE` | `/users`, `/users/{id}` | Auditor | Allowlist management |
-| `GET` | `/supervisor/projects`, `/supervisor/projects/{pid}/stages`, `/supervisor/dashboard` | Supervisor | Assigned projects and stats |
-| `POST` | `/supervisor/evidence` | Supervisor | Camera evidence upload (hash, geofence, alerts, AI analysis) |
-| `GET/POST` | `/supervisor/evidence[/{id}[/retry-ai, /retry-anchor, /anchor, /file]]` | Supervisor (file: + Auditor) | Evidence history, retries, private file |
-| `GET` | `/store/projects`, `/store/materials`, `/store/vendors`, `/store/projects/{pid}/{stages,materials,vendors}` | All roles | Reference data |
-| `POST` | `/store/projects/{pid}/challans`, `/store/projects/{pid}/challans/manual` | Store In-Charge | Challan upload (OCR) or manual draft |
-| `GET/PUT/PATCH` | `/store/challans/{id}`, `/store/deliveries/{id}` | Store, Auditor (edit: Store) | Challan detail and draft edit (optimistic locking) |
-| `POST` | `/store/challans/{id}/confirm` | Store In-Charge | Confirm + BOQ reconciliation + alerts |
-| `GET` | `/store/projects/{pid}/{challans,material-issues,stock-summary,boq-status,alerts}` | Store, Auditor | Lists and stock/BOQ status |
-| `GET` | `/store/files/{id}?token=` | Store, Auditor | Private challan file |
-| `POST` | `/store/issue-preview`, `/store/stages/{sid}/material-issues` | Store In-Charge | Anomaly preview and material issue |
-| `PATCH/POST` | `/store/alerts/{id}`, `/store/alerts/{id}/action` | Auditor, Store | Resolve/escalate with justification |
-| `POST` | `/api/analyze-image` | Public (user optional) | Gemini description + EXIF report |
-| `GET` | `/api/analyses`, `/uploads/{name}` | Public | Past analyses, analysis images |
-| `GET/POST` | `/api/v1/claims[/{id}[/commands, /decisions]]`, `/api/v1/jobs/{id}` | Public | Claims audit desk |
-| `POST` | `/api/v1/claims/{id}/submit` | Auditor | Approve/reject with clearance gate and certificate |
-| `GET` | `/api/v1/claims/{id}/certificate`, `/api/v1/stages/{id}/certificate` | Public | Clearance certificates |
-| `GET` | `/chain/config` | Public | MST network, RPC, explorer, contract address |
-| `POST/GET` | `/chain/verify`, `/chain/verify/{sha256}` | Public (rate limited) | On-chain fingerprint verification |
-| `GET/POST` | `/chain/wallet/message`, `/chain/wallet` | Auditor | Link BridgeKey wallet (signature) → on-chain `setAnchorer` |
-| `POST` | `/chain/certificates/{id}/onchain` | Auditor | Submit wallet-signed certificate tx (receipt verified) |
-| `POST` | `/chain/process` | Auditor | Run the MST relayer now |
-| `GET/POST` | `/chain/anchors/{entity}/{id}`, `/chain/status`, `/chain/anchors/{sha}/retry` | Any / Auditor | Anchor status, relayer health, retry |
+| Method | Endpoint | Access | Purpose |
+| --- | --- | --- | --- |
+| `GET` | `/health` | Public | Health + AI configured |
+| `POST` | `/auth/login`, `/auth/login-password` | Public (rate limited) | Firebase or email/password sign-in → `sv-` session |
+| `POST` | `/auth/wallet/challenge`, `/auth/wallet/login` | Public (rate limited) | BridgeKey sign-in checked against `AccessRegistry` |
+| `POST` | `/auth/wallet/pair`, `/pair/{id}/approve`, `/pair/{id}/claim` | Public / wallet | Phone QR pairing |
+| `POST` | `/auth/password` · `GET /auth/me` | Any user | Set app password · current user |
+| `GET/POST/PATCH/DELETE` | `/users[/{id}]` | Auditor | Accounts and project membership |
+| `GET` | `/supervisor/projects`, `/projects/{pid}/stages`, `/dashboard` | Supervisor | Assigned work |
+| `POST/GET` | `/supervisor/evidence[/{id}[/retry-ai, /retry-anchor, /anchor, /file]]` | Supervisor (file: + Auditor) | Photo upload and status |
+| `GET` | `/store/projects`, `/materials`, `/vendors`, `/projects/{pid}/{stages,materials,vendors}` | Any role | Reference data |
+| `GET` | `/store/projects/{pid}/{challans,material-issues,stock-summary,boq-status,alerts}`, `/store/challans/{id}`, `/store/files/{id}` | Store, Auditor | Lists, stock, BOQ, private challan file |
+| `POST` | `/store/projects/{pid}/challans[/manual]`, `/store/challans/{id}/confirm` | Store In-Charge | Challan upload, confirm + reconcile |
+| `POST` | `/store/issue-preview`, `/store/stages/{sid}/material-issues` | Store In-Charge | Anomaly preview, material issue |
+| `PATCH/POST` | `/store/alerts/{id}[/action]` | Auditor (Store: acknowledge only) | Resolve/escalate with justification (≥5 chars) |
+| `GET/POST` | `/api/v1/claims[/{id}]` | Any user / Supervisor | Claims list, create |
+| `POST` | `/api/v1/claims/{id}/commands`, `/decisions`, `/submit` | Auditor | Field decisions, approve/reject through the gate |
+| `GET` | `/api/v1/claims/{id}/certificate`, `/api/v1/stages/{id}/certificate` | Any user | Clearance certificate |
+| `POST` | `/api/analyze-image` | Any user (10/min) | AI description + EXIF report |
+| `GET` | `/chain/config` · `GET/POST /chain/verify[/{sha256}]` | Public (rate limited) | Network info · on-chain verification |
+| `GET/POST` | `/chain/wallet/message`, `/chain/wallet` | Any user | Link wallet (auditor: + `setAnchorer`) |
+| `POST` | `/chain/certificates/{id}/onchain`, `/chain/process`, `/chain/roles/sync`, `/chain/anchors/{id}/retry` | Auditor | Certificate tx, run relayer, sync roles, retry |
+| `GET` | `/chain/anchors/{entity}/{id}` · `/chain/status` | Any user · Auditor | Anchor status · relayer health |
 
---- | :--- | :--- | :--- |
-| `POST` | `/api/v1/auth/login` | Public | Authenticates user; returns JWT bearer token |
-| `POST` | `/api/v1/projects` | Auditor | Initializes new project with geofence coordinates and radius |
-| `POST` | `/api/v1/projects/{id}/stages` | Auditor | Configures sequential construction stages & specifications |
-| `POST` | `/api/v1/projects/{id}/boq` | Auditor | Uploads planned Bill of Quantities allocations |
-| `POST` | `/api/v1/stages/{id}/photos` | Supervisor | Ingests stage photo evidence, triggers async verification pipeline |
-| `GET` | `/api/v1/stages/{id}/verification` | Supervisor, Auditor | Polls check outcomes, evidence status, and open alerts |
-| `POST` | `/api/v1/projects/{id}/challans` | Store In-Charge | Ingests vendor delivery slip scan for OCR extraction |
-| `PUT` | `/api/v1/challans/{id}` | Store In-Charge | Saves human-corrected OCR values; triggers BOQ reconciliation |
-| `POST` | `/api/v1/stages/{id}/material-issues` | Store In-Charge | Records material issuance and evaluates anomaly metrics |
-| `GET` | `/api/v1/alerts` | Auditor | Retrieves active alert triage queue filtered by severity and stage |
-| `PATCH` | `/api/v1/alerts/{id}` | Auditor | Resolves or escalates an alert (mandatory written justification) |
-| `POST` | `/api/v1/stages/{id}/approve` | Auditor | Evaluates clearance gate and marks stage `CLEARED` |
-| `GET` | `/api/v1/stages/{id}/certificate` | Supervisor, Auditor | Generates and downloads signed milestone clearance PDF certificate |
-| `POST` | `/api/v1/chain/anchor` | Relayer / Internal | Submits batch of SHA-256 evidence fingerprints to smart contract |
-| `GET` | `/api/v1/chain/verify/{fingerprint}`| Public | Verifies evidence fingerprint and returns on-chain proof |
-| `GET` | `/api/v1/chain/status` | Public | Returns blockchain relayer health, contract address, and network |
+Full list: [docs/TRD.md](docs/TRD.md#api).
 
 ---
 
-## 🛡️ Security & Anti-Fraud Defenses
+## Run locally
 
-**CONSTRA** applies the **STRIDE** threat model and enforces robust integrity controls:
+Prerequisites: Node.js 20+, npm; Flutter 3 for the mobile app.
 
-```
-┌────────────────────────────────────────────────────────────────────────────────────────┐
-│                                 Anti-Fraud Shield Matrix                               │
-├──────────────────────────┬─────────────────────────────────────────────────────────────┤
-│ Threat Vector            │ System Defense                                              │
-├──────────────────────────┼─────────────────────────────────────────────────────────────┤
-│ Recycled Old Photos      │ Rejection based on EXIF capture age vs. upload time.       │
-│ Off-Site Photo Capture   │ Haversine boundary check against site coordinates.          │
-│ Photo Editing / Spoofing │ Flagging of editor tags + duplicate SHA-256 hash checks.    │
-│ Visual Prompt Injection  │ Strict system instructions ignoring text commands in images.│
-│ Inflated Challan Paper   │ Dual-layer review: OCR + human confirm + BOQ tolerance cap. │
-│ Ghost Material Issues    │ Material consumption tied strictly to photo-verified stages.│
-│ Self-Approval Collusion  │ Enforced separation of submitter and approver IDs in DB.    │
-│ Tampered Audit Logs      │ Cryptographic SHA-256 hash chaining of all historical rows.  │
-└──────────────────────────┴─────────────────────────────────────────────────────────────┘
-```
-
-- **Cryptographic Audit Log:** Each audit entry contains `row_hash = SHA256(prev_hash + actor_id + action + timestamp + detail)`. Tampering with any historical database row breaks the cryptographic chain.
-- **Strict File Upload Hardening:** Verification of file magic bytes (not just extensions), $10\text{ MB}$ size enforcement, randomized UUID file names stored outside the web root, and retention of untouched original EXIF data for auditability.
-
----
-
-## ⚙️ Configuration & Thresholds
-
-Project thresholds are fully configurable in the database on a per-project basis, preventing hardcoded assumptions across different construction types:
-
-```yaml
-thresholds:
-  site_radius_m: 200                # Permissible distance from project centroid (meters)
-  max_capture_age_hours: 24         # Maximum allowed time between photo capture and upload
-  vlm_min_confidence: 70            # Minimum VLM confidence percentage before raising alert
-  boq_tolerance_pct: 5              # Allowable delivery variance beyond planned quantity (%)
-  zscore_limit: 2.5                 # Standard deviation threshold for anomalous consumption
-  expected_usage_tolerance: 0.15    # Allowable usage buffer (15%) above theoretical BOQ norm
-limits:
-  max_upload_mb: 10                 # Maximum upload payload size per photo / challan
-```
-
----
-
-## ⚡ Getting Started & Local Setup
-
-### Prerequisites
-- Node.js 20+ and npm
-- A Cloudflare account (free plan) for deployment
-
-### Local development
 ```bash
-# 1. Backend Worker (http://localhost:8787)
+# API (http://localhost:8787; use --port 8788 if 8787 is busy)
 cd backend
 npm install
-cp .dev.vars.example .dev.vars        # fill in SECRET_KEY (any long random string), GEMINI_API_KEY, ...
-npm run db:migrate:local              # creates the local D1 database with demo data
-npm run dev                           # add `-- --ip 0.0.0.0` to reach it from a phone on your LAN
-npm test                              # unit tests
+cp .dev.vars.example .dev.vars      # SECRET_KEY, GEMINI_API_KEY; DEMO_MODE=true; CHAIN_MODE=fake for no wallet
+npm run db:migrate:local            # schema + demo project, stages, BOQ, users
+npm run dev
+npm test
 
-# 2. Frontend (http://localhost:5173)
+# Web (http://localhost:5173)
 cd ../frontend
-cp .env.example .env                  # VITE_API_BASE_URL=http://localhost:8787
+cp .env.example .env                # VITE_API_BASE_URL=http://localhost:8787
 npm install && npm run dev
+
+# Contracts
+cd ../contracts && npm install && npm test
+
+# Mobile
+cd ../mobile && flutter pub get && flutter test
+flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8787
 ```
 
-Demo logins (`DEMO_MODE=true`): use the role buttons on the login page, or send `Authorization: Bearer demo-supervisor | demo-store | demo-auditor`.
+With `DEMO_MODE=true` the login page shows one-click role buttons (`supervisor@siteverify.com`, `store@siteverify.com`, `auditor@siteverify.com`). Production runs with `DEMO_MODE=false`.
 
-### Deploy to Cloudflare (free plan)
-Run these yourself (nothing here logs in for you):
+## Deploy (Cloudflare free plan)
+
+Run these yourself; nothing here logs in for you.
+
 ```bash
 npx wrangler login
 cd backend
-npx wrangler d1 create constra-db         # paste the printed database_id into backend/wrangler.json
+npx wrangler d1 create constra-db          # put database_id in backend/wrangler.json
 npx wrangler r2 bucket create constra-files
-npx wrangler secret put SECRET_KEY         # long random string; signs sv- session tokens
+npx wrangler secret put SECRET_KEY
 npx wrangler secret put GEMINI_API_KEY
-npx wrangler secret put BOOTSTRAP_ADMIN_EMAIL      # optional: first auditor account
-npx wrangler secret put BOOTSTRAP_ADMIN_PASSWORD   # optional
-npx wrangler secret put ANCHOR_PRIVATE_KEY         # MST relayer wallet = EvidenceRegistry owner
-cd ../contracts && cp .env.example .env            # PRIVATE_KEY (same wallet), fund it from the faucet
-npm install && npm run deploy:testnet              # put the printed address in backend/wrangler.json CONTRACT_ADDRESS
-cd ..
-npm run deploy                              # applies D1 migrations, deploys the API, builds + deploys the frontend
+npx wrangler secret put ANCHOR_PRIVATE_KEY  # MST relayer = EvidenceRegistry owner
+cd ../contracts && cp .env.example .env     # PRIVATE_KEY (same wallet), fund from https://faucet.mstblockchain.com
+npm install && npm run deploy:testnet       # set CONTRACT_ADDRESS in backend/wrangler.json
+cd .. && npm run deploy                     # D1 migrations + API + frontend
 ```
-- The frontend calls `https://constra-api.pranavms09.workers.dev` by default in production; override with `VITE_API_BASE_URL` at build time. Vite also reads `frontend/.env` during builds, so put the production Worker URL in `frontend/.env.production` or the build will call localhost.
-- Add the frontend domain to Firebase → Authentication → Settings → Authorized domains, or Google sign-in fails.
-- Add any custom frontend domain to `FRONTEND_ORIGINS` in `backend/wrangler.json` (exact origins only; CORS has no wildcard).
-- Set `DEMO_MODE` to `"false"` in `backend/wrangler.json` before using real data: demo tokens bypass authentication.
-- Mainnet: `CONFIRM_MAINNET="yes, deploy to mainnet" npm run deploy:mainnet` in `contracts/`, then set `MST_NETWORK=mainnet`, `MST_CHAIN_ID=4646`, `MST_RPC_URL=https://mariorpc.mstblockchain.com`, `MST_EXPLORER_URL=https://mstscan.com`, `CONTRACT_ADDRESS` in `backend/wrangler.json`.
-- Local dev without a wallet: add `CHAIN_MODE=fake` to `backend/.dev.vars` (simulated anchors).
 
-### Free-plan limits to know
-- ~100k requests/day and ~10 ms CPU per request. Large uploads are hashed natively and sent to Gemini through the Files API (no base64), but very large photos can still exceed the CPU budget.
-- Background AI analysis and challan OCR run via `ctx.waitUntil` (about 30 s after the response). If they regularly time out, move them to Cloudflare Queues.
-
-## 🔐 Firebase Authentication
-
-1. **Zero frontend trust:** roles are loaded from D1, never from the client or token.
-2. **Token verification:** Firebase ID tokens are verified against Google's public keys (signature, issuer, audience, expiry). Unsigned tokens are rejected.
-3. **Verified emails only** for Google sign-in; logins and denials are written to `audit_logs`.
-
-Setup: create a Firebase project, enable Google sign-in, register a Web App and put its config in `frontend/.env`. The Worker only needs `FIREBASE_PROJECT_ID` (no service-account key).
+Mainnet: `CONFIRM_MAINNET="yes, deploy to mainnet" npm run deploy:mainnet`, then set `MST_NETWORK=mainnet`, `MST_CHAIN_ID=4646`, `MST_RPC_URL`, `MST_EXPLORER_URL`, `CONTRACT_ADDRESS`, `ACCESS_REGISTRY_ADDRESS` in `backend/wrangler.json`. More: [docs/TRD.md](docs/TRD.md#deployment).
 
 ---
 
-## 🎬 5-Minute Demo Walkthrough
+## Demo walkthrough (about 3 minutes)
 
-To experience the complete verification lifecycle during a live presentation:
-
-1. **Genuine Stage Upload:** Log in as **Site Supervisor** (`supervisor@siteverify.com`). Upload an authentic site photo for *Column Casting*. All checks (GPS, timestamp, VLM) pass; status updates to `UNDER_REVIEW`.
-2. **Fabricated Photo Injection:** Upload a photo of bare ground for *Slab Casting*. VLM identifies missing reinforcement steel ($82\%$ confidence) and raises a `CRITICAL` alert; status transitions to `FLAGGED`.
-3. **Location Tamper Attempt:** Upload a photo taken $410\text{ m}$ away. The EXIF checker flags a `HIGH` alert for geofence violation.
-4. **Duplicate Photo Reuse:** Upload the earlier column photo under a different stage. SHA-256 duplicate detection flags it instantly.
-5. **Inflated Challan Delivery:** Log in as **Store In-Charge** (`store@siteverify.com`). Upload a vendor challan with $24\%$ excess cement. Confirm OCR; BOQ engine flags over-delivery.
-6. **Anomalous Material Issue:** Issue 40 bags of cement when only 15 are expected for current verified work. Anomaly engine flags consumption deviation.
-7. **Certificate Gate Enforcement:** Log in as **Project Auditor** (`auditor@siteverify.com`). Attempt to approve the flagged stage. System **blocks certificate issuance** with explicit blocker tooltips.
-8. **Resolution & Certificate Generation:** Auditor reviews evidence panel, documents override comments, resolves alerts, and approves the stage. The system clears the stage, issues a SHA-256-sealed clearance certificate stored in D1.
+1. **Supervisor (phone):** sign in, pick the Nashik project and a stage, take a photo. The tag is stamped and hashed on the phone.
+2. **Upload:** the photo shows AI status and anchor status; open the MSTScan link once it is `confirmed`.
+3. **Off-site photo:** a photo outside the geofence raises `GEOFENCE_VIOLATION`.
+4. **Store In-Charge:** upload a challan; review extracted fields; confirm. A quantity above the BOQ raises `boq_over_delivery`.
+5. **Material issue:** issue more cement than verified progress allows; the preview warns and `consumption_anomaly` is raised.
+6. **Auditor:** open the claim on the Claim Audit Desk. Approval is blocked with the list of blockers.
+7. **Resolve and approve:** resolve alerts with justification, approve; sign the certificate anchor with BridgeKey.
+8. **Verify:** drop the photo on `/verify` → found on MST with block time. Change one pixel → not found.
 
 ---
 
-## 📚 Project Documentation Index
+## Testing
 
-For in-depth technical specifications, browse the accompanying documentation suite:
+| Suite | Command | Result |
+| --- | --- | --- |
+| Backend (vitest) | `cd backend && npm test` | 32/32 pass; `tsc` clean |
+| Contracts (Hardhat) | `cd contracts && npm test` | 23/23 pass |
+| Mobile (Flutter) | `cd mobile && flutter test` | 5/5 pass; `flutter analyze` clean |
+| Frontend | `npm run build` | builds |
+| On-chain | testnet txs above | anchor + `verify()` authentic |
 
-| Document | Description |
-| :--- | :--- |
-| [1. PRD - Multi-Stage Construction Milestone Verifier.md](./docs/1.%20PRD%20-%20Multi-Stage%20Construction%20Milestone%20Verifier.md) | **Product Requirements Document:** User personas, functional requirements (FR-1 to FR-9), user stories, and acceptance criteria. |
-| [2. TRD - Multi-Stage Construction Milestone Verifier.md](./docs/2.%20TRD%20-%20Multi-Stage%20Construction%20Milestone%20Verifier.md) | **Technical Requirements Document:** Architecture diagrams, module specifications, algorithms, and test plans. |
-| [3. UI UX Design Document.md](./docs/3.%20UI%20UX%20Design%20Document.md) | **UI/UX Design Document:** User journeys, text wireframes, design tokens, responsive breakpoints, and microcopy guidelines. |
-| [5. Security Document.md](./docs/5.%20Security%20Document.md) | **Security Document:** Threat model (STRIDE), insider fraud defenses (F1–F14), cryptographic audit chains, and upload safety. |
-| [6. System Design Document.md](./docs/6.%20System%20Design%20Document.md) | **System Design Document:** Modular monolith breakdown, extensible check pipelines, sequence diagrams, and trade-off rationales. |
+Not yet verified end to end: BridgeKey sign-in with a real wallet on web and phone, auditor `setRole` from the UI, mobile app on a physical device, MST mainnet. See [progress.md](progress.md).
 
 ---
 
-## 👥 Contributors & Acknowledgements
+## Limitations
 
-Developed for **MST Buildathon 2026**. Designed to bring transparency, accountability, and automated rigor to construction milestone auditing.
+- MST mainnet deployment waits for mainnet MSTC.
+- AI vision results are advisory for the auditor; they do not raise alerts on their own.
+- Background AI and text extraction use `ctx.waitUntil` (about 30 s); stuck challans are retried by cron. Cloudflare Queues is the upgrade path.
+- The free plan allows about 10 ms CPU per request, so images are never decoded or resized in the Worker.
+
+---
+
+## Documentation
+
+| Doc | Content |
+| --- | --- |
+| [docs/README.md](docs/README.md) | Index of all docs |
+| [architecture.md](architecture.md) | Components, flows, trust boundaries |
+| [docs/PRD.md](docs/PRD.md) | Product requirements |
+| [docs/TRD.md](docs/TRD.md) | Technical requirements, API, configuration, deployment |
+| [docs/DESIGN.md](docs/DESIGN.md) | Software design and key decisions |
+| [docs/UI-UX.md](docs/UI-UX.md) | Screens, journeys, design tokens |
+| [docs/DB-SCHEMA.md](docs/DB-SCHEMA.md) | D1 schema |
+| [docs/SECURITY.md](docs/SECURITY.md) | Threat model and controls |
+| [docs/CHAIN_INTEGRATION.md](docs/CHAIN_INTEGRATION.md) | MST relayer, wallet flows, verification |
+| [docs/MST-BLOCKCHAIN.md](docs/MST-BLOCKCHAIN.md) | MST networks, gas model, Buildathon checklist |
+| [progress.md](progress.md) | Current status |

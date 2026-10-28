@@ -1,477 +1,117 @@
-> **Implementation note (2026-10-27):** this is the original design spec. The shipped system runs on Cloudflare Workers (Hono) + D1 + R2 with MST Blockchain anchoring; see [architecture.md](../architecture.md) and [CHAIN_INTEGRATION.md](CHAIN_INTEGRATION.md). Code samples below that reference FastAPI are historical.
-
 # Technical Requirements Document (TRD)
 
-**Product:** Multi-Stage Construction Milestone Verifier **Version:** 1.0 **Companion docs:** PRD, DB Schema, Security Doc, Design Doc, UI/UX Doc
+**Product:** CONSTRA · **Version:** 2.0 (shipped build, 2026-10-28)
+**Related:** [PRD](PRD.md) · [DESIGN](DESIGN.md) · [DB-SCHEMA](DB-SCHEMA.md) · [SECURITY](SECURITY.md) · [architecture.md](../architecture.md)
 
----
+## Scope
 
-## 1. What is a TRD? (Simple explanation)
+Web portal, Flutter supervisor app, a Cloudflare Worker API with D1 and R2, an MST relayer, and two Solidity contracts on MST Blockchain.
 
-The PRD says **what** to build. The TRD says **how** to build it technically: which languages, which services, which APIs, which rules. **Analogy:** the PRD is the house plan a family wants; the TRD is the engineer's note on which steel, which cement, and how thick each wall must be.
+## Stack
 
----
-
-## 2. Technical Scope
-
-The system has five technical modules:
-
-1. **Auth and RBAC** (who can do what)
-2. **Evidence Ingestion** (photos and challans upload)
-3. **Verification Engine** (EXIF check, VLM audit, OCR, BOQ reconcile, anomaly detection)
-4. **Alert and Workflow Engine** (flags, stage state machine)
-5. **Certificate Service** (gating and PDF generation)
-
----
-
-## 3. Recommended Tech Stack
-
-| Layer | Choice | Why (simple reason) |
+| Layer | Technology | Constraint |
 | --- | --- | --- |
-| Frontend | React + Vite + Tailwind CSS | Fast to build, easy responsive layouts |
-| Backend | Python 3.11 + FastAPI | Great for AI/CV libraries, auto API docs |
-| Database | PostgreSQL (SQLite for quick demo) | Reliable relational data with constraints |
-| ORM | SQLAlchemy + Alembic | Clean models and migrations |
-| File storage | Local disk for demo, S3-compatible bucket for production | Photos and PDFs are large files |
-| Background jobs | FastAPI BackgroundTasks (demo) or Celery + Redis (production) | VLM and OCR calls are slow, so run them in the background |
-| VLM | Claude vision API (multimodal) | Photo vs text audit and structured JSON output |
-| OCR | Tesseract via pytesseract, or VLM-based extraction | Free baseline and a smarter fallback |
-| EXIF | Pillow or exifread | Read GPS and capture time |
-| Stats | pandas + numpy | z-score and aggregation |
-| PDF | ReportLab or WeasyPrint | Certificate generation |
-| Auth | JWT with passlib (bcrypt) | Standard and stateless |
+| Web | React 19, Vite, Tailwind, React Router; Worker static assets with SPA fallback | Only public `VITE_*` build-time vars |
+| Mobile | Flutter; `camera`, `geolocator`, `flutter_secure_storage`, `reown_sign` | Supervisor role only |
+| API | Cloudflare Workers + Hono (TypeScript), no `nodejs_compat` | ~10 ms CPU/request, 50 D1 queries/request |
+| Data | D1 (SQLite), R2 | No shared memory between requests |
+| AI | Gemini `gemini-2.5-flash` via Files API; optional Claude vision fallback for challan images | No base64, no image decoding |
+| Chain | viem; Solidity 0.8.24; Hardhat | Legacy `gasPrice` only (no EIP-1559 on MST) |
+| Auth | `jose` (Firebase JWKS), HMAC sessions, PBKDF2 | Roles from D1 / `AccessRegistry` |
 
----
+## Module requirements
 
-## 4. High-Level Architecture (text view)
+### TR-1 Auth and RBAC (`backend/src/auth.ts`, `routes/auth.ts`)
+- Bearer token types: `sv-` HMAC session (24 h), Firebase ID token (signature, issuer, audience, expiry; verified email), `demo-<role>` only when `DEMO_MODE` ≠ `"false"`.
+- Role always loaded from D1. `requireRole(...)` per route; `ensureProjectAccess` returns 404 for non-members.
+- Wallet login: `/auth/wallet/challenge` stores nonce + exact message (5 min, single use); `/auth/wallet/login` verifies the signature, reads `AccessRegistry.roleOf` (0 → 403), requires an active D1 user with that `wallet_address`, mirrors the chain role into D1.
+- QR pairing: `/auth/wallet/pair` returns id + secret (only SHA-256 stored, 5 min); desktop BridgeKey approves; phone claims once with the secret.
+- Rate limits: `LOGIN_LIMITER`, `VERIFY_LIMITER` (10/min per IP); analyze-image 10/min.
 
-```
-[React Web App]
-      |  HTTPS + JWT
-      v
-[FastAPI Backend]
-   |-- Auth / RBAC middleware
-   |-- Upload API  ---> [File Storage]
-   |-- Job Queue   ---> [Verification Workers]
-   |                      |-- EXIF Checker
-   |                      |-- VLM Auditor  --> [VLM API]
-   |                      |-- OCR Extractor
-   |                      |-- BOQ Reconciler
-   |                      |-- Anomaly Detector
-   |-- Alert Engine
-   |-- Stage State Machine
-   |-- Certificate Service
-      |
-      v
-[PostgreSQL]
-```
+### TR-2 Evidence ingestion (`routes/supervisor.ts`)
+Order: idempotency on `device_evidence_id` → project membership → magic-byte MIME (JPEG/PNG/WebP) → max 20 MB → server SHA-256 vs `client_sha256` → geofence (`radius + min(accuracy, 50 m)`) → R2 `evidence/` → D1 row → `HASH_MISMATCH` (critical) / `GEOFENCE_VIOLATION` (high) alerts → audit log → join or open claim → queue anchor → `waitUntil` relayer + AI.
 
-**Analogy:** the backend is a reception desk. Uploads arrive, the desk gives each one a token (job id), and specialist rooms (workers) inspect them. Results come back to the desk, which updates the case file.
+### TR-3 EXIF checks (`lib/exif.ts`)
+exifr on the first 256 KB; checks GPS present, Haversine distance ≤ radius, capture time not future and ≤ max age (default 24 h). Used by `/api/analyze-image`, the EXIF GPS route and claim approval.
 
----
+### TR-4 AI vision (`lib/gemini.ts`)
+Upload bytes through the Files API, then `generateContent` with a construction-analysis prompt that treats text inside images as data. Structured result stored on the evidence row (`ai_status`, `ai_summary`, `ai_structured_result`). Retry via `/supervisor/evidence/{id}/retry-ai`. Advisory only.
 
-## 5. Module Requirements
+### TR-5 Challan extraction (`services/store.ts`)
+Upload → R2 `challans/` → status `processing` → `waitUntil` extraction (`OCR_MODE=fake` for dev) → fuzzy vendor/material match (rapidfuzz port) → `draft` with per-field confidence. Cron `recoverStuckChallans` retries rows stuck 2–15 min and fails older ones. Edits use optimistic `version`.
 
-### 5.1 Auth and RBAC (TR-1)
+### TR-6 Reconciliation
+On confirm: validate items → normalize units via `unit_conversions` → check duplicate file hash and vendor + challan number, date within project window, vendor approval, delivered vs BOQ (`boq_tolerance_pct`, default 5%). Each failure → alert.
 
-| ID | Requirement |
+### TR-7 Anomaly detection
+`expected = planned × verified_progress`. Warn if no verified progress; alert if cumulative issue > `expected × (1 + expected_usage_tolerance)` (default 0.15), high when the excess is more than twice the tolerance. z-score on daily totals when ≥ 5 days exist, limit `zscore_limit` (2.5). `/store/issue-preview` runs the same function without writing.
+
+### TR-8 Claims and clearance (`routes/claims.ts`)
+Claims are JSON documents in D1. `submit` (auditor): self-approval guard → reject needs ≥5-char reason → blockers (stale fields, verdict consistency, open high/critical alerts, no photo, EXIF geofence fail, processing challans) → 422 with `blockers[]` or stage `CLEARED` + certificate (SHA-256 over canonical JSON) → anchor (`awaiting_signature` for wallet-linked auditors).
+
+### TR-9 MST relayer (`services/chain.ts`, `routes/chain.ts`)
+- Queue `chain_anchors` (`pending → submitted → confirmed | failed`), claim rows with `claimed_at` to avoid double send.
+- `anchorMany` ≤ 50 per tx, legacy `gasPrice`, receipt wait, retries with `attempts` / `last_error`.
+- Triggers: cron `* * * * *` and `waitUntil` after each upload.
+- `syncRoles`: reads `AccessRegistry` `RoleSet` logs (≤ 5000 blocks/run, cursor in `chain_sync`), re-reads `roleOf`, updates D1 role / `is_active`.
+- Certificate tx check: receipt success, sender = linked auditor wallet, `Anchored` log with the expected hash and kind 3.
+- `CHAIN_MODE=fake` simulates anchors (local only; flagged `simulated = 1`).
+
+### TR-10 Contracts (`contracts/`)
+- `EvidenceRegistry`: `anchor(bytes32, uint8 kind)`, `anchorMany` (1–50, skips zero/invalid/duplicate), `verify → (time, kind, by)`, `setAnchorer`, `transferOwnership`. Kinds 1 photo, 2 challan, 3 certificate.
+- `AccessRegistry`: `roleOf(address)` (0 none, 1 supervisor, 2 store in-charge, 3 auditor), `setRole` by owner or Auditor wallets, `RoleSet` event.
+
+## API
+
+Error body `{"detail": ...}`; 422 for validation, 403 for role, 404 for missing or non-member.
+
+| Group | Routes |
 | --- | --- |
-| TR-1.1 | Passwords hashed with bcrypt, never stored in plain text |
-| TR-1.2 | JWT access token with short expiry (for example 30 minutes) |
-| TR-1.3 | Every endpoint declares allowed roles |
-| TR-1.4 | Server-side check blocks a user from approving a stage they submitted |
+| Health | `GET /health`, `/api/health` |
+| Auth | `POST /auth/login`, `/auth/login-password`, `/auth/demo-login`, `/auth/password`, `/auth/wallet/challenge`, `/auth/wallet/login`, `/auth/wallet/pair`, `/auth/wallet/pair/{id}/approve`, `/auth/wallet/pair/{id}/claim`; `GET /auth/me` |
+| Users (auditor) | `GET/POST /users`, `PATCH/DELETE /users/{id}` |
+| Supervisor | `GET /supervisor/projects`, `/projects/{pid}/stages`, `/dashboard`, `/evidence`, `/evidence/{id}`, `/evidence/{id}/anchor`, `/evidence/{id}/file`; `POST /supervisor/evidence`, `/evidence/{id}/retry-ai`, `/evidence/{id}/retry-anchor` |
+| Store | `GET /store/projects`, `/materials`, `/vendors`, `/projects/{pid}/{stages,materials,vendors,challans,material-issues,stock-summary,boq-status,alerts}`, `/challans/{id}`, `/deliveries/{id}`, `/files/{id}`; `POST /store/projects/{pid}/challans`, `/challans/manual`, `/challans/{id}/confirm`, `/issue-preview`, `/stages/{sid}/material-issues`; `PUT/PATCH /store/challans/{id}`; `PATCH /store/alerts/{id}`, `POST /store/alerts/{id}/action` |
+| Claims (`/api/v1`) | `GET/POST /claims`, `GET /claims/{id}`, `POST /claims/{id}/commands`, `/decisions`, `/submit`, `GET /jobs/{id}`, `/claims/{id}/certificate`, `/stages/{id}/certificate` |
+| Analysis | `POST /api/analyze-image`, `GET /api/analyses`, `/uploads/{name}`, `/api/v1/projects/{pid}/evidence/{file}/exif-gps` |
+| Chain | `GET /chain/config`, `/verify/{sha256}`, `/anchors/{entity}/{id}`, `/status`, `/wallet/message`; `POST /chain/verify`, `/process`, `/roles/sync`, `/anchors/{id}/retry`, `/wallet`, `/certificates/{id}/onchain` |
+| Pings | role-check endpoints per role |
 
-```python
-from fastapi import Depends, HTTPException
+## Configuration
 
-def require_role(*allowed):
-    def checker(user = Depends(get_current_user)):
-        if user.role not in allowed:
-            raise HTTPException(status_code=403, detail="Not allowed")
-        return user
-    return checker
+`backend/wrangler.json` vars: `FIREBASE_PROJECT_ID`, `GEMINI_MODEL`, `FRONTEND_ORIGINS` (exact origins), `DEMO_MODE` (`false` in production), `OCR_MODE`, `MAX_UPLOAD_MB`, `CHAIN_MODE` (`mst`), `MST_NETWORK`, `MST_CHAIN_ID`, `MST_RPC_URL`, `MST_EXPLORER_URL`, `CONTRACT_ADDRESS`, `ACCESS_REGISTRY_ADDRESS`, `ACCESS_REGISTRY_FROM_BLOCK`. Bindings: `DB`, `FILES`, `LOGIN_LIMITER`, `VERIFY_LIMITER`; cron every minute.
 
-@app.post("/stages/{stage_id}/approve")
-def approve(stage_id: int, user = Depends(require_role("auditor"))):
-    ...
-```
+Secrets (`wrangler secret put`, local `.dev.vars`): `SECRET_KEY`, `GEMINI_API_KEY`, `ANTHROPIC_API_KEY` (optional), `BOOTSTRAP_ADMIN_EMAIL`, `BOOTSTRAP_ADMIN_PASSWORD`, `ANCHOR_PRIVATE_KEY`.
 
----
+Frontend (`frontend/.env`, public): `VITE_API_BASE_URL`, `VITE_FIREBASE_*`, `VITE_WALLET_LINK_TEST_SKIP`. Mobile `--dart-define`: `API_BASE_URL`, `WEB_APP_URL`, `WC_PROJECT_ID`.
 
-### 5.2 Evidence Ingestion (TR-2)
+Per-project thresholds (D1 `projects`, `project_settings`): `site_radius_m` 200, `boq_tolerance_pct` 5, `expected_usage_tolerance` 0.15, `zscore_limit` 2.5, `allow_new_vendors` 1.
 
-| ID | Requirement |
+## Deployment
+
+| Target | Command |
 | --- | --- |
-| TR-2.1 | Accept JPEG and PNG for photos; JPEG, PNG, PDF for challans |
-| TR-2.2 | Maximum file size 10 MB; reject others with a clear message |
-| TR-2.3 | Compute a **SHA-256 hash** of every file on upload |
-| TR-2.4 | Store original file untouched; never overwrite |
-| TR-2.5 | Save file path, hash, uploader, and time in the database |
-
-```python
-import hashlib
-
-def sha256_of(file_bytes: bytes) -> str:
-    return hashlib.sha256(file_bytes).hexdigest()
-```
-
-The hash lets us detect the same photo being reused for different stages (duplicate evidence).
-
----
-
-### 5.3 EXIF Tamper Checker (TR-3)
-
-**Checks performed, in order:**
-
-1. **EXIF present?** If not present, raise a *medium* alert (many phones strip it, so it is a flag, not a reject).
-2. **GPS inside site radius?** Use the Haversine formula. Outside radius raises a *high* alert.
-3. **Capture time close to upload time?** More than the configured limit (default 24 hours) raises a *high* alert.
-4. **Future timestamp?** Capture time later than server time raises a *high* alert.
-5. **Editing software tag?** If the `Software` tag shows an editor, raise a *medium* alert.
-6. **Duplicate hash?** Same hash in another stage raises a *high* alert.
-
-```python
-from PIL import Image, ExifTags
-from datetime import datetime
-
-def read_exif(path):
-    img = Image.open(path)
-    raw = img._getexif() or {}
-    data = {ExifTags.TAGS.get(k, k): v for k, v in raw.items()}
-    return data
-
-def capture_time(exif):
-    value = exif.get("DateTimeOriginal")
-    if not value:
-        return None
-    return datetime.strptime(value, "%Y:%m:%d %H:%M:%S")
-```
-
-**Important note:** EXIF can be faked by determined attackers. So the system uses EXIF as **one signal among many**, combined with the VLM check and the hash check. The Auditor makes the final call.
-
----
-
-### 5.4 VLM Photo Auditor (TR-4)
-
-| ID | Requirement |
-| --- | --- |
-| TR-4.1 | Send image plus stage description to the VLM |
-| TR-4.2 | Force a strict JSON response |
-| TR-4.3 | Validate the JSON with a schema; retry once on bad output |
-| TR-4.4 | Timeout of 30 seconds per call and handle API errors gracefully |
-| TR-4.5 | Store the full raw response for audit purposes |
-| TR-4.6 | Confidence below the threshold (default 70) raises an alert |
-
-**Prompt design (step by step):**
-
-1. Give the VLM a role: construction site inspector.
-2. Give the stage name and the checklist of visible things.
-3. Ask for a verdict, a confidence, visible items found, missing items, and a reason.
-4. Demand JSON only.
-
-```python
-PROMPT = """You are a construction site inspector.
-Stage claimed: {stage_name}
-Expected visible work: {stage_description}
-
-Look at the image and reply ONLY with JSON:
-{{
-  "matches_stage": true or false,
-  "confidence": number from 0 to 100,
-  "items_visible": ["..."],
-  "items_missing": ["..."],
-  "reason": "one short sentence"
-}}"""
-```
-
-```python
-from pydantic import BaseModel, Field
-
-class VlmResult(BaseModel):
-    matches_stage: bool
-    confidence: int = Field(ge=0, le=100)
-    items_visible: list[str]
-    items_missing: list[str]
-    reason: str
-```
-
----
-
-### 5.5 Challan OCR Extractor (TR-5)
-
-| ID | Requirement |
-| --- | --- |
-| TR-5.1 | Preprocess image: grayscale, denoise, deskew, threshold |
-| TR-5.2 | Extract text using OCR or VLM extraction |
-| TR-5.3 | Parse into: vendor, challan number, date, line items (material, quantity, unit) |
-| TR-5.4 | Store a confidence score per field |
-| TR-5.5 | Low-confidence fields highlighted for human correction |
-
-```python
-import cv2, pytesseract
-
-def ocr_text(path):
-    img = cv2.imread(path)
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    gray = cv2.fastNlMeansDenoising(gray)
-    _, bw = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    return pytesseract.image_to_string(bw)
-```
-
-Because challans vary a lot, the recommended approach is: **OCR for raw text, then a VLM or rule parser to turn text into structured JSON.** The user always reviews before saving.
-
----
-
-### 5.6 BOQ Reconciliation Engine (TR-6)
-
-**Steps:**
-
-1. Convert every quantity to a base unit using a unit table.
-2. Sum delivered quantity per material per stage.
-3. Compare with the BOQ planned quantity.
-4. Compute variance percentage.
-5. Raise an alert if variance exceeds tolerance.
-
-```python
-UNIT_TO_BASE = {
-    ("cement", "bag"): 50,      # kg per bag
-    ("cement", "kg"): 1,
-    ("cement", "tonne"): 1000,
-    ("steel", "kg"): 1,
-    ("steel", "tonne"): 1000,
-}
-
-def to_base(material, unit, qty):
-    return qty * UNIT_TO_BASE[(material, unit)]
-
-def variance_pct(delivered, planned):
-    return (delivered - planned) / planned * 100
-
-def reconcile(delivered, planned, tolerance=5):
-    v = variance_pct(delivered, planned)
-    if v > tolerance:
-        return {"status": "over_delivery", "variance": v}
-    if v < -tolerance:
-        return {"status": "under_delivery", "variance": v}
-    return {"status": "ok", "variance": v}
-```
-
-**Extra checks:** duplicate challan number from the same vendor, challan date outside project dates, vendor not in the approved list.
-
----
-
-### 5.7 Anomaly Detector (TR-7)
-
-Two complementary methods:
-
-**Method A: Expected-usage ratio (works from day one).** Use the BOQ norm, for example cement per cubic metre of concrete. Compare actual issue against expected for the verified work done.
-
-**Method B: z-score on history (works once data builds up).**
-
-```python
-import numpy as np
-
-def zscore_flag(history, today, threshold=2.5):
-    if len(history) < 5:
-        return None  # not enough data, fall back to Method A
-    mean, std = np.mean(history), np.std(history)
-    if std == 0:
-        return False
-    return abs((today - mean) / std) > threshold
-
-def ratio_flag(issued, expected, tolerance=0.15):
-    return issued > expected * (1 + tolerance)
-```
-
-**Why two methods?** The z-score needs history. A new project has none, so the ratio method protects it from the start.
-
----
-
-### 5.8 Alert Engine (TR-8)
-
-| Field | Meaning |
-| --- | --- |
-| type | `vlm_mismatch`, `gps_outside`, `time_mismatch`, `exif_missing`, `duplicate_photo`, `boq_variance`, `duplicate_challan`, `consumption_anomaly` |
-| severity | `low`, `medium`, `high`, `critical` |
-| status | `open`, `acknowledged`, `resolved`, `escalated` |
-| evidence | JSON with numbers and file links |
-| explanation | Plain sentence of why it was raised |
-
-**Severity mapping (default):**
-
-| Alert type | Severity |
-| --- | --- |
-| GPS outside radius | high |
-| Timestamp mismatch | high |
-| VLM mismatch with high confidence | critical |
-| Duplicate photo | high |
-| BOQ over-delivery beyond tolerance | high |
-| Consumption anomaly | high |
-| EXIF missing | medium |
-| Low VLM confidence | medium |
-
----
-
-### 5.9 Stage State Machine and Certificate Gate (TR-9)
-
-```
-PENDING --> UNDER_REVIEW --> FLAGGED --> UNDER_REVIEW --> CLEARED
-                      \------------------------------------/
-```
-
-| Transition | Rule |
-| --- | --- |
-| PENDING to UNDER\_REVIEW | At least one photo uploaded |
-| UNDER\_REVIEW to FLAGGED | Any open alert of high or critical severity |
-| FLAGGED to UNDER\_REVIEW | Auditor resolves or documents each alert |
-| UNDER\_REVIEW to CLEARED | Auditor approves and no open critical alerts remain |
-
-```python
-def can_issue_certificate(stage):
-    return (
-        stage.photo_verified
-        and stage.metadata_valid
-        and stage.material_reconciled
-        and not stage.open_critical_alerts
-        and stage.approver_id != stage.submitter_id
-    )
-```
-
-Certificate PDF includes: project, stage, date, evidence hashes, check results, and the approving Auditor.
-
----
-
-## 6. API Design (REST)
-
-| Method | Endpoint | Role | Purpose |
-| --- | --- | --- | --- |
-| POST | `/auth/login` | All | Get JWT |
-| POST | `/projects` | Auditor | Create project |
-| POST | `/projects/{id}/stages` | Auditor | Add stage |
-| POST | `/projects/{id}/boq` | Auditor | Upload BOQ |
-| POST | `/stages/{id}/photos` | Supervisor | Upload photo |
-| GET | `/stages/{id}/verification` | Supervisor, Auditor | Verification status |
-| POST | `/projects/{id}/challans` | Store In-Charge | Upload challan |
-| PUT | `/challans/{id}` | Store In-Charge | Correct OCR fields |
-| POST | `/stages/{id}/material-issues` | Store In-Charge | Log material issued |
-| GET | `/alerts` | Auditor | List alerts |
-| PATCH | `/alerts/{id}` | Auditor | Resolve or escalate |
-| POST | `/stages/{id}/approve` | Auditor | Approve and clear |
-| GET | `/stages/{id}/certificate` | Auditor, Supervisor | Download PDF |
-
-**Standard error format:**
-
-```json
-{ "error": { "code": "STAGE_BLOCKED", "message": "Open critical alert prevents clearance" } }
-```
-
----
-
-## 7. Processing Flow (step by step)
-
-**Photo upload flow:**
-
-1. Supervisor uploads photo.
-2. API validates type and size, stores file, saves hash.
-3. API returns `202 Accepted` with a job id.
-4. Worker runs EXIF checks, then the VLM audit.
-5. Worker saves results and creates alerts.
-6. State machine updates the stage.
-7. Frontend polls the verification endpoint and shows results.
-
-**Challan flow:**
-
-1. Store In-Charge uploads challan.
-2. Worker runs OCR and parsing.
-3. User reviews and confirms fields.
-4. Reconciler compares against BOQ.
-5. Alerts are created if needed.
-
----
-
-## 8. Configuration (no magic numbers in code)
-
-```yaml
-thresholds:
-  site_radius_m: 200
-  max_capture_age_hours: 24
-  vlm_min_confidence: 70
-  boq_tolerance_pct: 5
-  zscore_limit: 2.5
-  expected_usage_tolerance: 0.15
-limits:
-  max_upload_mb: 10
-```
-
-Thresholds are stored per project so the Auditor can tune them.
-
----
-
-## 9. Non-Functional Technical Requirements
-
-| Area | Requirement |
-| --- | --- |
-| Performance | API responds under 500 ms for non-AI calls; AI jobs complete under 60 seconds |
-| Reliability | Retry failed VLM or OCR calls up to 2 times with backoff |
-| Scalability | Workers can be scaled out independently |
-| Observability | Structured logs with request id; log every check result |
-| Testing | Unit tests for each checker; integration tests for the full flow |
-| Data integrity | Foreign keys, unique constraints, transactions |
-| Maintainability | Type hints, linting, modular folders |
-
----
-
-## 10. Suggested Project Structure
-
-```
-backend/
-  app/
-    main.py
-    config.py
-    auth/            # JWT, RBAC
-    models/          # SQLAlchemy models
-    schemas/         # Pydantic schemas
-    routers/         # API endpoints
-    services/
-      exif_checker.py
-      vlm_auditor.py
-      ocr_extractor.py
-      boq_reconciler.py
-      anomaly_detector.py
-      alert_engine.py
-      state_machine.py
-      certificate.py
-    workers/
-  tests/
-frontend/
-  src/
-    pages/
-    components/
-    api/
-```
-
----
-
-## 11. Testing Strategy
-
-| Test type | What it covers |
-| --- | --- |
-| Unit | Haversine, unit conversion, z-score, state transitions |
-| Integration | Upload to alert to clearance flow |
-| AI evaluation | A labelled set of good, wrong-stage, and tampered photos; track accuracy |
-| OCR evaluation | Sample challans with known values; track field accuracy |
-| Security | Role bypass attempts, oversized files, invalid tokens |
-
-**Planted-fraud test set (recommended):** prepare 10 genuine photos, 5 wrong-stage photos, 5 photos with changed EXIF location, 5 photos with old timestamps, and 5 duplicates. Measure how many the system catches.
-
----
-
-## 12. Technical Risks
+| API + migrations | `npm run deploy:api` (root) |
+| Web | `npm run deploy:web` (root; builds `frontend/dist`) |
+| Both | `npm run deploy` |
+| Contracts | `cd contracts && npm run deploy:testnet` / `deploy:access:testnet`; mainnet needs `CONFIRM_MAINNET="yes, deploy to mainnet"` |
+
+Live: web `https://constra.pranavms09.workers.dev`, API `https://constra-api.pranavms09.workers.dev`. Run `wrangler login` yourself; secrets never go in config.
+
+## Testing
+
+| Suite | Scope | Result |
+| --- | --- | --- |
+| `backend` vitest | units, anomaly, reconcile, EXIF, route guards (auth, self-approval, claims, mobile photo join) | 32/32 |
+| `contracts` Hardhat | access control, batching, duplicates, kinds, roles | 23/23 |
+| `mobile` flutter test | geofence, stamp + hash, login UI | 5/5 |
+| Manual E2E | local Hardhat chain + `wrangler dev`; MST testnet relayer tx | anchored + verified |
+
+## Technical risks
 
 | Risk | Mitigation |
 | --- | --- |
-| VLM API latency or outage | Background jobs, retries, graceful "pending" state |
-| VLM hallucination | Confidence threshold plus human Auditor decision |
-| OCR errors | Human review step; VLM fallback |
-| EXIF spoofing | Combine with hash, VLM, and consistency checks |
-| Unit confusion | Central unit table with tests |
+| `waitUntil` cut-off (~30 s) | Fast model; cron recovery; Queues later |
+| CPU limit on large images | Native hashing, no decoding, Files API |
+| MST RPC outage | Anchors stay queued and retry |
+| Bundle size (viem) | ~240 KiB gzip, within limits |

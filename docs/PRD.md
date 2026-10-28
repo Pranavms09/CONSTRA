@@ -1,245 +1,186 @@
 # Product Requirements Document (PRD)
 
-**Product:** Multi-Stage Construction Milestone Verifier (with VLM Audit and Anomaly Detection) **Domain:** PropTech / Applied Computer Vision / Operations Fraud Detection **Version:** 1.0
+**Product:** CONSTRA, multi-stage construction milestone verifier
+**Event:** MST Buildathon 2.0 · **Version:** 2.0 (shipped build, 2026-10-28)
+**Related:** [TRD](TRD.md) · [DESIGN](DESIGN.md) · [SECURITY](SECURITY.md) · [UI-UX](UI-UX.md)
 
----
+## 1. Problem
 
-## 1. What is a PRD? (Simple explanation)
+Contractors release payments per completed construction stage. The evidence is weak:
 
-A PRD answers three questions: **What are we building? For whom? Why?** It does not say *how* to build it (that is the TRD). Think of it as the order a customer gives a restaurant: "I want a pizza with these toppings." The kitchen decides the cooking method.
+- **Fabricated progress:** stages are billed before work is done.
+- **Unreliable photos:** old, off-site or edited photos are submitted as proof.
+- **Weak delivery checks:** paper challans are not matched to the Bill of Quantities (BOQ).
+- **Material diversion:** extra cement or steel is issued and leaves the site.
+- **Mutable records:** after payment, anyone with database access can change the evidence and nobody can prove it.
 
----
+## 2. Vision
 
-## 2. Problem Statement
+Turn every milestone claim into a verified evidence trail with a hard gate before certification, and make that trail independently provable on **MST Blockchain**.
 
-General contractors lose money and time because:
+## 3. Personas
 
-- **Fabricated progress claims:** A subcontractor says a stage is done and bills for it, but the work is incomplete.
-- **Weak delivery verification:** Paper challans (delivery slips) are not matched to what was planned in the Bill of Quantities (BOQ).
-- **Off-book material diversion:** Extra material is issued and quietly taken off-site.
-- **Unreliable photo logs:** Photos can be old, taken at another location, or edited.
-
-**Analogy:** It is like paying a taxi driver by the kilometre without a meter. The driver can take a longer route and you cannot prove it.
-
----
-
-## 3. Product Vision and Objective
-
-An automated site-audit platform that **verifies** construction progress and material use using:
-
-1. Vision-Language Model (VLM) checks of site photos against stage descriptions
-2. OCR reading of scanned vendor challans, reconciled against the BOQ
-3. Statistical detection of unusual material consumption
-4. Photo metadata (GPS and timestamp) tamper checks
-5. A rule that **blocks milestone certificates** until work is verified
-
----
-
-## 4. Target Users (Personas)
-
-| Persona | Who they are | Main goal | Main pain today |
-| --- | --- | --- | --- |
-| **Site Supervisor** | Person on site who manages daily work | Prove a stage is done and get it cleared quickly | Slow manual verification, disputes |
-| **Store In-Charge** | Manages material store and deliveries | Record deliveries and issues accurately | Paper challans, manual entry errors |
-| **Project Auditor** | Independent reviewer at the contractor | Catch fraud and approve only genuine work | No reliable evidence, too much manual checking |
-
----
-
-## 5. Goals and Non-Goals
-
-### Goals
-
-- Verify photo evidence against the claimed stage automatically
-- Detect GPS and timestamp tampering
-- Extract challan data with OCR and reconcile with the BOQ
-- Flag abnormal material drawdown
-- Give the Auditor a clear alert queue
-- Gate milestone certificates on verified outcomes
-
-### Non-Goals (out of scope)
-
-- Payment or billing processing
-- Native mobile apps
-- Drone or CCTV integration
-- Training custom ML models
-- Multi-project portfolio analytics
-
----
-
-## 6. Functional Requirements
-
-Each requirement has an ID so it can be traced into tests and the TRD.
-
-### 6.1 Role-based access (FR-1)
-
-| ID | Requirement | Priority |
+| Persona | Goal | Interface |
 | --- | --- | --- |
-| FR-1.1 | Users log in with email and password | Must |
-| FR-1.2 | Three roles: Supervisor, Store In-Charge, Auditor | Must |
-| FR-1.3 | Each role sees only its allowed screens and actions | Must |
-| FR-1.4 | A Supervisor cannot approve their own milestone | Must |
+| **Site Supervisor** | Prove a stage is done and get it cleared quickly | Flutter mobile app (camera), web dashboard |
+| **Store In-Charge** | Record deliveries and material issues accurately | Web (desktop/tablet) |
+| **Project Auditor** | Approve only genuine work; catch fraud | Web command centre, BridgeKey wallet |
+| **External verifier** (owner, bank, regulator) | Check a photo or certificate without trusting CONSTRA | Public `/verify` page |
 
-### 6.2 Project and stage setup (FR-2)
+## 4. Goals and non-goals
 
-| ID | Requirement | Priority |
+**Goals**
+- Verify site photos: integrity (SHA-256), location (geofence), capture time, AI description.
+- Extract challan data automatically, with human confirmation, and reconcile against the BOQ.
+- Flag abnormal material drawdown against verified progress and history.
+- Give auditors one desk with all evidence, alerts and blockers.
+- Block certificates until every blocker is cleared.
+- Anchor evidence and certificates on MST; keep portal roles on MST.
+
+**Non-goals**
+- Payments or billing.
+- Drone/CCTV integration, custom ML training.
+- Multi-project portfolio analytics.
+- Chains other than MST (Buildathon rule).
+
+## 5. Functional requirements
+
+Status: ✅ shipped · ◐ partial · ⏳ pending.
+
+### FR-1 Access and identity
+| ID | Requirement | Status |
 | --- | --- | --- |
-| FR-2.1 | Create a project with a site location (latitude, longitude, radius) | Must |
-| FR-2.2 | Define ordered stages, each with a text description of completed work | Must |
-| FR-2.3 | Upload or enter a BOQ with material, unit, and planned quantity per stage | Must |
+| FR-1.1 | Sign-in with Google (Firebase), email/password, or BridgeKey wallet | ✅ |
+| FR-1.2 | Three roles: Supervisor, Store In-Charge, Auditor | ✅ |
+| FR-1.3 | Each role sees only its screens, routes and assigned projects | ✅ |
+| FR-1.4 | Accounts created by an auditor only; no self sign-up | ✅ |
+| FR-1.5 | For wallet users, the role comes from `AccessRegistry` on MST | ✅ |
+| FR-1.6 | Mobile sign-in via QR pairing with a desktop BridgeKey or WalletConnect | ✅ |
 
-### 6.3 Photo evidence and VLM audit (FR-3)
-
-| ID | Requirement | Priority |
+### FR-2 Project setup
+| ID | Requirement | Status |
 | --- | --- | --- |
-| FR-3.1 | Supervisor uploads one or more photos per stage | Must |
-| FR-3.2 | System sends photo and stage description to a VLM | Must |
-| FR-3.3 | VLM returns match result, confidence, and reason | Must |
-| FR-3.4 | Low confidence or mismatch raises an alert | Must |
+| FR-2.1 | Project with site centroid and radius (default 200 m) | ✅ |
+| FR-2.2 | Ordered stages | ✅ |
+| FR-2.3 | BOQ per material and stage, with unit conversions | ✅ (seeded via migrations; no admin UI) |
+| FR-2.4 | Auditor assigns users to projects | ✅ |
 
-### 6.4 Metadata tamper detection (FR-4)
-
-| ID | Requirement | Priority |
+### FR-3 Photo evidence
+| ID | Requirement | Status |
 | --- | --- | --- |
-| FR-4.1 | Read EXIF GPS and capture time from each photo | Must |
-| FR-4.2 | Flag photos outside the site radius | Must |
-| FR-4.3 | Flag photos whose capture time is too far from upload time | Must |
-| FR-4.4 | Flag photos with missing or inconsistent EXIF | Must |
-| FR-4.5 | Flag duplicate photos reused across stages | Should |
+| FR-3.1 | Capture in-app with live GPS; block mock locations | ✅ |
+| FR-3.2 | Burn GPS/time/site tag into the photo, then SHA-256 on device | ✅ |
+| FR-3.3 | Server re-hashes; mismatch raises a critical alert | ✅ |
+| FR-3.4 | Geofence check; violation raises a high alert | ✅ |
+| FR-3.5 | AI vision report per photo shown to the auditor | ✅ |
+| FR-3.6 | Offline queue; idempotent retries | ✅ |
+| FR-3.7 | Photos join a per-stage claim automatically | ✅ |
 
-### 6.5 Challan OCR (FR-5)
-
-| ID | Requirement | Priority |
+### FR-4 Metadata checks
+| ID | Requirement | Status |
 | --- | --- | --- |
-| FR-5.1 | Store In-Charge uploads a scanned challan | Must |
-| FR-5.2 | System extracts vendor, challan number, date, material, quantity, unit | Must |
-| FR-5.3 | User can review and correct extracted values before saving | Must |
+| FR-4.1 | Read EXIF GPS and capture time | ✅ |
+| FR-4.2 | Fail photos outside radius or older than max age (default 24 h) or future-dated | ✅ |
+| FR-4.3 | Approval re-checks EXIF geofence | ✅ |
 
-### 6.6 BOQ reconciliation (FR-6)
-
-| ID | Requirement | Priority |
+### FR-5 Challans and BOQ
+| ID | Requirement | Status |
 | --- | --- | --- |
-| FR-6.1 | Compare total delivered quantity against BOQ allocation | Must |
-| FR-6.2 | Normalize units (bags, kg, tonnes) before comparing | Must |
-| FR-6.3 | Flag over-delivery and under-delivery beyond a tolerance | Must |
-| FR-6.4 | Flag duplicate challan numbers | Should |
+| FR-5.1 | Upload challan photo/PDF; automatic text extraction | ✅ |
+| FR-5.2 | Extract vendor, number, date, items (material, qty, unit) with confidence | ✅ |
+| FR-5.3 | Human review and edit before confirm (optimistic locking) | ✅ |
+| FR-5.4 | Normalize units; compare delivered vs BOQ (tolerance 5%) | ✅ |
+| FR-5.5 | Flag duplicate challans, invalid dates, unapproved vendors, over-delivery | ✅ |
+| FR-5.6 | Manual challan entry fallback | ✅ |
 
-### 6.7 Material consumption anomaly detection (FR-7)
-
-| ID | Requirement | Priority |
+### FR-6 Material consumption
+| ID | Requirement | Status |
 | --- | --- | --- |
-| FR-7.1 | Store In-Charge logs material issued to a stage | Must |
-| FR-7.2 | System computes usage versus expected usage for work completed | Must |
-| FR-7.3 | System flags statistically unusual drawdowns (z-score based) | Must |
+| FR-6.1 | Log material issued to a stage | ✅ |
+| FR-6.2 | Compare cumulative issue vs planned × verified progress (+15%) | ✅ |
+| FR-6.3 | z-score check (`|z| > 2.5`) once 5+ days of history exist | ✅ |
+| FR-6.4 | Preview anomaly before issuing | ✅ |
 
-### 6.8 Alerts (FR-8)
-
-| ID | Requirement | Priority |
+### FR-7 Alerts
+| ID | Requirement | Status |
 | --- | --- | --- |
-| FR-8.1 | Every failed check creates an alert with type, severity, and evidence | Must |
-| FR-8.2 | Auditor sees an alert dashboard sorted by severity | Must |
-| FR-8.3 | Auditor can resolve or escalate an alert with a written comment | Must |
+| FR-7.1 | Every failed check creates an alert with type, severity, evidence | ✅ |
+| FR-7.2 | Only auditors resolve/escalate; store staff may acknowledge | ✅ |
+| FR-7.3 | Every action needs a written justification (≥5 chars) and is logged | ✅ |
 
-### 6.9 Milestone clearance (FR-9)
-
-| ID | Requirement | Priority |
+### FR-8 Clearance
+| ID | Requirement | Status |
 | --- | --- | --- |
-| FR-9.1 | Stage moves through Pending, Under Review, Flagged, Cleared | Must |
-| FR-9.2 | Certificate is blocked while any critical alert is open | Must |
-| FR-9.3 | Auditor approval generates a downloadable certificate PDF | Must |
-| FR-9.4 | Every decision is recorded in an audit log | Must |
+| FR-8.1 | Stage states: PENDING, UNDER_REVIEW, FLAGGED (rejected), CLEARED | ✅ |
+| FR-8.2 | Approval blocked by open high/critical alerts, failed geofence, missing photo, processing challans, stale or inconsistent field decisions | ✅ |
+| FR-8.3 | Approver cannot be the submitter | ✅ |
+| FR-8.4 | Rejection requires a reason | ✅ |
+| FR-8.5 | Certificate with SHA-256 seal; printable | ✅ |
+| FR-8.6 | Every decision in `audit_logs` | ✅ |
 
----
+### FR-9 MST Blockchain
+| ID | Requirement | Status |
+| --- | --- | --- |
+| FR-9.1 | Anchor photo, challan and certificate hashes in `EvidenceRegistry` | ✅ testnet |
+| FR-9.2 | Auditor signs the certificate anchor with BridgeKey | ✅ (UI flow; real-wallet E2E pending) |
+| FR-9.3 | Public `/verify` reads the contract directly | ✅ |
+| FR-9.4 | D1 vs chain mismatch logged as tampering | ✅ |
+| FR-9.5 | Roles managed with `AccessRegistry.setRole` from BridgeKey | ✅ |
+| FR-9.6 | Mainnet deployment | ⏳ waiting for mainnet MSTC |
 
-## 7. User Stories (with acceptance criteria)
+## 6. User stories
 
-**US-1 (Supervisor):** *As a Supervisor, I want to upload stage photos so that my stage can be verified.*
+- **US-1 Supervisor:** I take a stage photo in the app; I see its AI result and its MST anchor confirm, with an explorer link.
+- **US-2 Store In-Charge:** I upload a challan; fields appear for review; on confirm I see any BOQ or duplicate alerts.
+- **US-3 Auditor:** I open a claim and see photos, AI report, EXIF check, alerts and blockers on one screen.
+- **US-4 Auditor:** I cannot approve while a blocker exists; the system tells me which one.
+- **US-5 Verifier:** I drop a file on `/verify` and learn whether MST has its hash, when, and who anchored it.
 
-- Given I am on a stage page, when I upload a JPEG, then I see the VLM result and metadata result within a minute.
+## 7. Business rules
 
-**US-2 (Store In-Charge):** *As a Store In-Charge, I want to upload a challan so that I do not type every line by hand.*
+1. No clearance while any high or critical alert is open on the project.
+2. Approver ≠ submitter (id, email or name).
+3. Location valid only inside radius + GPS accuracy (allowance capped at 50 m).
+4. Over-delivery beyond the BOQ tolerance (default 5%) is flagged.
+5. Consumption beyond verified progress + 15%, or `|z| > 2.5`, is flagged.
+6. Overrides need written reasons and are logged.
+7. Client-sent ids, submitter, AI or EXIF verdicts are never trusted; the server sets them.
 
-- Given a clear scan, when I upload it, then the extracted fields appear for my review.
-
-**US-3 (Auditor):** *As an Auditor, I want to see all open alerts in one list so that I can focus on risky items first.*
-
-- Given alerts exist, when I open the dashboard, then they are sorted by severity and show evidence.
-
-**US-4 (Auditor):** *As an Auditor, I want certificates blocked automatically when evidence fails so that no one can bill for unverified work.*
-
-- Given a stage has an open critical alert, when I try to issue a certificate, then the system refuses and tells me why.
-
----
-
-## 8. Business Rules
-
-1. A stage cannot be cleared if any **critical** alert is open.
-2. A Supervisor cannot approve a stage they submitted evidence for.
-3. A photo is "location valid" only if inside the site radius (default 200 m).
-4. A photo is "time valid" only if captured within 24 hours of upload (configurable).
-5. Delivered quantity beyond BOQ tolerance (default 5%) raises a flag.
-6. Consumption is anomalous when its absolute z-score exceeds 2.5 (configurable).
-7. All overrides require a written reason and are logged.
-
----
-
-## 9. Non-Functional Requirements (summary)
+## 8. Non-functional requirements
 
 | Area | Target |
 | --- | --- |
-| Performance | Photo audit result in under 60 seconds |
-| Availability | Works reliably during a demo and pilot |
-| Security | Role-based access, encrypted passwords, protected uploads |
-| Usability | Works on a phone browser for site users |
-| Auditability | Every action traceable |
-| Explainability | Every alert shows why it was raised |
+| Cost | Runs on Cloudflare free plan; MST gas only |
+| Latency | Upload response < 2 s; AI and anchoring in background (≈30 s / next cron minute) |
+| Security | See [SECURITY](SECURITY.md); no secrets in frontend or repo |
+| Usability | Mobile app works offline; web works on tablet |
+| Auditability | Every action logged; evidence provable on MST |
+| Explainability | Every alert and blocker states why |
 
----
-
-## 10. Success Metrics
+## 9. Success metrics
 
 | Metric | Target |
 | --- | --- |
-| Tamper detection on test set | At least 90% of planted tampered photos flagged |
-| Challan field extraction accuracy | At least 85% of fields correct on sample scans |
-| False alert rate | Under 15% of alerts dismissed as false |
-| Time to clear a genuine stage | Reduced versus manual process |
-| Certificates issued with open critical alerts | Exactly 0 |
+| Certificates issued with open critical alerts | 0 |
+| Tampered/off-site photos flagged in demo set | 100% |
+| Evidence hashes anchored and confirmed | ≥ 99% within 5 min |
+| Challan fields correct on clear scans | ≥ 85% |
 
----
+## 10. Assumptions and risks
 
-## 11. Assumptions and Dependencies
-
-- Site users take photos with a phone that records GPS and time.
-- A VLM API is available.
-- A BOQ exists before work begins.
-- Challans are legible scans or photos.
-
----
-
-## 12. Risks and Mitigation
-
-| Risk | Impact | Mitigation |
-| --- | --- | --- |
-| VLM gives wrong judgement | False pass or false flag | Show confidence and reason; Auditor has final say |
-| Photo has no EXIF (privacy settings) | Cannot verify location | Treat as a flag, not an automatic reject |
-| Poor OCR on blurry challans | Wrong data | Human review step before saving |
-| Too many false alerts | Users ignore alerts | Tunable thresholds and severity levels |
-| Too little history for anomaly stats | Weak detection | Use BOQ-based expected usage as fallback |
-
----
-
-## 13. Release Plan
-
-| Phase | Scope |
+| Risk | Mitigation |
 | --- | --- |
-| **MVP** | Roles, stages, photo upload with EXIF checks, VLM audit, alerts, clearance gating |
-| **Phase 2** | Challan OCR, BOQ reconciliation, consumption anomalies |
-| **Phase 3** | Certificate PDF polish, audit log views, threshold settings |
+| AI misjudges a photo | Advisory only; auditor decides |
+| Blurry challans | Confidence highlighting + human confirm |
+| Spoofed GPS | Mock-location block, fresh fix, tag burned before hashing, server geofence |
+| Relayer key exposure | Secret in Workers only; anchorer-gated contract; owner can revoke |
+| Background work timeout | Cron retries stuck challans and pending anchors |
 
----
+## 11. Release status
 
-## 14. Open Questions
-
-1. What default tolerance should apply to each material type?
-2. Should two Auditors be required for high-value stages?
-3. How long should evidence be retained?
+| Phase | Scope | Status |
+| --- | --- | --- |
+| MVP | Roles, photos, geofence, AI, alerts, clearance gate | Done |
+| Phase 2 | Challans, BOQ, consumption anomalies | Done |
+| Phase 3 | MST anchoring, BridgeKey, `AccessRegistry`, Flutter app | Done on testnet |
+| Next | Mainnet, real-device and real-wallet E2E, project/BOQ admin UI | Planned |

@@ -1,542 +1,112 @@
-> **Implementation note (2026-10-27):** this is the original design spec. The shipped system runs on Cloudflare Workers (Hono) + D1 + R2 with MST Blockchain anchoring; see [architecture.md](../architecture.md) and [CHAIN_INTEGRATION.md](CHAIN_INTEGRATION.md). Code samples below that reference FastAPI are historical.
+# Software Design
 
-# System Design Document
+**Product:** CONSTRA · **Version:** 2.0 (shipped build, 2026-10-28)
+**Related:** [architecture.md](../architecture.md) · [TRD](TRD.md) · [CHAIN_INTEGRATION](CHAIN_INTEGRATION.md)
 
-**Product:** Multi-Stage Construction Milestone Verifier **Version:** 1.0 **Read after:** PRD and TRD
+## Design goals
 
----
+1. **Evidence first:** every claim decision traces to a file whose hash is on MST.
+2. **Server decides:** clients send raw data only; the server computes hashes, verdicts, ids and roles.
+3. **Hard gate:** clearance is a server rule, not a UI convention.
+4. **Free to run:** Cloudflare free plan and MST gas only.
+5. **Explainable:** every alert and blocker says why.
 
-## 1. What is a design doc? (Simple explanation)
+## Architecture style
 
-- The **PRD** says *what* and *why*.
-- The **TRD** lists the technical *requirements and tools*.
-- The **Design Doc** explains *how the pieces fit and talk to each other*, and *why we chose this design*.
+A modular monolith in one Worker (`constra-api`) plus a static frontend Worker (`constra`). Modules are route files with shared domain services; no microservices, no queues yet.
 
-**Analogy:** if the product is a hospital, the PRD says "we treat patients", the TRD lists equipment and rules, and the design doc shows the floor plan, how a patient moves from reception to doctor to pharmacy, and why the departments are placed where they are.
+| Module | Owns |
+| --- | --- |
+| `auth.ts` | Token resolution, `requireRole`, project membership |
+| `routes/supervisor.ts` | Photo ingestion and status |
+| `routes/store.ts` + `services/store.ts` | Challans, units, reconciliation, anomalies, alerts |
+| `routes/claims.ts` | Claim documents, field decisions, clearance gate, certificates |
+| `routes/chain.ts` + `services/chain.ts` | Relayer, verification, wallet link, role sync |
+| `routes/analysis.ts` + `lib/` | AI vision, EXIF, hashing, fuzzy matching |
 
----
+## Main flows
 
-## 2. Design Goals and Trade-offs
+### Photo to chain
+```
+Phone: GPS fix → capture → burn tag → SHA-256 → offline queue → POST /supervisor/evidence
+API:   re-hash → geofence → R2 → D1 evidence → alerts → claim join → chain_anchors(pending)
+BG:    waitUntil(relayer, AI) ; cron every minute → anchorMany → receipt → confirmed
+```
+Burning the tag before hashing means the anchored hash also protects the visible GPS/time stamp.
 
-| Goal | Design choice | Trade-off accepted |
+### Challan
+```
+upload → R2 → processing → waitUntil extract → fuzzy match → draft
+draft → human edit (version check) → confirm → reconcile → alerts → anchor (kind 2)
+```
+
+### Material issue
+```
+preview(stage, material, qty) → evaluate(expected vs cumulative, z-score) → warn/alert
+issue → material_issues row → consumption_anomaly alert if flagged
+```
+
+### Clearance
+```
+auditor decisions per field → submit(verdict)
+  → self-approval? 403
+  → blockers? 422 {blockers[]}
+  → stage CLEARED, certificate {canonical JSON, sha256}
+  → wallet-linked auditor: BridgeKey anchor(hash, 3) → POST /chain/certificates/{id}/onchain (receipt checked)
+  → otherwise: relayer anchors it
+```
+
+### Wallet roles
+```
+auditor BridgeKey setRole(addr, role) on AccessRegistry
+  → cron or POST /chain/roles/sync reads RoleSet logs → roleOf → D1 role/is_active
+wallet login → challenge → personal_sign → roleOf on MST → sv- session
+```
+
+## Stage state machine
+
+| From | To | Trigger |
 | --- | --- | --- |
-| Easy to build in a short time | Modular monolith (one backend app with clean modules) | Less independent scaling than microservices |
-| Fast user experience | Heavy AI work runs in background jobs | Results arrive after a few seconds, so UI must show progress |
-| Explainable results | Every check returns a result plus a plain reason | Slightly more code per check |
-| Trustworthy decisions | AI suggests, rules and humans decide | Auditor workload remains |
-| Easy tuning | Thresholds stored in database per project | Extra settings screen |
-| Easy to extend | Each check is a plugin-style class | A small interface to follow |
+| PENDING | UNDER_REVIEW | claim opened (first photo) |
+| UNDER_REVIEW | FLAGGED | auditor rejects with a written reason |
+| FLAGGED | UNDER_REVIEW | new evidence submitted |
+| UNDER_REVIEW | CLEARED | approved with no blockers |
 
----
+Open high/critical alerts do not change the state; they block the `CLEARED` transition.
 
-## 3. System Context
+`CLEARED` is final: re-approval returns 400; photos for cleared stages do not join claims.
 
-```
-  Supervisor    Store In-Charge     Auditor
-      \              |              /
-       \             |             /
-        +---- Web App (React) ----+
-                     |
-               HTTPS + JWT
-                     |
-              +--------------+
-              |   Backend    |-----> VLM API (external)
-              |   (FastAPI)  |-----> OCR engine (local library)
-              +--------------+
-                |          |
-         PostgreSQL     File storage
-```
+## Algorithms
 
-External dependency: only the VLM API. Everything else runs in our own environment.
+**Geofence:** Haversine distance; valid if `distance ≤ site_radius_m + min(max(0, accuracy_m), 50)`. The cap stops a fake huge accuracy value from disabling the check.
 
----
+**Consumption:** `expected = planned_qty_base × verified_progress`. No progress → warn. `cumulative > expected × (1 + tol)` → alert (high when excess > 2 × tol, else medium). With ≥ 5 daily totals, `|z| > zscore_limit` → alert. Cumulative checking stops "many small issues just under the limit".
 
-## 4. Architecture Style: Modular Monolith
+**Reconciliation:** delivered base qty per material vs BOQ base qty; above `boq_tolerance_pct` → `boq_over_delivery`.
 
-One deployable backend, split into clear modules with strict boundaries.
+**Certificate seal:** SHA-256 over canonical JSON (sorted keys) of claim, stage, verdict, evidence hashes and checks. Same input always gives the same hash, so the on-chain value can be recomputed.
 
-```
-app/
-  api/          -> HTTP endpoints only (thin, no business logic)
-  services/     -> business logic (verification, reconciliation, clearance)
-  checks/       -> individual verification checks (plugin-style)
-  ai/           -> VLM client and OCR client wrappers
-  domain/       -> pure rules: state machine, units, severity mapping
-  repositories/ -> database access
-  workers/      -> background job handlers
-```
+## Key decisions
 
-**Why a monolith?** A small team can build, test, and demo it fast. Because modules are separate, any module (for example the AI worker) can later be split into its own service.
-
-**Layer rule (simple):** `api` calls `services`; `services` call `checks`, `ai`, `domain`, and `repositories`. Nothing calls upward.
-
----
-
-## 5. Core Design Pattern: The Check Pipeline
-
-All verification works the same way. Each check is a small class with the same shape. The pipeline runs them in order and collects results.
-
-```python
-from dataclasses import dataclass
-from typing import Protocol, Optional
-
-@dataclass
-class CheckOutcome:
-    check: str                 # for example "gps_radius"
-    result: str                # pass, warn, fail
-    detail: str                # plain-language reason
-    evidence: dict             # numbers used
-    alert_type: Optional[str] = None
-    severity: Optional[str] = None
-
-class PhotoCheck(Protocol):
-    name: str
-    def run(self, photo, project, settings) -> CheckOutcome: ...
-```
-
-**Example check:**
-
-```python
-class GpsRadiusCheck:
-    name = "gps_radius"
-
-    def run(self, photo, project, settings):
-        if photo.exif_latitude is None:
-            return CheckOutcome(self.name, "warn",
-                "Photo has no location data.",
-                {}, "exif_missing", "medium")
-        d = distance_m(photo.exif_latitude, photo.exif_longitude,
-                       project.site_latitude, project.site_longitude)
-        if d > project.site_radius_m:
-            return CheckOutcome(self.name, "fail",
-                f"Photo was taken {d:.0f} m from the site.",
-                {"distance_m": d, "limit_m": project.site_radius_m},
-                "gps_outside", "high")
-        return CheckOutcome(self.name, "pass",
-            f"Photo is {d:.0f} m from the site centre.", {"distance_m": d})
-```
-
-**Pipeline runner:**
-
-```python
-PHOTO_CHECKS = [
-    ExifPresentCheck(), GpsRadiusCheck(), CaptureTimeCheck(),
-    EditingSoftwareCheck(), DuplicateHashCheck(), VlmStageMatchCheck(),
-]
-
-def run_photo_pipeline(photo, project, settings, db):
-    outcomes = []
-    for check in PHOTO_CHECKS:
-        try:
-            outcomes.append(check.run(photo, project, settings))
-        except Exception as e:
-            outcomes.append(CheckOutcome(check.name, "warn",
-                "Check could not run; needs manual review.", {"error": str(e)},
-                "vlm_low_confidence" if check.name == "vlm_stage_match" else None,
-                "medium"))
-    save_outcomes(db, photo, outcomes)
-    raise_alerts(db, photo, outcomes)
-    return outcomes
-```
-
-**Why this design?** Adding a new check (for example perceptual-hash duplicate detection) means writing one new class and adding it to the list. Nothing else changes. **One failing check never stops the others.**
-
----
-
-## 6. Main Flows (Sequence Descriptions)
-
-### 6.1 Photo upload and verification
-
-```
-Supervisor     Frontend       API           Queue/Worker        VLM        DB
-   |  pick photo  |            |                |               |          |
-   |------------->| POST /photos|               |               |          |
-   |              |----------->| validate+store |               |          |
-   |              |            |-------------------------------------save->|
-   |              |<-----------| 202 + job id   |               |          |
-   |              |            |--enqueue------>|               |          |
-   |              | poll status|                |--EXIF checks--|          |
-   |              |----------->|                |--image+text-->|          |
-   |              |            |                |<--JSON--------|          |
-   |              |            |                |--save results + alerts-->|
-   |              |            |                |--update stage state----->|
-   |              |<-----------| results        |               |          |
-   |<-------------| show checks|                |               |          |
-```
-
-**Step by step:**
-
-1. API validates the file, stores it, saves a hash, and replies quickly with a job id.
-2. Worker reads EXIF, then runs the pipeline.
-3. VLM result is validated against a schema.
-4. Outcomes are saved; alerts are created for warn and fail results.
-5. The stage state machine recalculates the stage status.
-6. Frontend polls and displays friendly results.
-
----
-
-### 6.2 Challan upload, OCR, and reconciliation
-
-```
-Store user -> upload challan -> API stores file + hash
-          -> worker: preprocess -> OCR text -> parse to JSON
-          -> save as DRAFT (reviewed = false)
-          -> user reviews and corrects fields -> Confirm
-          -> reconcile against BOQ -> alerts if variance too high
-```
-
-**Design decision:** reconciliation runs **only after a human confirms** the fields. This avoids false alerts from OCR mistakes.
-
----
-
-### 6.3 Material issue and anomaly check
-
-```
-Store user -> POST material issue
-          -> convert to base unit
-          -> compute expected usage for VERIFIED work of this stage
-          -> compare (ratio method) and, if enough history, z-score
-          -> save issue
-          -> if anomalous: alert + warning in response
-```
-
-**Design decision:** the issue is **saved even when anomalous** (we do not block store work), but an alert is raised. Blocking would push people to record wrong numbers just to continue.
-
----
-
-### 6.4 Stage clearance
-
-```
-Auditor opens stage -> system builds checklist from latest data
-   photo verified?  metadata valid?  material reconciled?  no open critical alerts?
-        |
-   all true -> Approve enabled -> click -> transaction:
-        1. confirm approver != submitter
-        2. set stage cleared (DB trigger re-checks alerts)
-        3. generate certificate PDF with snapshot
-        4. write audit log
-   any false -> Approve disabled with reason
-```
-
-Steps 2 to 4 happen in **one database transaction** so we never get a cleared stage without a certificate, or the reverse.
-
----
-
-## 7. Stage State Machine
-
-```
-            first photo uploaded
-  PENDING  ------------------------->  UNDER_REVIEW
-                                         |   ^
-         high/critical alert raised      |   | all alerts resolved
-                                         v   |
-                                        FLAGGED
-
-  UNDER_REVIEW --(auditor approves, gate passes)--> CLEARED
-```
-
-```python
-ALLOWED = {
-    "pending":      {"under_review"},
-    "under_review": {"flagged", "cleared"},
-    "flagged":      {"under_review"},
-    "cleared":      set(),            # final state
-}
-
-def move(stage, new_status):
-    if new_status not in ALLOWED[stage.status]:
-        raise InvalidTransition(stage.status, new_status)
-    stage.status = new_status
-```
-
-**Design decision:** CLEARED is final. If an issue is found later, the Auditor raises a new correction record rather than silently reopening history.
-
----
-
-## 8. Detailed Algorithm Designs
-
-### 8.1 Capture time check
-
-```python
-from datetime import timedelta
-
-def capture_time_check(captured_at, uploaded_at, max_age_hours):
-    if captured_at is None:
-        return ("warn", "No capture time in photo.")
-    if captured_at > uploaded_at + timedelta(minutes=5):
-        return ("fail", "Photo time is in the future.")
-    age = uploaded_at - captured_at
-    if age > timedelta(hours=max_age_hours):
-        return ("fail", f"Photo is {age.days} day(s) old.")
-    return ("pass", "Photo was taken recently.")
-```
-
-EXIF times have no timezone in many cameras, so we store the project's local timezone and convert before comparing.
-
-### 8.2 Expected usage and anomaly decision
-
-**Idea:** material used should roughly match the amount of **verified work**.
-
-```python
-def expected_usage(boq_planned_base, verified_progress_fraction):
-    return boq_planned_base * verified_progress_fraction
-
-def assess_consumption(issued_total, expected, history, settings):
-    reasons = []
-    if issued_total > expected * (1 + settings.expected_usage_tolerance):
-        reasons.append("Issued more than expected for verified work.")
-    z = zscore(history, latest_daily_issue(history))
-    if z is not None and abs(z) > settings.zscore_limit:
-        reasons.append(f"Daily issue is unusual (z = {z:.1f}).")
-    return reasons       # empty list means normal
-```
-
-`verified_progress_fraction` comes from the stage: each stage has a weight, and progress counts only after photo verification passes. This is the key link that ties **material consumption to proven work**.
-
-### 8.3 Cumulative threshold guard (defence against "just under the limit")
-
-```python
-def cumulative_guard(issues_for_stage, expected, tolerance):
-    total = sum(i.qty_base for i in issues_for_stage)
-    return total > expected * (1 + tolerance)
-```
-
-Runs after **every** new issue, so many small entries cannot hide a large total.
-
-### 8.4 Severity and alert deduplication
-
-- One alert per (stage, type, source object). Re-running a check does not spam new alerts; it updates the existing open alert.
-- If a later re-check passes, the alert is **not auto-closed**; it is marked *suggest resolve*, and the Auditor confirms.
-
----
-
-## 9. VLM Integration Design
-
-```python
-class VlmClient:
-    def __init__(self, api_key, model, timeout=30):
-        ...
-
-    def audit_photo(self, image_bytes, stage) -> VlmResult:
-        prompt = build_prompt(stage)
-        for attempt in range(2):                      # one retry
-            raw = self._call(image_bytes, prompt)
-            try:
-                return VlmResult.model_validate_json(extract_json(raw))
-            except ValidationError:
-                continue
-        raise VlmFormatError("Model returned invalid JSON twice")
-```
-
-| Design point | Decision |
-| --- | --- |
-| Image size | Resize a copy to a sensible dimension before sending, to reduce cost and time; keep the original for evidence |
-| Failure handling | On timeout or error, set the photo to "needs manual review" instead of failing the stage |
-| Result storage | Save the full raw response with the photo |
-| Caching | If the same hash and stage were audited before, reuse the result |
-| Prompt | Role, stage description, expected items, strict JSON, injection-safety line |
-| Interface | Wrapped in one class, so the provider can be swapped without touching other code |
-
----
-
-## 10. OCR and Parsing Design
-
-**Two-step design:**
-
-1. **Image to text** using OCR (with preprocessing).
-2. **Text to structure** using a parser, with a VLM fallback for messy layouts.
-
-```python
-def parse_challan(text: str) -> dict:
-    return {
-        "vendor":      find_vendor(text),
-        "challan_no":  find_with_regex(text, r"(?:challan|dc)\s*(?:no|#)[:.\s]*([A-Z0-9\-\/]+)"),
-        "date":        find_date(text),
-        "items":       find_line_items(text),     # material, qty, unit
-    }
-```
-
-**Normalisation steps after parsing:**
-
-1. Match the material name to the materials table (fuzzy match, for example "OPC cement" to "Cement").
-2. Convert unit to base unit using the conversion table.
-3. Attach a confidence value to each field.
-4. Show low-confidence fields highlighted for human review.
-
-```python
-from rapidfuzz import process
-
-def match_material(name, known_names, cutoff=80):
-    best = process.extractOne(name, known_names, score_cutoff=cutoff)
-    return best[0] if best else None
-```
-
----
-
-## 11. Frontend Design
-
-| Concern | Decision |
-| --- | --- |
-| Framework | React with route-based pages per role |
-| State | React Query for server data; small local state for forms |
-| Routing | Protected routes that check role from the token |
-| Live updates | Poll verification status every 2 to 3 seconds while jobs run, then stop |
-| Upload | Direct from camera or gallery, with progress bar and retry |
-| Error handling | Central error component with plain-language messages |
-| Styling | Tailwind with the design tokens from the UI/UX doc |
-
-**Folder layout:**
-
-```
-src/
-  api/            client + typed endpoints
-  auth/           login, token handling, route guards
-  pages/
-    supervisor/   ProjectPage, StagePage
-    store/        Dashboard, NewDelivery, MaterialIssue
-    auditor/      Dashboard, AlertDetail, StageReview, Settings
-  components/     StatusBadge, SeverityTag, CheckRow, EvidenceCard, Uploader
-```
-
----
-
-## 12. Error Handling Design
-
-| Failure | System behaviour |
-| --- | --- |
-| VLM unavailable | Photo marked "needs manual review"; Auditor sees a notice; EXIF checks still complete |
-| OCR unreadable | Challan saved as draft; user asked to retake or type values |
-| Database write fails | Transaction rolled back; user sees a retry message |
-| Worker crashes mid-job | Job stays "processing" until timeout, then retried up to 2 times, then "failed" with a visible state |
-| Invalid file | Rejected immediately with a clear reason |
-| Two auditors act at once | Optimistic locking with a version column; second action asks to refresh |
-
-**Principle:** fail **visible and safe**. A broken check can never produce a silent pass. A missing result is treated as "not verified", which keeps the stage from clearing.
-
----
-
-## 13. Deployment Design
-
-### 13.1 Demo setup (hackathon friendly)
-
-```
-docker compose:
-  - backend   (FastAPI + background tasks)
-  - frontend  (React build served by Nginx)
-  - db        (PostgreSQL)
-  - volume    (uploads)
-```
-
-```yaml
-services:
-  db:
-    image: postgres:15
-    environment:
-      POSTGRES_DB: siteverify
-      POSTGRES_USER: app
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-    volumes: ["dbdata:/var/lib/postgresql/data"]
-  backend:
-    build: ./backend
-    env_file: .env
-    depends_on: [db]
-    volumes: ["uploads:/data/uploads"]
-    ports: ["8000:8000"]
-  frontend:
-    build: ./frontend
-    ports: ["3000:80"]
-volumes: { dbdata: {}, uploads: {} }
-```
-
-### 13.2 Production growth path
-
-| Stage | Change |
-| --- | --- |
-| First | Add Redis and Celery workers for jobs |
-| Next | Move uploads to an S3-compatible bucket with signed URLs |
-| Then | Managed PostgreSQL with automated backups |
-| Later | Split the AI worker into its own service if load grows |
-
----
-
-## 14. Observability Design
-
-- **Request id** attached to every log line and returned in error responses.
-- **Structured JSON logs** with user id (not personal data), action, and result.
-- **Metrics** worth tracking: job time, VLM failure rate, alerts per day by type, percentage of alerts dismissed as false.
-- **Health endpoint:** `GET /health` checks database and queue.
-
----
-
-## 15. Testing Design
-
-| Layer | Approach |
-| --- | --- |
-| Checks | Unit tests with fixed inputs for each check class |
-| Domain | Tests for state machine, unit conversion, severity mapping |
-| API | Tests for each role against each endpoint |
-| AI | Fake VLM client returning fixed JSON for repeatable tests; a separate small evaluation set for real accuracy |
-| End to end | One scripted run: upload good photo, upload tampered photo, upload challan, issue extra material, try to clear stage, see it blocked, resolve, clear |
-
-```python
-class FakeVlm:
-    def audit_photo(self, image_bytes, stage):
-        return VlmResult(matches_stage=False, confidence=90,
-                         items_visible=["soil"], items_missing=["steel mesh"],
-                         reason="Only bare soil is visible.")
-```
-
-Using a fake client lets tests run quickly and without cost.
-
----
-
-## 16. Design Decisions Log
-
-| # | Decision | Alternatives considered | Reason |
-| --- | --- | --- | --- |
-| D1 | Modular monolith | Microservices | Faster build, simpler demo, can split later |
-| D2 | Background jobs for AI | Do it inside the request | Avoids slow requests and timeouts |
-| D3 | AI suggests, humans decide | Fully automatic approval | AI can be wrong; money is at stake |
-| D4 | EXIF failures are flags, not hard rejects | Reject all missing EXIF | Some phones strip EXIF legitimately |
-| D5 | Reconcile only after human review of OCR | Reconcile immediately | Avoids false alerts from OCR errors |
-| D6 | Save anomalous issues, but alert | Block anomalous issues | Blocking encourages false record keeping |
-| D7 | Progress counts only after verification | Self-reported progress | Ties material use to proven work |
-| D8 | Cleared is a final state | Allow reopening | Preserves a trustworthy history |
-| D9 | Rules engine plus DB trigger both guard clearance | App code only | Defence in depth |
-| D10 | Thresholds editable per project | Hard-coded values | Different sites need different tuning |
-
----
-
-## 17. Build Order (suggested plan)
-
-| Step | Deliverable | Why this order |
+| Decision | Why | Trade-off |
 | --- | --- | --- |
-| 1 | Database, users, login, role checks | Everything depends on it |
-| 2 | Projects, stages, BOQ setup | Gives data to verify against |
-| 3 | Photo upload plus EXIF checks | Fast win, no AI needed |
-| 4 | VLM audit with fake and real clients | Core AI feature |
-| 5 | Alerts and Auditor dashboard | Makes results visible |
-| 6 | Stage state machine and clearance gate | Delivers the main promise |
-| 7 | Challan upload, OCR, review screen | Second evidence stream |
-| 8 | BOQ reconciliation | Uses challan data |
-| 9 | Material issue and anomaly detection | Uses verified progress |
-| 10 | Certificate PDF and audit log chain | Final polish |
-| 11 | Demo data script with planted fraud cases | Makes the demo convincing |
+| Cloudflare Workers + D1 + R2 | Free, no cold starts | CPU limit; no image processing |
+| Relayer in the Worker (cron + `waitUntil`) | No extra server; supervisors need no wallet | Relayer key is a Worker secret |
+| Batch `anchorMany` ≤ 50 | Fewer txs, less gas | Up to one minute delay |
+| Auditor signs certificates personally | Approval is attributable to a wallet, not to our server | Needs BridgeKey |
+| `AccessRegistry` as role source | Roles cannot be changed by editing our DB | One cron tick of lag |
+| Plain signed challenge, not SIWE | MST-only rule; minimal surface | Custom format |
+| Tag burned into JPEG before hashing | Hash covers the visible proof | Original unstamped image not kept |
+| Gemini `gemini-2.5-flash` | Fast enough for the `waitUntil` budget | Newer models too slow |
+| Claims as JSON documents in D1 | Flexible field decisions | Atomic updates via `json_insert` |
+| AI advisory only | Model errors must not block or pass work | Auditor workload |
 
----
+## Error handling
 
-## 18. Demo Scenario Design
+- `fail(status, detail)` → `{"detail": ...}`; blockers returned as a list.
+- Background failures are recorded on the row (`ai_status`, `failure_reason`, `last_error`) with retry endpoints.
+- Anchoring never blocks the user: rows stay queued until the chain accepts them.
 
-A strong demo shows the system **catching** fraud. Prepare a script:
+## Extension path
 
-1. Supervisor uploads a **genuine** photo: all checks pass.
-2. Supervisor uploads a photo of the **wrong stage**: VLM mismatch alert.
-3. Supervisor uploads a photo with **location changed**: GPS alert.
-4. Supervisor uploads an **old photo**: time alert.
-5. Supervisor uploads the **same photo for another stage**: duplicate alert.
-6. Store user uploads a challan with **inflated quantity**: BOQ over-delivery alert.
-7. Store user issues **far more cement** than the verified work needs: consumption alert.
-8. Auditor tries to **issue the certificate**: blocked, with reasons.
-9. Auditor resolves the alerts with comments; certificate is issued.
-
-This walks through every required feature in under five minutes.
+Cloudflare Queues for AI/extraction, project/BOQ admin UI, MST mainnet, two-auditor approval for high-value stages.
