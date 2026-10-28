@@ -13,6 +13,7 @@ CONSTRA: construction milestone verification (evidence photos, challan OCR, BOQ 
 - MST: legacy `gasPrice` txs only; chain IDs 91562037 (testnet) / 4646 (mainnet). Details: [docs/MST-BLOCKCHAIN.md](docs/MST-BLOCKCHAIN.md).
 - `mst-mcp` OAuth metadata is http/https-mismatched; use the bearer-token setup in docs/MST-BLOCKCHAIN.md. Its doc store is empty; read docs.mstblockchain.com (`/llms.txt`, `.md` pages).
 - Wrangler finds-up `wrangler.json` before a local `.jsonc`; keep `backend/wrangler.json`.
+- `GEMINI_MODEL=gemini-2.5-flash`: `gemini-flash-latest` (gemini-3.8-flash) took 187 s on a challan vs 4 s, beyond the ~30 s waitUntil budget.
 - D1 rejects `undefined` binds; booleans are 0/1.
 - `DEMO_MODE` tokens bypass auth: `false` in `wrangler.json`, `true` only in `.dev.vars`. Demo auditor could otherwise authorize an on-chain anchorer wallet.
 - Never trust client-sent submitter, ids, AI or EXIF verdicts on claims; the server sets them.

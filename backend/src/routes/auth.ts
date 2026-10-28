@@ -6,6 +6,7 @@ import {
   parseBearer, requireUser, timingSafeEqual, userResponse, verifyFirebaseToken, verifyPassword,
 } from "../auth";
 import { audit, first, nowIso, run } from "../db";
+import { sha256Hex } from "../lib/util";
 import { fail, jsonBody } from "../errors";
 import { isRealChain, readRole } from "../services/chain";
 import { ROLES, type AppEnv, type Role, type User } from "../types";
@@ -161,10 +162,8 @@ auth.post("/wallet/challenge", async (c) => {
   return c.json({ nonce, message, expires_at: expiresAt });
 });
 
-auth.post("/wallet/login", async (c) => {
-  await rateLimit(c);
-  requireWalletAuth(c.env);
-  const body = await jsonBody<{ address?: string; nonce?: string; signature?: string; claimed_role?: string }>(c.req);
+/** Verifies a signed challenge and returns the wallet's account with its role refreshed from AccessRegistry on MST. */
+async function walletSignIn(c: Context<AppEnv>, body: { address?: string; nonce?: string; signature?: string; claimed_role?: string }) {
   const address = walletAddress(body.address);
   if (!body.nonce || !body.signature) fail(422, "nonce and signature are required");
   const ip = clientIp(c);
@@ -207,9 +206,58 @@ auth.post("/wallet/login", async (c) => {
 
   // MST is the source of truth: the D1 role is only a mirror of AccessRegistry.roleOf.
   const updated = (await first<User>(c.env.DB, "UPDATE users SET role = ?, last_login_at = ?, updated_at = ? WHERE id = ? RETURNING *", role, nowIso(), nowIso(), user!.id))!;
-  const token = await createSessionToken(c.env, updated.id, updated.email);
   await audit(c.env.DB, { actorId: updated.id, action: "login", entity: "user", entityId: String(updated.id), detail: { role, claimed_role: body.claimed_role ?? null, provider: "wallet", wallet: address }, ip });
-  return c.json({ ...userResponse(updated), token });
+  return updated;
+}
+
+auth.post("/wallet/login", async (c) => {
+  await rateLimit(c);
+  requireWalletAuth(c.env);
+  const user = await walletSignIn(c, await jsonBody(c.req));
+  return c.json({ ...userResponse(user), token: await createSessionToken(c.env, user.id, user.email) });
+});
+
+// Phone sign-in by QR: the phone creates a pairing and polls it with a secret; a desktop BridgeKey wallet approves it.
+const PAIRING_TTL_MS = 5 * 60_000;
+
+auth.post("/wallet/pair", async (c) => {
+  await rateLimit(c);
+  requireWalletAuth(c.env);
+  const id = crypto.randomUUID();
+  const secret = crypto.randomUUID() + crypto.randomUUID();
+  const expiresAt = new Date(Date.now() + PAIRING_TTL_MS).toISOString();
+  await run(c.env.DB, "DELETE FROM wallet_pairings WHERE expires_at < ?", nowIso());
+  await run(c.env.DB, "INSERT INTO wallet_pairings (id, secret_hash, expires_at) VALUES (?, ?, ?)", id, await sha256Hex(secret), expiresAt);
+  return c.json({ pair_id: id, secret, expires_at: expiresAt }, 201);
+});
+
+auth.post("/wallet/pair/:id/approve", async (c) => {
+  await rateLimit(c);
+  requireWalletAuth(c.env);
+  const id = c.req.param("id");
+  const open = await first(c.env.DB, "SELECT id FROM wallet_pairings WHERE id = ? AND user_id IS NULL AND expires_at >= ?", id, nowIso());
+  if (!open) fail(410, "This phone sign-in request has expired or was already used. Start again on the phone.");
+  const user = await walletSignIn(c, await jsonBody(c.req));
+  const res = await run(c.env.DB, "UPDATE wallet_pairings SET user_id = ? WHERE id = ? AND user_id IS NULL AND expires_at >= ?", user.id, id, nowIso());
+  if (!res.meta.changes) fail(410, "This phone sign-in request has expired or was already used. Start again on the phone.");
+  return c.json({ full_name: user.full_name, role: user.role });
+});
+
+// Not rate-limited: the phone polls it, and the 64-hex secret cannot be guessed.
+auth.post("/wallet/pair/:id/claim", async (c) => {
+  const { secret } = await jsonBody<{ secret?: string }>(c.req);
+  if (!secret) fail(422, "secret is required");
+  const id = c.req.param("id");
+  const secretHash = await sha256Hex(secret!);
+  const pairing = await first<{ user_id: number | null; expires_at: string }>(c.env.DB, "SELECT user_id, expires_at FROM wallet_pairings WHERE id = ? AND secret_hash = ?", id, secretHash);
+  if (!pairing || pairing.expires_at < nowIso()) fail(410, "Sign-in request expired. Please try again.");
+  if (pairing!.user_id == null) return c.json({ status: "pending" }, 202);
+  // Single use: only the request that deletes the row gets the session.
+  const claimed = await first<{ user_id: number }>(c.env.DB, "DELETE FROM wallet_pairings WHERE id = ? AND secret_hash = ? AND user_id IS NOT NULL RETURNING user_id", id, secretHash);
+  if (!claimed) fail(410, "Sign-in request expired. Please try again.");
+  const user = await first<User>(c.env.DB, "SELECT * FROM users WHERE id = ?", claimed!.user_id);
+  if (!user?.is_active) fail(403, "Your account is not registered or is disabled.");
+  return c.json({ ...userResponse(user!), token: await createSessionToken(c.env, user!.id, user!.email) });
 });
 
 export default auth;

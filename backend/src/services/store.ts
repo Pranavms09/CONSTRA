@@ -446,3 +446,23 @@ export async function processChallanOcr(env: Env, challanId: number) {
       `OCR engine could not read document: ${(err as Error).message}`, challanId);
   }
 }
+
+const OCR_RETRY_AFTER_MS = 2 * 60_000;
+const OCR_GIVE_UP_AFTER_MS = 15 * 60_000;
+
+/**
+ * Cron recovery for challans whose upload-time OCR was cut off (waitUntil stops ~30 s after the response):
+ * re-runs OCR for recently stuck rows (cron has a longer time budget) and fails rows stuck past the give-up window.
+ */
+export async function recoverStuckChallans(env: Env) {
+  const now = Date.now();
+  const retryBefore = new Date(now - OCR_RETRY_AFTER_MS).toISOString();
+  const giveUpBefore = new Date(now - OCR_GIVE_UP_AFTER_MS).toISOString();
+  const expired = await run(env.DB,
+    "UPDATE challans SET status = 'failed', failure_reason = 'OCR timed out. Please upload the challan again or enter it manually.', version = version + 1 WHERE status = 'processing' AND uploaded_at < ?",
+    giveUpBefore);
+  const stuck = await all<{ id: number }>(env.DB,
+    "SELECT id FROM challans WHERE status = 'processing' AND uploaded_at < ? ORDER BY uploaded_at LIMIT 3", retryBefore);
+  for (const c of stuck) await processChallanOcr(env, c.id);
+  return { retried: stuck.length, timed_out: expired.meta.changes ?? 0 };
+}
