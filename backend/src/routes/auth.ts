@@ -194,7 +194,7 @@ auth.post("/wallet/login", async (c) => {
   }
   if (!user) {
     await denied("Wallet not linked to an account");
-    fail(403, "This wallet is not linked to a CONSTRA account. Ask your Project Auditor.");
+    fail(403, "This wallet is not linked to a CONSTRA account. Sign in with Google or email once, then link it under Users (or ask your Project Auditor).");
   }
   if (!user!.is_active) {
     await denied("Account disabled", user!.id);

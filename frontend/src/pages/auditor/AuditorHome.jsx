@@ -16,7 +16,7 @@ import {
 } from "../../api/store";
 import { ClaimAuditDesk } from "./ClaimAuditDesk";
 import { saveUserToFirestore } from "../../services/firebaseDataService";
-import { setRoleOnChain } from "../../lib/mst";
+import { linkWallet, setRoleOnChain } from "../../lib/mst";
 import { useAuth } from "../../auth/AuthContext";
 import ConstraLogo from "../../components/common/ConstraLogo";
 
@@ -213,6 +213,28 @@ export const AuditorHome = () => {
       loadUsers();
     } catch (err) {
       alert(err?.code === 4001 ? "Transaction rejected in BridgeKey." : err?.message || "Failed to update role");
+    } finally {
+      setChainBusyId(null);
+    }
+  };
+
+  const handleLinkWallet = async (u) => {
+    const isSelf = user?.email?.toLowerCase() === u.email?.toLowerCase();
+    const address = isSelf ? null : window.prompt(`BridgeKey wallet address for ${u.email} (0x…)`)?.trim();
+    if (!isSelf && !address) return;
+    setChainBusyId(u.id);
+    try {
+      if (isSelf) {
+        // Own wallet: BridgeKey signature proves ownership (also enables certificate signing).
+        await linkWallet();
+      } else {
+        await updateUserRole(u.id, { wallet_address: address });
+        await setRoleOnChain(address, u.role);
+      }
+      loadUsers();
+    } catch (err) {
+      alert(err?.code === 4001 ? "Request rejected in BridgeKey." : err?.message || "Failed to link wallet");
+      loadUsers();
     } finally {
       setChainBusyId(null);
     }
@@ -1009,6 +1031,17 @@ export const AuditorHome = () => {
                               )}
                             </td>
                             <td className="py-3 px-3 text-right">
+                              {!u.wallet_address && (
+                                <button
+                                  type="button"
+                                  disabled={chainBusyId === u.id}
+                                  onClick={() => handleLinkWallet(u)}
+                                  className="mr-1 text-[#101010] hover:bg-[#FCBC18] px-2 py-1 border border-transparent hover:border-[#101010] font-label-code text-xs uppercase font-bold cursor-pointer transition-colors disabled:opacity-50"
+                                  title="Link a BridgeKey wallet so this user can sign in with MST"
+                                >
+                                  LINK WALLET
+                                </button>
+                              )}
                               {u.wallet_address && u.is_active && user?.email?.toLowerCase() !== u.email?.toLowerCase() && (
                                 <button
                                   type="button"
