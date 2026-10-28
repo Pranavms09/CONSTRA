@@ -1105,6 +1105,18 @@ export const AuditorHome = () => {
                                   LINK WALLET
                                 </button>
                               )}
+                              {/* A wallet the user linked themselves has no AccessRegistry role yet; setRole is idempotent. */}
+                              {u.wallet_address && user?.email?.toLowerCase() !== u.email?.toLowerCase() && (
+                                <button
+                                  type="button"
+                                  disabled={chainBusyId === u.id}
+                                  onClick={() => handleUpdateRole(u, u.role)}
+                                  className="mr-1 text-[#101010] hover:bg-[#FCBC18] px-2 py-1 border border-transparent hover:border-[#101010] font-label-code text-xs uppercase font-bold cursor-pointer transition-colors disabled:opacity-50"
+                                  title="Write this user's role to AccessRegistry for their wallet (signs with your BridgeKey)"
+                                >
+                                  GRANT ON MST
+                                </button>
+                              )}
                               {u.wallet_address && u.is_active && user?.email?.toLowerCase() !== u.email?.toLowerCase() && (
                                 <button
                                   type="button"
