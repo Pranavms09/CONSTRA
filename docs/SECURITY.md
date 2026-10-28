@@ -43,7 +43,7 @@ Dishonest subcontractor or supervisor (fake progress), store staff (inflated del
 - Passwords: PBKDF2, minimum 8 chars, current password required to change; set via `POST /auth/password`.
 - Wallet sign-in: nonce deleted on read, 5 min expiry, signature recovered with viem, role read from MST.
 - QR pairing: only the SHA-256 of the phone secret is stored; 5 min TTL; single claim; both screens show the same 8-char code to stop approve-a-stranger phishing; no token reaches the browser.
-- `DEMO_MODE=false` in production: demo tokens bypass auth and could otherwise authorize an anchorer wallet.
+- `DEMO_MODE` is on for judging. Demo tokens are public, so `denyDemo` blocks them from user management, password changes, wallet links (which would authorize an MST anchorer) and certificate txs. Turn it off (`"false"`) after judging; demo uploads still spend relayer gas.
 - Mobile stores the session in `flutter_secure_storage`.
 
 ## Authorization

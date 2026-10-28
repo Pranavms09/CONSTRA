@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import type { Context } from "hono";
 import { getAddress, isAddress, isHash, verifyMessage, type Hex } from "viem";
-import { clientIp, requireRole, requireUser } from "../auth";
+import { clientIp, denyDemo, requireRole, requireUser } from "../auth";
 import { all, audit, first, run } from "../db";
 import { fail, intParam, jsonBody } from "../errors";
 import { formFile, normalizeSha256, sha256Hex } from "../lib/util";
@@ -122,7 +122,7 @@ chain.post("/anchors/:id/retry", requireRole("auditor"), async (c) => {
 
 // Any signed-in user links a BridgeKey (EIP-1193) wallet: the signature proves ownership.
 // Auditors may re-link and get their wallet authorized as an anchorer; site roles link once (changes go through an auditor).
-chain.post("/wallet", requireUser, async (c) => {
+chain.post("/wallet", requireUser, denyDemo, async (c) => {
   const user = c.get("user");
   if (user.role !== "auditor" && user.wallet_address) fail(409, "A wallet is already linked to your account. Ask your Project Auditor to change it.");
   const body = await jsonBody<{ address?: string; signature?: string }>(c.req);
@@ -153,7 +153,7 @@ chain.get("/wallet/message", requireUser, (c) => {
 });
 
 // Auditor submits the tx hash of a certificate they anchored from their own wallet; the receipt is checked on MST.
-chain.post("/certificates/:id/onchain", requireRole("auditor"), async (c) => {
+chain.post("/certificates/:id/onchain", requireRole("auditor"), denyDemo, async (c) => {
   const user = c.get("user");
   if (!isRealChain(c.env)) fail(400, "MST anchoring is disabled (CHAIN_MODE=fake).");
   const cert = (await first<any>(c.env.DB, "SELECT * FROM clearance_certificates WHERE id = ?", intParam(c.req.param("id")))) ?? fail(404, "Certificate not found");

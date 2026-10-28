@@ -2,11 +2,11 @@
 
 > Stops construction milestone fraud before money moves. Site photos, delivery challans and material issues are checked automatically (GPS geofence, SHA-256 integrity, AI vision, BOQ reconciliation, consumption anomalies), and every piece of evidence plus every clearance certificate is anchored on **MST Blockchain**, so anyone can prove later that nothing was swapped.
 
-[![MST Blockchain](https://img.shields.io/badge/Chain-MST%20Blockchain-6b4d00)](https://testnet.mstscan.com/address/0x9945391814a414c3cbcc0DDCBe98919Ab75c3F54)
+[![MST Blockchain](https://img.shields.io/badge/Chain-MST%20Blockchain-6b4d00)](https://mstscan.com/address/0x9945391814a414c3cbcc0DDCBe98919Ab75c3F54)
 [![Backend](https://img.shields.io/badge/API-Cloudflare%20Workers%20%7C%20Hono-orange)](#technology-stack)
 [![Frontend](https://img.shields.io/badge/Web-React%2019%20%7C%20Vite-blue)](#technology-stack)
 [![Mobile](https://img.shields.io/badge/Mobile-Flutter-02569B)](mobile/README.md)
-[![Status](https://img.shields.io/badge/Status-Live%20on%20MST%20Testnet%20%2B%20Mainnet-success)](#submission-at-a-glance)
+[![Status](https://img.shields.io/badge/Status-Live%20on%20MST%20Mainnet-success)](#submission-at-a-glance)
 
 Built for **MST Buildathon 2.0**.
 
@@ -19,15 +19,27 @@ Built for **MST Buildathon 2.0**.
 | Live web app | https://constra.pranavms09.workers.dev |
 | Live API (health) | https://constra-api.pranavms09.workers.dev/health |
 | Public proof checker | https://constra.pranavms09.workers.dev/verify (no login) |
+| Try it without a wallet | Login page → choose a role → **Enter demo mode** |
 | Source | https://github.com/Pranavms09/CONSTRA |
-| `EvidenceRegistry` (MST testnet) | [`0x9945391814a414c3cbcc0DDCBe98919Ab75c3F54`](https://testnet.mstscan.com/address/0x9945391814a414c3cbcc0DDCBe98919Ab75c3F54#code) (source verified) |
-| `AccessRegistry` (MST testnet) | [`0xBCC31B88E689a077F41a5718C853267262ac3373`](https://testnet.mstscan.com/address/0xBCC31B88E689a077F41a5718C853267262ac3373) |
-| First app transaction | [`0xea286225…0f51`](https://testnet.mstscan.com/tx/0xea286225008721f688860b74d7f418fa126599accd6da5ecf70c798167bb0f51): relayer `anchorMany` for a site photo hash (block 6639012) |
+| Live app network | **MST mainnet** (chain `4646`); the earlier testnet deployment is kept for history |
 | Wallet | BridgeKey (browser extension, EIP-6963); WalletConnect or QR pairing on the phone |
 | Mobile app | Flutter supervisor app in [`mobile/`](mobile/README.md) (Android APK build) |
-| `EvidenceRegistry` (MST mainnet) | [`0x9945391814a414c3cbcc0DDCBe98919Ab75c3F54`](https://mstscan.com/address/0x9945391814a414c3cbcc0DDCBe98919Ab75c3F54#code) (source verified; deploy tx [`0x924a22dd…3273`](https://mstscan.com/tx/0x924a22ddaa8bd76ebf302cea86469fe57635506e09b51f96d7e59ed9f8f33273)) |
-| `AccessRegistry` (MST mainnet) | [`0x9b8d7e21f44DeCB92415F3644C0A0Ce831d63BF5`](https://mstscan.com/address/0x9b8d7e21f44DeCB92415F3644C0A0Ce831d63BF5#code) (source verified; Auditor grant tx [`0x4133a625…19fa6`](https://mstscan.com/tx/0x4133a625d66c8aac7fcdb1ecfab648e9455275e03349cf6f4e136741e2919fa6)) |
-| Live app network | MST testnet (contracts also live on mainnet) |
+
+**MST mainnet (live)**
+
+| Item | Link / value |
+| --- | --- |
+| `EvidenceRegistry` | [`0x9945391814a414c3cbcc0DDCBe98919Ab75c3F54`](https://mstscan.com/address/0x9945391814a414c3cbcc0DDCBe98919Ab75c3F54#code) (source verified; deploy tx [`0x924a22dd…3273`](https://mstscan.com/tx/0x924a22ddaa8bd76ebf302cea86469fe57635506e09b51f96d7e59ed9f8f33273)) |
+| `AccessRegistry` | [`0x9b8d7e21f44DeCB92415F3644C0A0Ce831d63BF5`](https://mstscan.com/address/0x9b8d7e21f44DeCB92415F3644C0A0Ce831d63BF5#code) (source verified; Auditor grant tx [`0x4133a625…19fa6`](https://mstscan.com/tx/0x4133a625d66c8aac7fcdb1ecfab648e9455275e03349cf6f4e136741e2919fa6)) |
+| App transaction | [`0xcd8de467…60e8`](https://mstscan.com/tx/0xcd8de46780d14f11cdb6bf5471fe14acd9f6dbb0f58776b9aea1cc28e33460e8): relayer `anchorMany` anchoring 3 evidence hashes (block 21731591) |
+
+**MST testnet (history)**
+
+| Item | Link / value |
+| --- | --- |
+| `EvidenceRegistry` | [`0x9945391814a414c3cbcc0DDCBe98919Ab75c3F54`](https://testnet.mstscan.com/address/0x9945391814a414c3cbcc0DDCBe98919Ab75c3F54#code) (source verified; same address as mainnet, same deployer and nonce) |
+| `AccessRegistry` | [`0xBCC31B88E689a077F41a5718C853267262ac3373`](https://testnet.mstscan.com/address/0xBCC31B88E689a077F41a5718C853267262ac3373) |
+| First app transaction | [`0xea286225…0f51`](https://testnet.mstscan.com/tx/0xea286225008721f688860b74d7f418fa126599accd6da5ecf70c798167bb0f51): relayer `anchorMany` for a site photo hash (block 6639012) |
 
 ---
 
@@ -51,7 +63,7 @@ CONSTRA turns a milestone claim into an evidence pipeline with a hard gate at th
 4. **Store In-Charge** uploads vendor challans. The text extractor reads them; a human confirms; the system reconciles against the BOQ and flags duplicates, bad dates, unapproved vendors and over-delivery.
 5. **Material issues** are compared with photo-verified progress and with history (z-score); anomalies raise alerts.
 6. **Auditor** reviews everything on the Claim Audit Desk. Approval is blocked while any blocker remains (open high/critical alert, failed geofence, missing photo, unconfirmed challan, self-approval).
-7. **On approval**, a clearance certificate with a SHA-256 seal is issued and anchored on MST, signed by the auditor's BridgeKey wallet.
+7. **On approval**, a clearance certificate with a SHA-256 seal is issued and anchored on MST: signed by the auditor's BridgeKey wallet when one is linked, otherwise by the relayer.
 8. **Anyone** can drop a file on `/verify` and check it against the MST contract directly.
 
 ---
@@ -64,7 +76,7 @@ MST is the trust layer, not a bolt-on. Three things live on-chain:
 | --- | --- | --- |
 | Evidence photo hashes (kind 1) | `EvidenceRegistry` | This exact photo existed at this block time and was not changed later |
 | Delivery challan hashes (kind 2) | `EvidenceRegistry` | The confirmed challan file is the one that was reconciled |
-| Clearance certificate hashes (kind 3) | `EvidenceRegistry` | The auditor's signed decision, from the auditor's own wallet |
+| Clearance certificate hashes (kind 3) | `EvidenceRegistry` | The auditor's decision; sent from the auditor's own wallet when linked, else by the relayer |
 | Portal role per wallet | `AccessRegistry` | Who is a supervisor, store in-charge or auditor; the source of truth for wallet sign-in |
 
 ```mermaid
@@ -91,7 +103,7 @@ Networks: testnet chain `91562037` (`https://testnetrpc.mstblockchain.com`, expl
 
 ## Architecture
 
-Everything runs on Cloudflare's free plan: two Workers, one D1 database, one R2 bucket. Firebase is used only for Google sign-in; Gemini for vision and challan text extraction.
+Everything runs on Cloudflare's free plan: two Workers, one D1 database, one R2 bucket. Firebase is used only for Google sign-in; Gemini for vision and challan text extraction (Claude is an optional fallback for challan images when `ANTHROPIC_API_KEY` is set).
 
 ```mermaid
 flowchart TD
@@ -210,7 +222,7 @@ Accounts are created by an auditor only (no self sign-up). Site roles see only p
 | Mobile | Flutter (camera, geolocator, `flutter_secure_storage`, WalletConnect `reown_sign`) |
 | API | Cloudflare Workers + Hono (TypeScript), cron trigger every minute |
 | Data | Cloudflare D1 (SQLite), R2 (private files with SHA-256 checksums) |
-| AI | Gemini `gemini-2.5-flash` via Files API (vision + challan extraction) |
+| AI | Gemini `gemini-2.5-flash` via Files API (vision + challan extraction); optional Claude fallback for challan images |
 | Forensics | exifr, Haversine, z-scores, rapidfuzz port for fuzzy matching |
 | Auth | Firebase ID tokens verified with `jose`; HMAC `sv-` sessions (24 h); PBKDF2 passwords; wallet challenge + `AccessRegistry` |
 | Chain | MST Blockchain, Solidity 0.8.24, Hardhat, viem, BridgeKey |
@@ -224,13 +236,14 @@ CONSTRA/
 ├── backend/            Cloudflare Worker API (Hono + D1 + R2 + MST relayer)
 │   ├── src/routes/     auth, users, pings, supervisor, store, claims, analysis, chain
 │   ├── src/services/   store domain (units, reconcile, anomaly, extraction), chain relayer
-│   ├── src/lib/        exif, gemini, fuzzy, hashing
-│   ├── migrations/     D1 schema 0001–0008 + demo seed
-│   └── test/           vitest (32 tests)
+│   ├── src/lib/        exif, gemini, fuzzy, util (SHA-256, MIME sniffing)
+│   ├── migrations/     D1 schema 0001–0009 + demo seed (0009: mainnet re-anchor)
+│   └── test/           vitest (33 tests)
 ├── frontend/           React portal (supervisor, store, auditor, /verify, /wallet-pair)
 ├── mobile/             Flutter supervisor app
 ├── contracts/          EvidenceRegistry + AccessRegistry (Hardhat, 23 tests)
 ├── docs/               PRD, TRD, design, security, schema, chain docs
+├── scripts/            check-docs.sh (doc word limits + links)
 ├── wrangler.json       frontend Worker (static assets)
 └── architecture.md     system architecture
 ```
@@ -245,8 +258,9 @@ Errors return `{"detail": ...}`. All routes except those marked Public need `Aut
 | --- | --- | --- | --- |
 | `GET` | `/health` | Public | Health + AI configured |
 | `POST` | `/auth/login`, `/auth/login-password` | Public (rate limited) | Firebase or email/password sign-in → `sv-` session |
+| `POST` | `/auth/demo-login` | Public (only when `DEMO_MODE=true`) | One-click demo session per role |
 | `POST` | `/auth/wallet/challenge`, `/auth/wallet/login` | Public (rate limited) | BridgeKey sign-in checked against `AccessRegistry` |
-| `POST` | `/auth/wallet/pair`, `/pair/{id}/approve`, `/pair/{id}/claim` | Public / wallet | Phone QR pairing |
+| `POST` | `/auth/wallet/pair`, `/auth/wallet/pair/{id}/approve`, `/auth/wallet/pair/{id}/claim` | Public / wallet | Phone QR pairing |
 | `POST` | `/auth/password` · `GET /auth/me` | Any user | Set app password · current user |
 | `GET/POST/PATCH/DELETE` | `/users[/{id}]` | Auditor | Accounts and project membership |
 | `GET` | `/supervisor/projects`, `/projects/{pid}/stages`, `/dashboard` | Supervisor | Assigned work |
@@ -259,7 +273,8 @@ Errors return `{"detail": ...}`. All routes except those marked Public need `Aut
 | `GET/POST` | `/api/v1/claims[/{id}]` | Any user / Supervisor | Claims list, create |
 | `POST` | `/api/v1/claims/{id}/commands`, `/decisions`, `/submit` | Auditor | Field decisions, approve/reject through the gate |
 | `GET` | `/api/v1/claims/{id}/certificate`, `/api/v1/stages/{id}/certificate` | Any user | Clearance certificate |
-| `POST` | `/api/analyze-image` | Any user (10/min) | AI description + EXIF report |
+| `POST` · `GET` | `/api/analyze-image` · `/api/analyses` | Any user (analyze: 10/min) | AI description + EXIF report · past analyses |
+| `GET` | `/api/v1/projects/{pid}/evidence/{file}/exif-gps` | Auditor | EXIF & GPS check for one photo |
 | `GET` | `/chain/config` · `GET/POST /chain/verify[/{sha256}]` | Public (rate limited) | Network info · on-chain verification |
 | `GET/POST` | `/chain/wallet/message`, `/chain/wallet` | Any user | Link wallet (auditor: + `setAnchorer`) |
 | `POST` | `/chain/certificates/{id}/onchain`, `/chain/process`, `/chain/roles/sync`, `/chain/anchors/{id}/retry` | Auditor | Certificate tx, run relayer, sync roles, retry |
@@ -295,7 +310,7 @@ cd ../mobile && flutter pub get && flutter test
 flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8787
 ```
 
-With `DEMO_MODE=true` the login page shows one-click role buttons (`supervisor@siteverify.com`, `store@siteverify.com`, `auditor@siteverify.com`). Production runs with `DEMO_MODE=false`.
+**Demo mode (on in production for judging):** pick a role on the login page and click **Enter demo mode**; no wallet or account needed. Demo sessions run the full workflow (uploads, challans, approvals, real MST anchors) but cannot manage users, set passwords or link wallets. Set `DEMO_MODE="false"` in `backend/wrangler.json` to turn it off.
 
 ## Deploy (Cloudflare free plan)
 
@@ -309,12 +324,25 @@ npx wrangler r2 bucket create constra-files
 npx wrangler secret put SECRET_KEY
 npx wrangler secret put GEMINI_API_KEY
 npx wrangler secret put ANCHOR_PRIVATE_KEY  # MST relayer = EvidenceRegistry owner
-cd ../contracts && cp .env.example .env     # PRIVATE_KEY (same wallet), fund from https://faucet.mstblockchain.com
-npm install && npm run deploy:testnet       # set CONTRACT_ADDRESS in backend/wrangler.json
+cd ../contracts && cp .env.example .env     # PRIVATE_KEY = your own new wallet (same as relayer), fund from https://faucet.mstblockchain.com
+npm install
+npm run deploy:testnet                      # EvidenceRegistry → CONTRACT_ADDRESS
+npm run deploy:access:testnet               # AccessRegistry → ACCESS_REGISTRY_ADDRESS, ACCESS_REGISTRY_FROM_BLOCK (deploy block)
 cd .. && npm run deploy                     # D1 migrations + API + frontend
 ```
 
-Mainnet: `CONFIRM_MAINNET="yes, deploy to mainnet" npm run deploy:mainnet`, then set `MST_NETWORK=mainnet`, `MST_CHAIN_ID=4646`, `MST_RPC_URL`, `MST_EXPLORER_URL`, `CONTRACT_ADDRESS`, `ACCESS_REGISTRY_ADDRESS` in `backend/wrangler.json`. More: [docs/TRD.md](docs/TRD.md#deployment).
+Addresses are written to `contracts/deployments.json`; copy them into `backend/wrangler.json` `vars` before `npm run deploy`.
+
+Mainnet (what the live app uses):
+
+```bash
+cd contracts
+CONFIRM_MAINNET="yes, deploy to mainnet" npm run deploy:mainnet
+CONFIRM_MAINNET="yes, deploy to mainnet" npm run deploy:access:mainnet
+WALLET=0x... ROLE=3 npm run set-role:mainnet   # 1 supervisor, 2 store in-charge, 3 auditor, 0 revoke
+```
+
+Then set `MST_NETWORK=mainnet`, `MST_CHAIN_ID=4646`, `MST_RPC_URL=https://mariorpc.mstblockchain.com`, `MST_EXPLORER_URL=https://mstscan.com`, `CONTRACT_ADDRESS`, `ACCESS_REGISTRY_ADDRESS` and `ACCESS_REGISTRY_FROM_BLOCK` in `backend/wrangler.json`, and redeploy. More: [docs/TRD.md](docs/TRD.md#deployment).
 
 ---
 
@@ -326,7 +354,7 @@ Mainnet: `CONFIRM_MAINNET="yes, deploy to mainnet" npm run deploy:mainnet`, then
 4. **Store In-Charge:** upload a challan; review extracted fields; confirm. A quantity above the BOQ raises `boq_over_delivery`.
 5. **Material issue:** issue more cement than verified progress allows; the preview warns and `consumption_anomaly` is raised.
 6. **Auditor:** open the claim on the Claim Audit Desk. Approval is blocked with the list of blockers.
-7. **Resolve and approve:** resolve alerts with justification, approve; sign the certificate anchor with BridgeKey.
+7. **Resolve and approve:** resolve alerts with justification, approve; sign the certificate anchor with BridgeKey (in demo mode the relayer anchors it).
 8. **Verify:** drop the photo on `/verify` → found on MST with block time. Change one pixel → not found.
 
 ---
@@ -335,19 +363,19 @@ Mainnet: `CONFIRM_MAINNET="yes, deploy to mainnet" npm run deploy:mainnet`, then
 
 | Suite | Command | Result |
 | --- | --- | --- |
-| Backend (vitest) | `cd backend && npm test` | 32/32 pass; `tsc` clean |
+| Backend (vitest) | `cd backend && npm test` | 33/33 pass; `tsc` clean |
 | Contracts (Hardhat) | `cd contracts && npm test` | 23/23 pass |
 | Mobile (Flutter) | `cd mobile && flutter test` | 5/5 pass; `flutter analyze` clean |
 | Frontend | `npm run build` | builds |
-| On-chain | testnet txs above | anchor + `verify()` authentic |
+| On-chain | testnet and mainnet txs above | anchor + `verify()` authentic |
 
-Not yet verified end to end: BridgeKey sign-in with a real wallet on web and phone, auditor `setRole` from the UI, mobile app on a physical device, MST mainnet. See [progress.md](progress.md).
+Not yet verified end to end: BridgeKey sign-in with a real wallet on web and phone, auditor `setRole` / "Grant on MST" from the production UI, mobile app on a physical device, the full per-role flow on mainnet. See [progress.md](progress.md).
 
 ---
 
 ## Limitations
 
-- The live app runs against MST testnet; the same contracts are deployed and verified on mainnet. Switching means updating `backend/wrangler.json` and re-granting roles on the mainnet `AccessRegistry`.
+- The live app runs on MST mainnet. Hashes first anchored on testnet were re-anchored on mainnet (migration `0009`); their testnet txs remain on testnet.mstscan.com.
 - AI vision results are advisory for the auditor; they do not raise alerts on their own.
 - Background AI and text extraction use `ctx.waitUntil` (about 30 s); stuck challans are retried by cron. Cloudflare Queues is the upgrade path.
 - The free plan allows about 10 ms CPU per request, so images are never decoded or resized in the Worker.

@@ -57,20 +57,31 @@ describe("auth and authorization guards", () => {
     expect(res.status).toBe(403);
   });
 
+  it("keeps public demo tokens away from accounts, passwords and wallet links", async () => {
+    const auditor = { ...STORE_USER, id: 3, email: "auditor@siteverify.com", role: "auditor" };
+    expect((await call(makeEnv(auditor), "GET", "/users", "demo-auditor")).status).toBe(200);
+    expect((await call(makeEnv(auditor), "POST", "/users", "demo-auditor", { email: "x@y.com", full_name: "X", role: "auditor" })).status).toBe(403);
+    expect((await call(makeEnv(auditor), "DELETE", "/users/7", "demo-auditor")).status).toBe(403);
+    expect((await call(makeEnv(auditor), "POST", "/chain/wallet", "demo-auditor", {})).status).toBe(403);
+    expect((await call(makeEnv(auditor), "POST", "/auth/password", "demo-auditor", { new_password: "site-pass-123" })).status).toBe(403);
+  });
+
   it("lets an auditor assign projects and rejects malformed project_ids", async () => {
     const auditor = { ...STORE_USER, id: 3, email: "auditor@siteverify.com", role: "auditor" };
-    expect((await call(makeEnv(auditor), "PATCH", "/users/7", "demo-auditor", { project_ids: [1] })).status).toBe(200);
-    expect((await call(makeEnv(auditor), "PATCH", "/users/7", "demo-auditor", { project_ids: ["1; DROP"] })).status).toBe(422);
+    firebaseClaims({ email: "auditor@siteverify.com", email_verified: true, firebase: { sign_in_provider: "google.com" } });
+    expect((await call(makeEnv(auditor), "PATCH", "/users/7", "fb-token", { project_ids: [1] })).status).toBe(200);
+    expect((await call(makeEnv(auditor), "PATCH", "/users/7", "fb-token", { project_ids: ["1; DROP"] })).status).toBe(422);
     expect((await call(makeEnv(STORE_USER), "PATCH", "/users/7", "demo-store_incharge", { project_ids: [1] })).status).toBe(403);
   });
 
   it("lets a signed-in user set a mobile app password, requiring the current one once set", async () => {
+    firebaseClaims({ email: "supervisor@siteverify.com", email_verified: true, firebase: { sign_in_provider: "google.com" } });
     const sup = { ...STORE_USER, id: 2, email: "supervisor@siteverify.com", role: "supervisor" };
-    expect((await call(makeEnv(sup), "POST", "/auth/password", "demo-supervisor", { new_password: "short" })).status).toBe(422);
-    expect((await call(makeEnv(sup), "POST", "/auth/password", "demo-supervisor", { new_password: "site-pass-123" })).status).toBe(200);
+    expect((await call(makeEnv(sup), "POST", "/auth/password", "fb-token", { new_password: "short" })).status).toBe(422);
+    expect((await call(makeEnv(sup), "POST", "/auth/password", "fb-token", { new_password: "site-pass-123" })).status).toBe(200);
     const withHash = { ...sup, password_hash: await hashPassword("old-pass-123") };
-    expect((await call(makeEnv(withHash), "POST", "/auth/password", "demo-supervisor", { current_password: "wrong-pass", new_password: "site-pass-123" })).status).toBe(401);
-    expect((await call(makeEnv(withHash), "POST", "/auth/password", "demo-supervisor", { current_password: "old-pass-123", new_password: "site-pass-123" })).status).toBe(200);
+    expect((await call(makeEnv(withHash), "POST", "/auth/password", "fb-token", { current_password: "wrong-pass", new_password: "site-pass-123" })).status).toBe(401);
+    expect((await call(makeEnv(withHash), "POST", "/auth/password", "fb-token", { current_password: "old-pass-123", new_password: "site-pass-123" })).status).toBe(200);
     expect((await call(makeEnv(null), "POST", "/auth/password", undefined, { new_password: "site-pass-123" })).status).toBe(401);
   });
 
@@ -92,13 +103,14 @@ describe("wallet sign-in on MST", () => {
   beforeEach(() => vi.mocked(readRole).mockReset());
 
   it("lets a site role link a wallet once by signature, without anchorer rights", async () => {
+    firebaseClaims({ email: STORE_USER.email, email_verified: true, firebase: { sign_in_provider: "google.com" } });
     const env = { ...makeEnv(STORE_USER), MST_CHAIN_ID: "91562037" };
     const signature = await account.signMessage({ message: walletLinkMessage(account.address, STORE_USER, 91562037) });
-    const res = await call(env, "POST", "/chain/wallet", "demo-store_incharge", { address: account.address, signature });
+    const res = await call(env, "POST", "/chain/wallet", "fb-token", { address: account.address, signature });
     expect(res.status).toBe(200);
     expect(((await res.json()) as any).authorize_tx).toBeNull();
     const linked = { ...env, DB: makeEnv({ ...STORE_USER, wallet_address: account.address }).DB };
-    expect((await call(linked, "POST", "/chain/wallet", "demo-store_incharge", { address: account.address, signature })).status).toBe(409);
+    expect((await call(linked, "POST", "/chain/wallet", "fb-token", { address: account.address, signature })).status).toBe(409);
   });
 
   it("issues a challenge that names the wallet and MST chain", async () => {

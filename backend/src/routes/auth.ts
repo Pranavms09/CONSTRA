@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import type { Context } from "hono";
 import { getAddress, isAddress, verifyMessage, type Hex } from "viem";
 import {
-  clientIp, createSessionToken, ensureDemoUser, findUserByEmail, hashPassword, insertUser, isDemoMode,
+  clientIp, createSessionToken, denyDemo, ensureDemoUser, findUserByEmail, hashPassword, insertUser, isDemoMode,
   parseBearer, requireUser, timingSafeEqual, userResponse, verifyFirebaseToken, verifyPassword,
 } from "../auth";
 import { audit, first, nowIso, run } from "../db";
@@ -77,7 +77,7 @@ auth.post("/login", async (c) => {
 auth.get("/me", requireUser, (c) => c.json(userResponse(c.get("user"))));
 
 // Sets or changes the D1 password used by /login-password, so web users (e.g. Firebase sign-in) can log into the mobile app.
-auth.post("/password", requireUser, async (c) => {
+auth.post("/password", requireUser, denyDemo, async (c) => {
   await rateLimit(c);
   const user = c.get("user");
   const body = await jsonBody<{ current_password?: string; new_password?: string }>(c.req);

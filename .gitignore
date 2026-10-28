@@ -64,3 +64,20 @@ GoogleService-Info.plist
 # Build output
 build/
 .gradle/
+
+# Launch-video generation (/brag skills and their output)
+brag-output/
+brag-output-*/
+.agents/skills/brag/
+.agents/skills/brag-slim/
+.claude/skills/brag
+.claude/skills/brag-slim
+skills/brag
+skills/brag-slim
+data/skills/brag
+data/skills/brag-slim
+*.mp4
+*.webm
+*.mov
+# the landing page serves this one
+!frontend/public/constra_hero.mp4

@@ -1,12 +1,12 @@
 import { Hono } from "hono";
 import { getAddress, isAddress } from "viem";
-import { findUserByEmail, hashPassword, insertUser, requireRole, userResponse } from "../auth";
+import { denyDemo, findUserByEmail, hashPassword, insertUser, requireRole, userResponse } from "../auth";
 import { all, audit, first, nowIso, run } from "../db";
 import { fail, intParam, jsonBody } from "../errors";
 import { ROLES, type AppEnv, type Role, type User } from "../types";
 
 const users = new Hono<AppEnv>();
-users.use("*", requireRole("auditor"));
+users.use("*", requireRole("auditor"), (c, next) => (c.req.method === "GET" ? next() : denyDemo(c, next)));
 
 const checkRole = (role: unknown) => (role == null || ROLES.includes(role as Role) ? (role as Role | undefined) : fail(422, "Invalid role"));
 // undefined keeps the current wallet, null or "" unlinks it.

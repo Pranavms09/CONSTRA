@@ -10,18 +10,18 @@
     "FIREBASE_PROJECT_ID": "constra-b561b",
     "GEMINI_MODEL": "gemini-2.5-flash",
     "FRONTEND_ORIGINS": "https://constra.pranavms09.workers.dev,http://localhost:5173,http://127.0.0.1:5173",
-    "DEMO_MODE": "false",
+    "DEMO_MODE": "true",
     "OCR_MODE": "real",
     "MAX_UPLOAD_MB": "10",
     "SHOW_CHAIN_COPY": "false",
     "CHAIN_MODE": "mst",
-    "MST_NETWORK": "testnet",
-    "MST_CHAIN_ID": "91562037",
-    "MST_RPC_URL": "https://testnetrpc.mstblockchain.com",
-    "MST_EXPLORER_URL": "https://testnet.mstscan.com",
+    "MST_NETWORK": "mainnet",
+    "MST_CHAIN_ID": "4646",
+    "MST_RPC_URL": "https://mariorpc.mstblockchain.com",
+    "MST_EXPLORER_URL": "https://mstscan.com",
     "CONTRACT_ADDRESS": "0x9945391814a414c3cbcc0DDCBe98919Ab75c3F54",
-    "ACCESS_REGISTRY_ADDRESS": "0xBCC31B88E689a077F41a5718C853267262ac3373",
-    "ACCESS_REGISTRY_FROM_BLOCK": "6640378"
+    "ACCESS_REGISTRY_ADDRESS": "0x9b8d7e21f44DeCB92415F3644C0A0Ce831d63BF5",
+    "ACCESS_REGISTRY_FROM_BLOCK": "21731226"
   },
   "d1_databases": [
     {

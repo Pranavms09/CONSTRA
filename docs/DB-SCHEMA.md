@@ -14,6 +14,7 @@ Database `constra-db` (SQLite). Source of truth: [backend/migrations/](../backen
 | `0006_wallet_pairing.sql` | `wallet_pairings` (phone QR sign-in) |
 | `0007_more_materials.sql` | Sand, aggregate, bricks, more rebar sizes |
 | `0008_backfill_mobile_claims.sql` | Groups earlier mobile photos into per-stage claims |
+| `0009_mainnet_reanchor.sql` | Testnet → mainnet switch: re-queues real testnet anchors for mainnet |
 
 Apply: `npm run db:migrate:local` / `db:migrate:remote` in `backend/`.
 
@@ -63,7 +64,7 @@ Apply: `npm run db:migrate:local` / `db:migrate:remote` in `backend/`.
 | Table | Key columns | Notes |
 | --- | --- | --- |
 | `chain_anchors` | `sha256` (PK), `entity`, `entity_id`, `project_id`, `kind` (1 photo, 2 challan, 3 certificate), `status` (`pending`/`sending`/`sent`/`anchored`/`failed`/`awaiting_signature`), `tx_hash`, `chain_id`, `block_number`, `anchored_at`, `anchored_by`, `attempts`, `last_error`, `claimed_at`, `simulated` | Relayer queue; MST is the source of truth, this is a cache |
-| `chain_sync` | `key` (PK), `value` | Cursor for `AccessRegistry` `RoleSet` log sync |
+| `chain_sync` | `key` (PK), `value` | `RoleSet` log cursor, key `roles_block:<registry address>` |
 
 ## Relationships
 

@@ -79,7 +79,7 @@ Error body `{"detail": ...}`; 422 for validation, 403 for role, 404 for missing 
 
 ## Configuration
 
-`backend/wrangler.json` vars: `FIREBASE_PROJECT_ID`, `GEMINI_MODEL`, `FRONTEND_ORIGINS` (exact origins), `DEMO_MODE` (`false` in production), `OCR_MODE`, `MAX_UPLOAD_MB`, `CHAIN_MODE` (`mst`), `MST_NETWORK`, `MST_CHAIN_ID`, `MST_RPC_URL`, `MST_EXPLORER_URL`, `CONTRACT_ADDRESS`, `ACCESS_REGISTRY_ADDRESS`, `ACCESS_REGISTRY_FROM_BLOCK`. Bindings: `DB`, `FILES`, `LOGIN_LIMITER`, `VERIFY_LIMITER`; cron every minute.
+`backend/wrangler.json` vars: `FIREBASE_PROJECT_ID`, `GEMINI_MODEL`, `FRONTEND_ORIGINS` (exact origins), `DEMO_MODE` (`true` for judging; demo tokens blocked from `/users` writes, `/auth/password`, `/chain/wallet`, certificate tx), `OCR_MODE`, `MAX_UPLOAD_MB`, `CHAIN_MODE` (`mst`), `MST_NETWORK`, `MST_CHAIN_ID`, `MST_RPC_URL`, `MST_EXPLORER_URL`, `CONTRACT_ADDRESS`, `ACCESS_REGISTRY_ADDRESS`, `ACCESS_REGISTRY_FROM_BLOCK`. Bindings: `DB`, `FILES`, `LOGIN_LIMITER`, `VERIFY_LIMITER`; cron every minute.
 
 Secrets (`wrangler secret put`, local `.dev.vars`): `SECRET_KEY`, `GEMINI_API_KEY`, `ANTHROPIC_API_KEY` (optional), `BOOTSTRAP_ADMIN_EMAIL`, `BOOTSTRAP_ADMIN_PASSWORD`, `ANCHOR_PRIVATE_KEY`.
 
@@ -102,7 +102,7 @@ Live: web `https://constra.pranavms09.workers.dev`, API `https://constra-api.pra
 
 | Suite | Scope | Result |
 | --- | --- | --- |
-| `backend` vitest | units, anomaly, reconcile, EXIF, route guards (auth, self-approval, claims, mobile photo join) | 32/32 |
+| `backend` vitest | units, anomaly, reconcile, EXIF, route guards (auth, self-approval, claims, mobile photo join) | 33/33 |
 | `contracts` Hardhat | access control, batching, duplicates, kinds, roles | 23/23 |
 | `mobile` flutter test | geofence, stamp + hash, login UI | 5/5 |
 | Manual E2E | local Hardhat chain + `wrangler dev`; MST testnet relayer tx | anchored + verified |

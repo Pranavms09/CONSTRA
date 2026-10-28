@@ -245,7 +245,9 @@ export async function readRole(env: Env, wallet: Address): Promise<Role | null> 
 export async function syncRoles(env: Env) {
   if (!isRealChain(env) || !env.ACCESS_REGISTRY_ADDRESS) return { synced: 0 };
   const pc = publicClient(env);
-  const last = await first<{ value: string }>(env.DB, "SELECT value FROM chain_sync WHERE key = 'roles_block'");
+  // Cursor is per registry, so switching networks (e.g. testnet to mainnet) starts at that registry's deploy block.
+  const cursorKey = `roles_block:${accessRegistry(env).toLowerCase()}`;
+  const last = await first<{ value: string }>(env.DB, "SELECT value FROM chain_sync WHERE key = ?", cursorKey);
   const fromBlock = last ? BigInt(last.value) + 1n : BigInt(env.ACCESS_REGISTRY_FROM_BLOCK || "0");
   const latest = await pc.getBlockNumber();
   if (fromBlock > latest) return { synced: 0 };
@@ -259,6 +261,6 @@ export async function syncRoles(env: Env) {
     if (role) await run(env.DB, "UPDATE users SET role = ?, is_active = 1, updated_at = ? WHERE lower(wallet_address) = ?", role, nowIso(), wallet);
     else await run(env.DB, "UPDATE users SET is_active = 0, updated_at = ? WHERE lower(wallet_address) = ?", nowIso(), wallet);
   }
-  await run(env.DB, "INSERT INTO chain_sync (key, value) VALUES ('roles_block', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value", toBlock.toString());
+  await run(env.DB, "INSERT INTO chain_sync (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value", cursorKey, toBlock.toString());
   return { synced: wallets.length, to_block: Number(toBlock) };
 }

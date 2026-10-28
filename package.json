@@ -15,7 +15,8 @@
     "deploy:mainnet": "npm run deploy:mainnet --prefix contracts",
     "deploy:access:testnet": "npm run deploy:access:testnet --prefix contracts",
     "deploy:access:mainnet": "npm run deploy:access:mainnet --prefix contracts",
-    "verify:mainnet": "npm run verify:mainnet --prefix contracts --"
+    "verify:mainnet": "npm run verify:mainnet --prefix contracts --",
+    "set-role:mainnet": "npm run set-role:mainnet --prefix contracts"
   },
   "devDependencies": {
     "wrangler": "^4.153.0"

@@ -183,6 +183,15 @@ export const requireRole = (...allowed: Role[]): MiddlewareHandler<AppEnv> => as
   await next();
 };
 
+/**
+ * Demo tokens are public strings when DEMO_MODE is on: they may run the workflow, but not manage accounts,
+ * passwords or wallet links (an auditor wallet link makes the relayer authorize it as an MST anchorer).
+ */
+export const denyDemo: MiddlewareHandler<AppEnv> = async (c, next) => {
+  if (c.req.header("authorization")?.startsWith("Bearer demo-")) fail(403, "Not available in demo mode. Sign in with a real account.");
+  await next();
+};
+
 export async function optionalUser(c: Context<AppEnv>): Promise<User | null> {
   const header = c.req.header("authorization");
   if (!header?.startsWith("Bearer ")) return null;

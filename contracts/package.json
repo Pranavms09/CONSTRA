@@ -11,7 +11,8 @@
     "verify:testnet": "hardhat verify --network mstTestnet",
     "verify:mainnet": "hardhat verify --network mstMainnet",
     "deploy:access:testnet": "hardhat run scripts/deploy-access.js --network mstTestnet",
-    "deploy:access:mainnet": "hardhat run scripts/deploy-access.js --network mstMainnet"
+    "deploy:access:mainnet": "hardhat run scripts/deploy-access.js --network mstMainnet",
+    "set-role:mainnet": "hardhat run scripts/set-role.js --network mstMainnet"
   },
   "keywords": [],
   "author": "",

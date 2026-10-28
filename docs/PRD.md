@@ -126,7 +126,7 @@ Status: ✅ shipped · ◐ partial · ⏳ pending.
 | FR-9.3 | Public `/verify` reads the contract directly | ✅ |
 | FR-9.4 | D1 vs chain mismatch logged as tampering | ✅ |
 | FR-9.5 | Roles managed with `AccessRegistry.setRole` from BridgeKey | ✅ |
-| FR-9.6 | Mainnet deployment | ✅ contracts verified; live app on testnet |
+| FR-9.6 | Mainnet deployment | ✅ contracts verified; live app on mainnet |
 
 ## 6. Business rules
 

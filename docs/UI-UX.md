@@ -16,7 +16,7 @@
 | Route | Who | Content |
 | --- | --- | --- |
 | `/`, `/landing` | Public | Landing page |
-| `/login` | Public | Google, email/password, "Sign in with BridgeKey"; demo role buttons only when `DEMO_MODE=true` |
+| `/login` | Public | Google, email/password, "Sign in with BridgeKey"; "Enter demo mode" per role (works when `DEMO_MODE` is on) |
 | `/supervisor` | Supervisor | Tabs: 01 assigned project, 02 evidence capture stream / target stage, 03 stage telemetry, 04 account & app login (set mobile password) |
 | `/store` | Store In-Charge | Dashboard, `deliveries`, `deliveries/new`, `deliveries/:id` (challan review), `issue`, `issues`, `stock`, `alerts` |
 | `/auditor` | Auditor | Tabs: 01 Claim Audit Desk, 02 store challans, 03 audit alerts, 04 EXIF & GPS, 05 user access |
