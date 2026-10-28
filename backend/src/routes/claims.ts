@@ -6,7 +6,7 @@ import { analyzeStoredExif } from "../lib/exif";
 import { analyzeConstruction } from "../lib/gemini";
 import { canonicalJson, sha256Hex } from "../lib/util";
 import { enqueueAnchor, explorerTx, isRealChain, processAnchors } from "../services/chain";
-import type { AppEnv } from "../types";
+import type { AppEnv, User } from "../types";
 
 // Claims Audit Desk. Claims were a JSON file + in-memory jobs; both now live in D1 as JSON documents.
 const claims = new Hono<AppEnv>();
@@ -34,6 +34,7 @@ const CERT_SELECT = "SELECT cc.*, u.full_name AS auditor_name, u.email AS audito
 const photoKey = (claim: any) => {
   const photo = (claim.files ?? []).find((f: any) => f.kind === "photo");
   if (!photo) return null;
+  if (typeof photo.key === "string") return photo.key; // mobile app evidence (evidence/...)
   if (typeof photo.url === "string" && photo.url.startsWith("/uploads/")) return photo.url.slice(1);
   return photo.name ? `uploads/${String(photo.name).split("/").pop()}` : null;
 };
@@ -53,6 +54,52 @@ async function photoExif(env: AppEnv["Bindings"], claim: any) {
   } catch {
     return null;
   }
+}
+
+type MobileEvidence = {
+  id: number; key: string; name: string; sha256: string; capturedAt: string; latitude: number; longitude: number;
+  accuracyM: number; distance: number | null; withinRadius: boolean; hashMatched: boolean;
+};
+
+/** A mobile app photo joins the supervisor's open claim for its stage, or starts one, so it reaches the Claim Audit Desk. */
+export async function attachEvidenceToClaim(db: D1Database, user: User, project: any, stage: any, ev: MobileEvidence) {
+  if (stage.status === "CLEARED") return null;
+  const risky = !ev.hashMatched || !ev.withinRadius;
+  const file = {
+    id: `EV-${ev.id}`, kind: "photo", name: ev.name, url: `/supervisor/evidence/${ev.id}/file`, key: ev.key, sha256: ev.sha256,
+    evidence_id: ev.id, source: "mobile_app", captured_at: ev.capturedAt, latitude: ev.latitude, longitude: ev.longitude,
+    accuracy_m: ev.accuracyM, distance_to_site_m: ev.distance, within_radius: ev.withinRadius, hash_matched: ev.hashMatched,
+  };
+  const open = await first<{ id: string }>(db,
+    `SELECT id FROM claims WHERE json_extract(data, '$.status') = 'UNDER_REVIEW' AND json_extract(data, '$.project_id') = ?
+       AND json_extract(data, '$.stage_id') = ? AND json_extract(data, '$.submitter_id') = ? ORDER BY created_at DESC LIMIT 1`,
+    String(project.id), stage.id, user.id);
+  if (open) {
+    // Appended in SQL: parallel uploads (offline queue flush) cannot drop each other's photo.
+    await run(db,
+      `UPDATE claims SET data = json_set(json_insert(data, '$.files[#]', json(?)), '$.risk', CASE WHEN ? THEN 'HIGH' ELSE json_extract(data, '$.risk') END) WHERE id = ?`,
+      JSON.stringify(file), risky ? 1 : 0, open.id);
+    return open.id;
+  }
+
+  // shortcut: two first photos uploaded at the same instant can open two claims for one stage; fine for one supervisor's queue.
+  const claimId = `CLM-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
+  const claim = {
+    id: claimId, claimant: user.full_name || user.email, submitter_id: user.id, submitter_email: user.email, policy_no: "POL-INSP-MOBILE",
+    project_id: String(project.id), stage_id: stage.id, type: stage.name, filed_at: nowIso(), risk: risky ? "HIGH" : "LOW",
+    status: "UNDER_REVIEW", files: [file],
+    ai: {
+      sha256: ev.sha256,
+      gps_distance_m: { fieldKey: "gps_distance_m", value: ev.distance ?? 0, confidence: 0.9, source: "Device GPS at capture (server geofence)", source_ref: file.name },
+      inspection_date: { fieldKey: "inspection_date", value: ev.capturedAt.slice(0, 10), confidence: 0.9, source: "Device capture time", source_ref: file.name },
+    },
+    decisions: {}, line_items: [], report: null,
+  };
+  await run(db, "INSERT INTO claims (id, data) VALUES (?, ?)", claimId, JSON.stringify(claim));
+  await run(db, "UPDATE stages SET status = 'UNDER_REVIEW' WHERE id = ?", stage.id);
+  await audit(db, { actorId: user.id, action: "claim_submitted", entity: "claim", entityId: claimId,
+    detail: { claim_id: claimId, project_id: project.id, stage_id: stage.id, file_count: 1, submitter: claim.claimant, source: "mobile_app" } });
+  return claimId;
 }
 
 claims.get("/claims", requireUser, async (c) => {

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   API_BASE_URL,
+  fetchFileObjectUrl,
   sendAgentCommand,
   fetchJobStatus,
   saveAuditorDecisions,
@@ -12,6 +13,36 @@ import {
   submitClaimVerdict,
 } from "../../services/firebaseDataService";
 import { MstCertificatePanel } from "../../components/MstCertificatePanel";
+
+// API-relative photos (mobile evidence) need the login token; external URLs load directly.
+function ClaimPhoto({ url, alt, className }) {
+  const external = url.startsWith("http");
+  const [src, setSrc] = useState(external ? url : null);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (external) return undefined;
+    let objectUrl = null;
+    let cancelled = false;
+    setSrc(null);
+    setError(null);
+    fetchFileObjectUrl(url)
+      .then((u) => {
+        objectUrl = u;
+        if (cancelled) URL.revokeObjectURL(u);
+        else setSrc(u);
+      })
+      .catch((err) => !cancelled && setError(err.message));
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [url, external]);
+
+  if (error) return <p className="p-6 text-[#ba1a1a]">{error}</p>;
+  if (!src) return <p className="p-6 text-[#5F5E5E]">LOADING PHOTO...</p>;
+  return <img src={src} alt={alt} className={className} />;
+}
 
 export const ClaimAuditDesk = () => {
   const [claimsList, setClaimsList] = useState([]);
@@ -692,15 +723,17 @@ export const ClaimAuditDesk = () => {
               {previewFile.kind === "photo" ? (
                 previewFile.url ? (
                   <div className="space-y-3">
-                    <img
-                      src={
-                        previewFile.url.startsWith("http")
-                          ? previewFile.url
-                          : `${API_BASE_URL}${previewFile.url}`
-                      }
+                    <ClaimPhoto
+                      url={previewFile.url}
                       alt={previewFile.name}
                       className="max-h-[50vh] mx-auto object-contain border border-[#101010] shadow-[2px_2px_0px_#101010]"
                     />
+                    {previewFile.source === "mobile_app" && (
+                      <p className="text-xs text-[#5F5E5E]">
+                        MOBILE APP CAPTURE // {previewFile.captured_at} // {previewFile.distance_to_site_m ?? "?"} M FROM SITE ±
+                        {previewFile.accuracy_m} M // {previewFile.hash_matched ? "HASH VERIFIED" : "HASH MISMATCH"}
+                      </p>
+                    )}
                     <div className="bg-[#F2ECE6] p-2 border border-[#A39B8F]/40 text-xs text-left">
                       <p className="font-bold text-[#101010]">FILE: {previewFile.name}</p>
                       {previewFile.sha256 && (

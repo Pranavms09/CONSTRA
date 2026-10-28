@@ -4,6 +4,7 @@ import { all, audit, first, nowIso, parseJson, run } from "../db";
 import { fail, intParam } from "../errors";
 import { analyzeConstruction, GeminiError } from "../lib/gemini";
 import { formFile, haversineM, sha256Hex, sniffMime } from "../lib/util";
+import { attachEvidenceToClaim } from "./claims";
 import { chainConfig, enqueueAnchor, explorerTx, isRealChain, processAnchors } from "../services/chain";
 import type { AppEnv, Env, User } from "../types";
 
@@ -167,13 +168,23 @@ supervisor.post("/evidence", supervisorOnly, async (c) => {
   await audit(db, { actorId: user.id, action: "EVIDENCE_CAPTURED", entity: "evidence", entityId: String(evidenceId), ip: clientIp(c) ?? "unknown",
     detail: { device_evidence_id: deviceEvidenceId, project_id: projectId, stage_id: stageId, sha256: serverSha, hash_matched: hashMatched, radius_warning: !withinRadius, distance_to_site_m: distance } });
 
-  // 10. Queue the evidence hash for anchoring on MST (relayer sends it now and the cron retries)
+  // 10. Into the auditor's queue; the evidence is already stored, so a failure here must not fail the upload.
+  try {
+    await attachEvidenceToClaim(db, user, project, stage, {
+      id: evidenceId, key, name: file.name || key.split("/")[1], sha256: serverSha, capturedAt, latitude, longitude, accuracyM,
+      distance: distance == null ? null : Math.round(distance * 100) / 100, withinRadius, hashMatched,
+    });
+  } catch (err) {
+    console.error(`Could not attach evidence #${evidenceId} to a claim`, err);
+  }
+
+  // 11. Queue the evidence hash for anchoring on MST (relayer sends it now and the cron retries)
   const anchor = await enqueueAnchor(c.env, { entity: "photo", entityId: evidenceId, sha256: serverSha, projectId });
   await run(db, "UPDATE evidence SET blockchain_status = ?, blockchain_tx = ?, blockchain_network = ?, blockchain_chain_id = ? WHERE id = ?",
     !anchor ? "failed" : isRealChain(c.env) ? "queued" : "simulated", anchor?.tx_hash ?? null, `mst-${c.env.MST_NETWORK}`, Number(c.env.MST_CHAIN_ID), evidenceId);
   c.executionCtx.waitUntil(processAnchors(c.env));
 
-  // 11. Background AI analysis
+  // 12. Background AI analysis
   c.executionCtx.waitUntil(runEvidenceAnalysis(c.env, evidenceId, bytes, mime!, stage.name, project.name));
 
   return c.json(evidenceResponse(await loadEvidence(db, "e.id = ?", evidenceId), c.env), 201);

@@ -204,6 +204,14 @@ export async function loginWithBackend(claimedRole, idToken, isSignup = false, f
   return res.json();
 }
 
+/** Loads a login-protected file (e.g. mobile evidence photo) as an object URL, since <img> cannot send the bearer token. */
+export async function fetchFileObjectUrl(path) {
+  const token = await getAuthToken();
+  const res = await fetch(`${API_BASE_URL}${path}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+  if (!res.ok) throw new Error(`Could not load file (status ${res.status})`);
+  return URL.createObjectURL(await res.blob());
+}
+
 export async function fetchMe() {
   return apiFetch("/auth/me");
 }

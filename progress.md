@@ -5,11 +5,11 @@ MST Buildathon Round 2: CONSTRA on Cloudflare (Workers + D1 + R2) with real MST 
 
 ## Completed
 - Cloudflare port (Hono Worker, D1, R2); Firestore/Render/Python removed.
-- `mst-mcp` connected (bearer workaround, empty doc store); notes in `docs/MST-BLOCKCHAIN.md`.
 - `EvidenceRegistry` v2: authorized anchorers, `anchoredBy`, kind validation; Hardhat networks `mstTestnet`/`mstMainnet` (legacy gasPrice), `scripts/deploy.js` → `deployments.json`.
-- Worker relayer: D1 queue → `anchorMany` on MST, cron + `waitUntil`, receipts, retries, tamper detection, wallet link (`setAnchorer`), auditor-signed certificate verification.
+- Worker relayer: D1 queue → `anchorMany` on MST (cron + `waitUntil`), receipts, retries, `setAnchorer`, auditor-signed certificates.
 - Blockchain role auth: `AccessRegistry` contract (+ tests, `deploy:access:*`), `/auth/wallet/challenge|login`, cron/`/chain/roles/sync` RoleSet mirror, migration `0004_wallet_auth.sql`, "Sign in with BridgeKey" on login, auditor roster grants/revokes roles via BridgeKey `setRole`.
 - Flutter supervisor app (`mobile/`, replaced the Kotlin app): live-GPS camera, tag burned into JPEG + on-device SHA-256, offline queue, evidence/anchor status, BridgeKey sign-in via WalletConnect or QR pairing (`/auth/wallet/pair*`, web `/wallet-pair`).
+- Mobile photos auto-join a claim per project + stage on the Claim Audit Desk.
 - Supervisor web "Account & App Login" tab: `POST /auth/password` sets/changes the D1 password the mobile app signs in with.
 - Frontend: BridgeKey (EIP-6963) wallet link + certificate signing in the certificate modal; public `/verify` page reading the contract directly.
 - Security audit fixes: verified email for Firebase, auditor-created accounts only, login on claims API with server-set ids/verdicts, approval re-checks EXIF geofence, auditor-only alert resolution, GPS allowance ≤50 m, image analysis login + 10/min, 24 h sessions, `DEMO_MODE=false` in production.
@@ -21,7 +21,7 @@ MST Buildathon Round 2: CONSTRA on Cloudflare (Workers + D1 + R2) with real MST 
 - **MST Testnet deploy:** `EvidenceRegistry` at `0x9945391814a414c3cbcc0DDCBe98919Ab75c3F54` (tx `0xb95b48bc…5a0d`, block 6617418, owner = deployer); source verified on testnet.mstscan.com; set in `backend/wrangler.json`.
 - Contracts: 23/23 Hardhat tests (incl. AccessRegistry).
 - Mobile: `flutter analyze` clean, 5/5 `flutter test` (geofence, stamp + hash, login UI).
-- Backend: `tsc` clean, 31/31 vitest (wallet sign-in, QR pairing, app password); local E2E: set password, then app login 200, wrong password 401 (`test/routes.test.ts` guards fail on pre-fix code).
+- Backend: `tsc` clean, 32/32 vitest; local E2E: app password login; 2 mobile uploads → one claim with 2 photos, auditor photo 200 (no login 401) (`test/routes.test.ts` guards fail on pre-fix code).
 - Local E2E (Hardhat chain + `wrangler dev`, CHAIN_MODE=mst): evidence anchored and confirmed; `/chain/verify` authentic; wallet link + `setAnchorer`; unauthorized wallet reverted; auditor certificate tx accepted.
 - Frontend `vite build` passes. Migrations 0001–0007 apply locally.
 
