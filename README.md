@@ -11,8 +11,7 @@
 Built for **MST Buildathon 2.0**.
 
 <p align="center">
-  <a href="docs/media/constra-demo.mp4"><img src="docs/media/constra-demo.gif" alt="CONSTRA 22-second product video: capture, verify, approve, anchor on MST" width="720"></a>
-  <br><sub>22-second overview (no audio). Click for the MP4.</sub>
+  <img src="docs/media/constra-demo.gif" alt="CONSTRA 22-second product video: capture, verify, approve, anchor on MST" width="720">
 </p>
 
 ---
