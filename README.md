@@ -194,7 +194,7 @@ stateDiagram-v2
 | MST Testnet address | [`0x9945391814a414c3cbcc0DDCBe98919Ab75c3F54`](https://testnet.mstscan.com/address/0x9945391814a414c3cbcc0DDCBe98919Ab75c3F54#code) (source verified) |
 | Testnet deploy tx | [`0xb95b48bc3ee2756a…`](https://testnet.mstscan.com/tx/0xb95b48bc3ee2756ab8d9d95b0456f5e5459cd07dc571ba5be2b8fa4c1f485a0d) (block 6617418) |
 | MST Mainnet address | _pending deploy_ |
-| Testnet tx hashes | _relayer `anchorMany` / auditor certificate txs — add after first run_ |
+| Testnet tx (core flow) | [`0xea286225008721f6…`](https://testnet.mstscan.com/tx/0xea286225008721f688860b74d7f418fa126599accd6da5ecf70c798167bb0f51): relayer `anchorMany` anchoring an evidence photo SHA-256 (block 6639012) |
 | Networks | Testnet chain `91562037` (`testnetrpc.mstblockchain.com`), Mainnet chain `4646` (`mariorpc.mstblockchain.com`) |
 | Explorer | https://testnet.mstscan.com · https://mstscan.com |
 | Wallet | BridgeKey (EIP-6963/EIP-1193) |

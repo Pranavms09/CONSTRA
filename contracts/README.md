@@ -11,6 +11,8 @@ Tamper-evident registry of SHA-256 fingerprints for site photos (kind 1), delive
 
 `scripts/deploy.js` also writes these to `deployments.json`. Copy them here after deploying.
 
+First app transaction (testnet): [`0xea286225008721f6…`](https://testnet.mstscan.com/tx/0xea286225008721f688860b74d7f418fa126599accd6da5ecf70c798167bb0f51), evidence photo anchored by the backend relayer, block 6639012.
+
 ## Setup
 
 ```bash
