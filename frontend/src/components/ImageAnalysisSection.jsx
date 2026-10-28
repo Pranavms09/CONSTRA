@@ -95,6 +95,8 @@ export const ImageAnalysisSection = () => {
             id: `EVD-${response.id || "9022"}`,
             model: response.model || "gemini-2.5-flash",
             fileHash: response.file_hash,
+            // Stored name (uploads/evd_….ext) for the auditor's EXIF & GPS audit.
+            storedName: response.file_url?.split("/").pop() || null,
             createdAt: response.created_at,
             confidence: "98.1%",
             stage: "STAGE #02: STRUCTURAL SLAB CONCRETE CASTING & REBAR BINDING",
@@ -405,6 +407,11 @@ export const ImageAnalysisSection = () => {
                   {analysisMeta?.fileHash ||
                     "8f4a9b2c7e1104398bc3a4e98f72361092a34bc98124ef1294812d8471029e81"}
                 </span>
+                {analysisMeta?.storedName && (
+                  <span className="shrink-0 text-[#1b1b20]">
+                    FILE: <span className="select-all font-mono">{analysisMeta.storedName}</span>
+                  </span>
+                )}
               </div>
               <button
                 type="button"

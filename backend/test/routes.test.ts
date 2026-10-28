@@ -55,6 +55,13 @@ describe("auth and authorization guards", () => {
     expect(res.status).toBe(403);
   });
 
+  it("lets an auditor assign projects and rejects malformed project_ids", async () => {
+    const auditor = { ...STORE_USER, id: 3, email: "auditor@siteverify.com", role: "auditor" };
+    expect((await call(makeEnv(auditor), "PATCH", "/users/7", "demo-auditor", { project_ids: [1] })).status).toBe(200);
+    expect((await call(makeEnv(auditor), "PATCH", "/users/7", "demo-auditor", { project_ids: ["1; DROP"] })).status).toBe(422);
+    expect((await call(makeEnv(STORE_USER), "PATCH", "/users/7", "demo-store_incharge", { project_ids: [1] })).status).toBe(403);
+  });
+
   it("rejects zero and negative quantities", async () => {
     for (const qty of [0, -500]) await expect(toBase(makeEnv(null).DB, 1, "kg", qty)).rejects.toMatchObject({ status: 422 });
   });

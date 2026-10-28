@@ -9,6 +9,7 @@ import {
   fetchExifGpsReport,
 } from "../../api/client";
 import {
+  fetchProjects,
   fetchChallans,
   getChallanFileUrl,
   fetchStoreAlerts,
@@ -55,14 +56,16 @@ export const AuditorHome = () => {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("supervisor");
   const [walletAddress, setWalletAddress] = useState("");
+  const [projectsList, setProjectsList] = useState([]);
+  const [newUserProjectId, setNewUserProjectId] = useState("");
   const [chainBusyId, setChainBusyId] = useState(null);
   const [submittingUser, setSubmittingUser] = useState(false);
   const [formSuccess, setFormSuccess] = useState(null);
   const [formError, setFormError] = useState(null);
 
   // EXIF & GPS Analyzer state
-  const [projectId, setProjectId] = useState("project-001");
-  const [fileName, setFileName] = useState("column_casting.jpg");
+  const [projectId, setProjectId] = useState("");
+  const [fileName, setFileName] = useState("");
   const [exifReport, setExifReport] = useState(null);
   const [loadingExif, setLoadingExif] = useState(false);
   const [exifError, setExifError] = useState(null);
@@ -144,7 +147,15 @@ export const AuditorHome = () => {
 
   useEffect(() => {
     loadUsers();
-    handleFetchExifReport("project-001", "column_casting.jpg");
+    fetchProjects()
+      .then((data) => {
+        setProjectsList(data || []);
+        if (data?.length) {
+          setNewUserProjectId(String(data[0].id));
+          setProjectId(String(data[0].id));
+        }
+      })
+      .catch(() => setProjectsList([]));
     loadChallans();
     loadAlerts();
   }, []);
@@ -180,6 +191,7 @@ export const AuditorHome = () => {
         email: email.trim(),
         role,
         wallet_address: walletAddress.trim() || undefined,
+        project_ids: newUserProjectId ? [Number(newUserProjectId)] : undefined,
       });
       await saveUserToFirestore(newUser);
       setFullName("");
@@ -237,6 +249,17 @@ export const AuditorHome = () => {
       loadUsers();
     } finally {
       setChainBusyId(null);
+    }
+  };
+
+  // Site roles only see projects they are members of.
+  const handleAssignProject = async (u, pid) => {
+    if (!pid) return;
+    try {
+      await updateUserRole(u.id, { project_ids: [Number(pid)] });
+      loadUsers();
+    } catch (err) {
+      alert(err?.message || "Failed to assign project");
     }
   };
 
@@ -680,13 +703,16 @@ export const AuditorHome = () => {
                 <label className="font-label-meta text-label-meta uppercase text-[#504533] block mb-1">
                   PROJECT IDENTIFIER
                 </label>
-                <input
-                  type="text"
+                <select
                   value={projectId}
                   onChange={(e) => setProjectId(e.target.value)}
-                  placeholder="project-001"
                   className="w-full bg-[#F2ECE6] border border-[#101010] px-3 py-2 text-[#101010] font-label-code text-label-code uppercase outline-none"
-                />
+                >
+                  {!projectsList.length && <option value="">NO PROJECTS</option>}
+                  {projectsList.map((p) => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="font-label-meta text-label-meta uppercase text-[#504533] block mb-1">
@@ -696,7 +722,7 @@ export const AuditorHome = () => {
                   type="text"
                   value={fileName}
                   onChange={(e) => setFileName(e.target.value)}
-                  placeholder="column_casting.jpg"
+                  placeholder="evd_….jpg (from Image Analysis)"
                   className="w-full bg-[#F2ECE6] border border-[#101010] px-3 py-2 text-[#101010] font-label-code text-label-code outline-none"
                 />
               </div>
@@ -932,6 +958,20 @@ export const AuditorHome = () => {
                   </div>
 
                   <div>
+                    <label className="font-label-meta text-label-meta uppercase text-[#504533] block mb-1">ASSIGNED PROJECT</label>
+                    <select
+                      value={newUserProjectId}
+                      onChange={(e) => setNewUserProjectId(e.target.value)}
+                      className="w-full bg-[#E6E2DD] border border-on-surface px-3 py-2 text-[#101010] font-label-code text-label-code uppercase outline-none focus:ring-2 focus:ring-primary-container"
+                    >
+                      <option value="">NO PROJECT (AUDITORS SEE ALL)</option>
+                      {projectsList.map((p) => (
+                        <option key={p.id} value={p.id}>{p.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
                     <label className="font-label-meta text-label-meta uppercase text-[#504533] block mb-1">ASSIGNED ROLE CLEARANCE</label>
                     <select
                       value={role}
@@ -1003,6 +1043,29 @@ export const AuditorHome = () => {
                               {u.wallet_address && (
                                 <div className="mt-1 text-[11px] text-[#101010]" title={u.wallet_address}>
                                   MST WALLET {u.wallet_address.slice(0, 6)}…{u.wallet_address.slice(-4)}
+                                </div>
+                              )}
+                              {u.role !== "auditor" && (
+                                <div className="mt-1 flex flex-wrap items-center gap-1 text-[11px]">
+                                  {(u.project_ids || []).map((pid) => (
+                                    <span key={pid} className="px-1 border border-[#101010] text-[#101010]">
+                                      {projectsList.find((p) => p.id === pid)?.name || `PROJECT #${pid}`}
+                                    </span>
+                                  ))}
+                                  {!u.project_ids?.length && <span className="text-[#ba1a1a] font-bold">NO PROJECT: CANNOT SEE SITE DATA</span>}
+                                  {projectsList.some((p) => !u.project_ids?.includes(p.id)) && (
+                                    <select
+                                      value=""
+                                      onChange={(e) => handleAssignProject(u, e.target.value)}
+                                      className="px-1 border border-[#101010] bg-[#F2ECE6] uppercase cursor-pointer"
+                                      title="Add this user to a project"
+                                    >
+                                      <option value="">+ ASSIGN PROJECT</option>
+                                      {projectsList.filter((p) => !u.project_ids?.includes(p.id)).map((p) => (
+                                        <option key={p.id} value={p.id}>{p.name}</option>
+                                      ))}
+                                    </select>
+                                  )}
                                 </div>
                               )}
                             </td>

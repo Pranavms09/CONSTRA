@@ -1,7 +1,7 @@
 import { Hono } from "hono";
-import { clientIp, requireUser } from "../auth";
+import { clientIp, requireRole, requireUser } from "../auth";
 import { all, audit, first } from "../db";
-import { fail } from "../errors";
+import { fail, intParam } from "../errors";
 import { analyzeExifGps, analyzeStoredExif, EXIF_PREFIX_BYTES } from "../lib/exif";
 import { describeImage } from "../lib/gemini";
 import { EXT_BY_MIME, sha256Hex, sniffMime } from "../lib/util";
@@ -86,24 +86,25 @@ analysis.get("/uploads/:name", async (c) => {
   return new Response(obj.body, { headers: { "Content-Type": obj.httpMetadata?.contentType ?? "application/octet-stream", "Cache-Control": "public, max-age=86400" } });
 });
 
-// DEMO ONLY (as before): hardcoded project lookup for the EXIF report endpoint.
-const DEMO_PROJECTS: Record<string, { latitude: number; longitude: number; site_radius_m: number; max_capture_age_hours: number }> = {
-  "project-001": { latitude: 12.9716, longitude: 77.5946, site_radius_m: 200, max_capture_age_hours: 24 },
-};
+const MAX_CAPTURE_AGE_HOURS = 24;
 
-analysis.get("/api/v1/projects/:projectId/evidence/:fileName/exif-gps", async (c) => {
-  const project = DEMO_PROJECTS[c.req.param("projectId")] ?? fail(404, "Project not found");
+// Auditor EXIF/GPS audit of an uploaded photo (uploads/, from /api/analyze-image) against a real project's geofence.
+analysis.get("/api/v1/projects/:projectId/evidence/:fileName/exif-gps", requireRole("auditor"), async (c) => {
+  const project = (await first<{ centroid_lat: number | null; centroid_lng: number | null; site_radius_m: number }>(
+    c.env.DB, "SELECT centroid_lat, centroid_lng, site_radius_m FROM projects WHERE id = ?", intParam(c.req.param("projectId"), "projectId")
+  )) ?? fail(404, "Project not found");
+  if (project.centroid_lat == null || project.centroid_lng == null) fail(422, "Project has no site coordinates set.");
   const name = c.req.param("fileName");
   if (!/^[\w.-]+$/.test(name)) fail(400, "Invalid filename");
   let report;
   try {
     report = await analyzeStoredExif(c.env.FILES, `uploads/${name}`, {
-      siteLatitude: project.latitude, siteLongitude: project.longitude, siteRadiusM: project.site_radius_m, maxCaptureAgeHours: project.max_capture_age_hours,
+      siteLatitude: project.centroid_lat!, siteLongitude: project.centroid_lng!, siteRadiusM: project.site_radius_m, maxCaptureAgeHours: MAX_CAPTURE_AGE_HOURS,
     });
   } catch (err) {
     return fail(422, (err as Error).message);
   }
-  return report ? c.json(report) : fail(404, "Evidence file not found");
+  return report ? c.json(report) : fail(404, `No uploaded photo named ${name}. Upload it in Image Analysis first and use the evd_… file name it shows.`);
 });
 
 export default analysis;
