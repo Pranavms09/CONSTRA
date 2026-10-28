@@ -34,8 +34,8 @@ fun ProjectSelectScreen(
     val defaultProject = remember {
         Project(
             id = 1,
-            name = "Pune Vidyarthi Griha's College of Engineering, Nashik",
-            siteAddress = "206, Dindori Road, Behind Reliance Petrol Pump, Mhasrul, Nashik, Maharashtra 422004",
+            name = "Shree Construction, Nashik",
+            siteAddress = "Shree Construction Site, Dindori Road, Mhasrul, Nashik, Maharashtra 422004",
             centroidLat = 20.03639,
             centroidLng = 73.79959,
             siteRadiusM = 500.0

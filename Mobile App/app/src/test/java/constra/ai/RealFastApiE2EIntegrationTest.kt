@@ -115,7 +115,7 @@ class RealFastApiE2EIntegrationTest {
             deviceEvidenceId = deviceEvidenceId,
             projectId = 1,
             stageId = 1,
-            projectName = "Pune Vidyarthi Griha's College of Engineering, Nashik",
+            projectName = "Shree Construction, Nashik",
             stageName = "Campus Substructure & Foundation Footings",
             originalFilePath = jpegFile.absolutePath,
             fileSizeBytes = jpegFile.length(),

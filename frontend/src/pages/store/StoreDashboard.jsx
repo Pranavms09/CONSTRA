@@ -71,7 +71,7 @@ export const StoreDashboard = () => {
               </span>
             </div>
             <h2 className="font-headline-lg text-headline-lg font-bold text-[#101010] uppercase tracking-tight">
-              {selectedProject?.name || "Pune Vidyarthi Griha's College of Engineering, Nashik"}
+              {selectedProject?.name || "Shree Construction, Nashik"}
             </h2>
             <p className="font-label-meta text-label-meta text-[#5F5E5E] uppercase mt-1">
               SITE LOCATION: {selectedProject?.site_address || "206, Dindori Road, Mhasrul, Nashik, Maharashtra 422004"}
