@@ -84,12 +84,12 @@ flowchart LR
     APP["Flutter app<br/>stamp + SHA-256"] --> API["constra-api Worker"]
     WEB["React portal"] --> API
     API --> D1[("D1 queue<br/>chain_anchors")]
-    D1 -->|cron every minute<br/>+ waitUntil| RELAY["Relayer (viem)<br/>anchorMany ≤50, legacy gasPrice"]
+    D1 -->|"cron every minute<br/>+ waitUntil"| RELAY["Relayer (viem)<br/>anchorMany ≤50, legacy gasPrice"]
     RELAY --> ER["EvidenceRegistry<br/>MST"]
-    BK["Auditor BridgeKey"] -->|anchor(certHash, 3)<br/>setRole()| ER
+    BK["Auditor BridgeKey"] -->|"anchor(certHash, 3)<br/>setRole()"| ER
     BK --> AR["AccessRegistry<br/>MST"]
-    AR -->|RoleSet logs → roleOf| API
-    VERIFY["/verify page"] -->|verify(hash) over public RPC| ER
+    AR -->|"RoleSet logs → roleOf"| API
+    VERIFY["/verify page"] -->|"verify(hash) over public RPC"| ER
 ```
 
 - **Relayer:** the API Worker queues hashes in D1, then sends `anchorMany` batches (up to 50) with legacy `gasPrice` (MST has no EIP-1559), waits for receipts, retries failures and records tx hash and block.
