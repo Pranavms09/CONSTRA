@@ -23,17 +23,20 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
   static const _maxFixAge = Duration(seconds: 20);
   CameraController? _camera;
   StreamSubscription<Position>? _gps;
+  StreamSubscription<ServiceStatus>? _gpsService;
   Position? _pos;
   String? _cameraError, _gpsError;
-  bool _busy = false;
+  (String, Future<void> Function())? _gpsAction;
+  bool _busy = false, _starting = false;
   Timer? _clock;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _initCamera();
-    _initGps();
+    _start();
+    // Restart GPS as soon as the user switches location back on (no app restart needed).
+    _gpsService = Geolocator.getServiceStatusStream().listen((s) => s == ServiceStatus.enabled ? _initGps() : _gpsOff());
     _clock = Timer.periodic(const Duration(seconds: 1), (_) => setState(() {}));
   }
 
@@ -42,23 +45,38 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
     WidgetsBinding.instance.removeObserver(this);
     _clock?.cancel();
     _gps?.cancel();
+    _gpsService?.cancel();
     _camera?.dispose();
     super.dispose();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (_starting) return; // a permission dialog made the app inactive, not the user leaving
     if (state == AppLifecycleState.inactive) {
       _camera?.dispose();
       _camera = null;
       _gps?.cancel();
+      _gps = null;
     } else if (state == AppLifecycleState.resumed) {
-      _initCamera();
-      _initGps();
+      _start();
+    }
+  }
+
+  /// Sequential: Android shows one permission dialog at a time, and concurrent location requests throw.
+  Future<void> _start() async {
+    if (_starting) return;
+    _starting = true;
+    try {
+      await _initGps();
+      await _initCamera();
+    } finally {
+      _starting = false;
     }
   }
 
   Future<void> _initCamera() async {
+    if (_camera != null) return;
     try {
       final cams = await availableCameras();
       if (cams.isEmpty) throw CameraException('none', 'No camera found on this device.');
@@ -82,21 +100,52 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
     }
   }
 
+  void _setGpsError(String? error, [(String, Future<void> Function())? action]) {
+    if (!mounted) return;
+    setState(() {
+      _gpsError = error;
+      _gpsAction = action;
+    });
+  }
+
+  void _gpsOff() {
+    _gps?.cancel();
+    _gps = null;
+    _pos = null;
+    _setGpsError('Location is off. Turn it on to capture evidence.', ('TURN ON', Geolocator.openLocationSettings));
+  }
+
   Future<void> _initGps() async {
-    setState(() => _gpsError = null);
-    if (!await Geolocator.isLocationServiceEnabled()) {
-      setState(() => _gpsError = 'Turn on location (GPS) to capture evidence.');
-      return;
+    _setGpsError(null);
+    try {
+      if (!await Geolocator.isLocationServiceEnabled()) return _gpsOff();
+      var perm = await Geolocator.checkPermission();
+      if (perm == LocationPermission.denied) perm = await Geolocator.requestPermission();
+      if (perm == LocationPermission.deniedForever) {
+        return _setGpsError('Location permission is blocked. Allow it in app settings.', ('SETTINGS', Geolocator.openAppSettings));
+      }
+      if (perm == LocationPermission.denied) {
+        return _setGpsError('Location permission is required: evidence must carry a GPS tag.', ('RETRY', _initGps));
+      }
+      // "Approximate" only gives a ~2 km fix, useless for the site geofence.
+      if (await Geolocator.getLocationAccuracy() == LocationAccuracyStatus.reduced) {
+        return _setGpsError('Precise location is off. Allow "Precise" for CONSTRA in app settings.', ('SETTINGS', Geolocator.openAppSettings));
+      }
+      await _gps?.cancel();
+      _gps = Geolocator.getPositionStream(locationSettings: const LocationSettings(accuracy: LocationAccuracy.best)).listen(
+        (p) {
+          if (!mounted) return;
+          setState(() {
+            _pos = p;
+            _gpsError = null;
+            _gpsAction = null;
+          });
+        },
+        onError: (Object e) => e is LocationServiceDisabledException ? _gpsOff() : _setGpsError('GPS error: $e', ('RETRY', _initGps)),
+      );
+    } catch (e) {
+      _setGpsError('GPS error: $e', ('RETRY', _initGps));
     }
-    var perm = await Geolocator.checkPermission();
-    if (perm == LocationPermission.denied) perm = await Geolocator.requestPermission();
-    if (perm == LocationPermission.denied || perm == LocationPermission.deniedForever) {
-      setState(() => _gpsError = 'Location permission is required: evidence must carry a GPS tag.');
-      return;
-    }
-    await _gps?.cancel();
-    _gps = Geolocator.getPositionStream(locationSettings: const LocationSettings(accuracy: LocationAccuracy.best))
-        .listen((p) => setState(() => _pos = p), onError: (Object e) => setState(() => _gpsError = 'GPS error: $e'));
   }
 
   bool get _fresh => _pos != null && DateTime.now().difference(_pos!.timestamp) < _maxFixAge;
@@ -252,8 +301,8 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
               ),
               if (_gpsError != null)
                 TextButton(
-                  onPressed: _initGps,
-                  child: const Text('RETRY', style: TextStyle(color: C.signal)),
+                  onPressed: _gpsAction?.$2 ?? _initGps,
+                  child: Text(_gpsAction?.$1 ?? 'RETRY', style: const TextStyle(color: C.signal)),
                 ),
             ],
           ),

@@ -203,6 +203,8 @@ export const AuthProvider = ({ children }) => {
     return userProfile;
   };
 
+  const updateUser = (patch) => saveUser({ ...user, ...patch });
+
   const logout = async () => {
     localStorage.removeItem("siteverify_token");
     localStorage.removeItem("siteverify_user");
@@ -226,6 +228,7 @@ export const AuthProvider = ({ children }) => {
         loginWithWallet,
         registerWithEmail,
         loginAsDemo,
+        updateUser,
         logout,
       }}
     >

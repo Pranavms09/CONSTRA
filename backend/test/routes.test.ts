@@ -3,6 +3,7 @@ import { jwtVerify } from "jose";
 import { privateKeyToAccount } from "viem/accounts";
 import worker from "../src/index";
 import { readRole } from "../src/services/chain";
+import { walletLinkMessage } from "../src/routes/chain";
 import { toBase } from "../src/services/store";
 import { hashPassword } from "../src/auth";
 
@@ -89,6 +90,16 @@ describe("wallet sign-in on MST", () => {
     call(env, "POST", "/auth/wallet/login", undefined, { address: account.address, nonce: "n1", signature: await account.signMessage({ message }), ...extra });
 
   beforeEach(() => vi.mocked(readRole).mockReset());
+
+  it("lets a site role link a wallet once by signature, without anchorer rights", async () => {
+    const env = { ...makeEnv(STORE_USER), MST_CHAIN_ID: "91562037" };
+    const signature = await account.signMessage({ message: walletLinkMessage(account.address, STORE_USER, 91562037) });
+    const res = await call(env, "POST", "/chain/wallet", "demo-store_incharge", { address: account.address, signature });
+    expect(res.status).toBe(200);
+    expect(((await res.json()) as any).authorize_tx).toBeNull();
+    const linked = { ...env, DB: makeEnv({ ...STORE_USER, wallet_address: account.address }).DB };
+    expect((await call(linked, "POST", "/chain/wallet", "demo-store_incharge", { address: account.address, signature })).status).toBe(409);
+  });
 
   it("issues a challenge that names the wallet and MST chain", async () => {
     const res = await call(mstEnv(null), "POST", "/auth/wallet/challenge", undefined, { address: account.address.toLowerCase() });

@@ -18,7 +18,7 @@ async function rateLimit(c: Context<AppEnv>) {
   if (!success) fail(429, "Rate limit exceeded: 10 per 1 minute");
 }
 
-/** Message an auditor signs with BridgeKey to prove wallet ownership. */
+/** Message a user signs with BridgeKey to prove wallet ownership. */
 export const walletLinkMessage = (address: string, user: { id: number; email: string }, chainId: number) =>
   `CONSTRA wallet link\nWallet: ${address}\nAccount: ${user.email} (#${user.id})\nMST chain: ${chainId}`;
 
@@ -120,9 +120,11 @@ chain.post("/anchors/:id/retry", requireRole("auditor"), async (c) => {
   return c.json({ success: true, sha256: id, message: "Anchor re-queued for the MST relayer" });
 });
 
-// Auditor links a BridgeKey (EIP-1193) wallet: signature proves ownership, then the relayer authorizes it on-chain.
-chain.post("/wallet", requireRole("auditor"), async (c) => {
+// Any signed-in user links a BridgeKey (EIP-1193) wallet: the signature proves ownership.
+// Auditors may re-link and get their wallet authorized as an anchorer; site roles link once (changes go through an auditor).
+chain.post("/wallet", requireUser, async (c) => {
   const user = c.get("user");
+  if (user.role !== "auditor" && user.wallet_address) fail(409, "A wallet is already linked to your account. Ask your Project Auditor to change it.");
   const body = await jsonBody<{ address?: string; signature?: string }>(c.req);
   if (!body.address || !isAddress(body.address) || !body.signature) fail(422, "address and signature are required");
   const address = getAddress(body.address!);
@@ -136,7 +138,7 @@ chain.post("/wallet", requireRole("auditor"), async (c) => {
   }
   let authorizeTx: string | null = null;
   try {
-    authorizeTx = await authorizeAnchorer(c.env, address);
+    if (user.role === "auditor") authorizeTx = await authorizeAnchorer(c.env, address);
   } catch (err) {
     fail(502, `Wallet linked, but on-chain authorization failed: ${(err as Error).message}`);
   }
@@ -144,7 +146,7 @@ chain.post("/wallet", requireRole("auditor"), async (c) => {
   return c.json({ wallet_address: address, authorize_tx: authorizeTx, explorer_url: explorerTx(c.env, authorizeTx) });
 });
 
-chain.get("/wallet/message", requireRole("auditor"), (c) => {
+chain.get("/wallet/message", requireUser, (c) => {
   const address = c.req.query("address");
   if (!address || !isAddress(address)) fail(422, "address query parameter is required");
   return c.json({ message: walletLinkMessage(getAddress(address!), c.get("user"), Number(c.env.MST_CHAIN_ID)) });

@@ -1,6 +1,7 @@
 import React from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "./AuthContext";
+import { WalletLinkGate } from "./WalletLinkGate";
 
 export function getRoleHomeRoute(role) {
   switch (role) {
@@ -38,5 +39,5 @@ export const ProtectedRoute = ({ allowedRole, children }) => {
     return <Navigate to={getRoleHomeRoute(user.role)} replace />;
   }
 
-  return <>{children}</>;
+  return <WalletLinkGate>{children}</WalletLinkGate>;
 };
