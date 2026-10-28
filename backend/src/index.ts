@@ -9,7 +9,7 @@ import pings from "./routes/pings";
 import store from "./routes/store";
 import supervisor from "./routes/supervisor";
 import users from "./routes/users";
-import { processAnchors } from "./services/chain";
+import { processAnchors, syncRoles } from "./services/chain";
 import type { AppEnv, Env } from "./types";
 
 const app = new Hono<AppEnv>();
@@ -42,5 +42,6 @@ export default {
   // Every minute: confirm sent MST transactions and anchor queued hashes.
   scheduled(_event: ScheduledController, env: Env, ctx: ExecutionContext) {
     ctx.waitUntil(processAnchors(env).then((r) => console.log("anchor relayer", JSON.stringify(r))));
+    ctx.waitUntil(syncRoles(env).then((r) => console.log("role sync", JSON.stringify(r))).catch((err) => console.warn("role sync failed:", err)));
   },
 } satisfies ExportedHandler<Env>;

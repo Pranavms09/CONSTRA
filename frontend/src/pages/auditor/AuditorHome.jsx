@@ -16,6 +16,7 @@ import {
 } from "../../api/store";
 import { ClaimAuditDesk } from "./ClaimAuditDesk";
 import { saveUserToFirestore } from "../../services/firebaseDataService";
+import { setRoleOnChain } from "../../lib/mst";
 import { useAuth } from "../../auth/AuthContext";
 import ConstraLogo from "../../components/common/ConstraLogo";
 
@@ -53,6 +54,8 @@ export const AuditorHome = () => {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("supervisor");
+  const [walletAddress, setWalletAddress] = useState("");
+  const [chainBusyId, setChainBusyId] = useState(null);
   const [submittingUser, setSubmittingUser] = useState(false);
   const [formSuccess, setFormSuccess] = useState(null);
   const [formError, setFormError] = useState(null);
@@ -176,11 +179,23 @@ export const AuditorHome = () => {
         full_name: fullName.trim(),
         email: email.trim(),
         role,
+        wallet_address: walletAddress.trim() || undefined,
       });
       await saveUserToFirestore(newUser);
-      setFormSuccess(`User ${newUser.email} added successfully to database & Firebase Firestore!`);
       setFullName("");
       setEmail("");
+      setWalletAddress("");
+      if (newUser.wallet_address) {
+        // The role a wallet signs in with lives in AccessRegistry on MST; grant it from the auditor's BridgeKey.
+        try {
+          const { explorer_url } = await setRoleOnChain(newUser.wallet_address, role);
+          setFormSuccess(`User ${newUser.email} added and role granted on MST: ${explorer_url}`);
+        } catch (err) {
+          setFormError(`User ${newUser.email} saved, but the MST role grant failed: ${err?.message}. Retry from the roster.`);
+        }
+      } else {
+        setFormSuccess(`User ${newUser.email} added successfully to database & Firebase Firestore!`);
+      }
       loadUsers();
     } catch (err) {
       setFormError(err?.message || "Failed to register new user");
@@ -189,12 +204,17 @@ export const AuditorHome = () => {
     }
   };
 
-  const handleUpdateRole = async (userId, newRole) => {
+  const handleUpdateRole = async (u, newRole) => {
+    setChainBusyId(u.id);
     try {
-      await updateUserRole(userId, { role: newRole });
+      // Wallet-linked roles are changed on MST (AccessRegistry); the backend mirrors them into D1.
+      if (u.wallet_address) await setRoleOnChain(u.wallet_address, newRole);
+      else await updateUserRole(u.id, { role: newRole });
       loadUsers();
     } catch (err) {
-      alert(err?.message || "Failed to update role");
+      alert(err?.code === 4001 ? "Transaction rejected in BridgeKey." : err?.message || "Failed to update role");
+    } finally {
+      setChainBusyId(null);
     }
   };
 
@@ -874,6 +894,22 @@ export const AuditorHome = () => {
                   </div>
 
                   <div>
+                    <label className="font-label-meta text-label-meta uppercase text-[#504533] block mb-1">BRIDGEKEY WALLET (MST, OPTIONAL)</label>
+                    <input
+                      type="text"
+                      placeholder="0x…"
+                      pattern="^0x[0-9a-fA-F]{40}$"
+                      title="40-hex-digit wallet address starting with 0x"
+                      value={walletAddress}
+                      onChange={(e) => setWalletAddress(e.target.value)}
+                      className="w-full bg-[#E6E2DD] border border-on-surface px-3 py-2 text-[#101010] font-label-code text-label-code outline-none focus:ring-2 focus:ring-primary-container"
+                    />
+                    <p className="mt-1 font-body-sm text-[11px] text-[#5F5E5E]">
+                      With a wallet, the role is granted on MST from your BridgeKey and the user can sign in with BridgeKey.
+                    </p>
+                  </div>
+
+                  <div>
                     <label className="font-label-meta text-label-meta uppercase text-[#504533] block mb-1">ASSIGNED ROLE CLEARANCE</label>
                     <select
                       value={role}
@@ -942,15 +978,21 @@ export const AuditorHome = () => {
                             </td>
                             <td className="py-3 px-3 border-r border-[#A39B8F]/30 text-[#5F5E5E]">
                               {u.email}
+                              {u.wallet_address && (
+                                <div className="mt-1 text-[11px] text-[#101010]" title={u.wallet_address}>
+                                  MST WALLET {u.wallet_address.slice(0, 6)}…{u.wallet_address.slice(-4)}
+                                </div>
+                              )}
                             </td>
                             <td className="py-3 px-3 border-r border-[#A39B8F]/30 text-center">
                               <select
                                 value={u.role}
-                                onChange={(e) => handleUpdateRole(u.id, e.target.value)}
+                                onChange={(e) => handleUpdateRole(u, e.target.value)}
+                                disabled={chainBusyId === u.id}
                                 className={`px-2 py-1 border font-bold uppercase text-xs bg-[#F2ECE6] outline-none cursor-pointer ${getRoleBadge(
                                   u.role
                                 )}`}
-                                title="Change user's authorized role"
+                                title={u.wallet_address ? "Change role on MST (signs with your BridgeKey)" : "Change user's authorized role"}
                               >
                                 <option value="supervisor">SITE SUPERVISOR (LEVEL-01)</option>
                                 <option value="store_incharge">STORE IN-CHARGE (LEVEL-02)</option>
@@ -958,11 +1000,26 @@ export const AuditorHome = () => {
                               </select>
                             </td>
                             <td className="py-3 px-3 text-center border-r border-[#A39B8F]/30">
-                              <span className="text-[#2F6F4E] font-bold uppercase text-xs">
-                                ✓ ACTIVE
-                              </span>
+                              {chainBusyId === u.id ? (
+                                <span className="font-bold uppercase text-xs animate-pulse">SIGNING ON MST…</span>
+                              ) : u.is_active ? (
+                                <span className="text-[#2F6F4E] font-bold uppercase text-xs">✓ ACTIVE</span>
+                              ) : (
+                                <span className="text-[#ba1a1a] font-bold uppercase text-xs">REVOKED</span>
+                              )}
                             </td>
                             <td className="py-3 px-3 text-right">
+                              {u.wallet_address && u.is_active && user?.email?.toLowerCase() !== u.email?.toLowerCase() && (
+                                <button
+                                  type="button"
+                                  disabled={chainBusyId === u.id}
+                                  onClick={() => window.confirm(`Revoke ${u.email}'s role on MST?`) && handleUpdateRole(u, "none")}
+                                  className="mr-1 text-[#101010] hover:bg-[#FCBC18] px-2 py-1 border border-transparent hover:border-[#101010] font-label-code text-xs uppercase font-bold cursor-pointer transition-colors disabled:opacity-50"
+                                  title="Set AccessRegistry role to none (signs with your BridgeKey)"
+                                >
+                                  REVOKE ON MST
+                                </button>
+                              )}
                               {user?.email?.toLowerCase() !== u.email?.toLowerCase() && (
                                 <button
                                   type="button"

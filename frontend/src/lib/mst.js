@@ -5,6 +5,9 @@ import { apiFetch } from "../api/client";
 // keccak256 selectors of EvidenceRegistry functions (see contracts/EvidenceRegistry.sol).
 const SELECTOR_ANCHOR = "0xa25e29d7"; // anchor(bytes32,uint8)
 const SELECTOR_VERIFY = "0x75e36616"; // verify(bytes32)
+// AccessRegistry (contracts/AccessRegistry.sol): portal roles per wallet.
+const SELECTOR_SET_ROLE = "0x571c3e60"; // setRole(address,uint8)
+export const ROLE_IDS = { none: 0, supervisor: 1, store_incharge: 2, auditor: 3 };
 export const KIND_LABELS = { 1: "Photo evidence", 2: "Delivery challan", 3: "Clearance certificate" };
 
 let configPromise = null;
@@ -120,4 +123,27 @@ export async function signCertificateOnChain(certificateId, certificateHash) {
   const receipt = await waitForReceipt(cfg.rpc_url, txHash);
   if (receipt.status !== "0x1") throw new Error("Transaction reverted on MST (is this wallet authorized?)");
   return apiFetch(`/chain/certificates/${certificateId}/onchain`, { method: "POST", body: JSON.stringify({ tx_hash: txHash }) });
+}
+
+/** Wallet sign-in: BridgeKey signs a single-use backend challenge; the backend reads the role from AccessRegistry on MST. */
+export async function signInWithWallet(claimedRole) {
+  const { provider, address } = await connectWallet();
+  const { nonce, message } = await apiFetch("/auth/wallet/challenge", { method: "POST", body: JSON.stringify({ address }) });
+  const signature = await provider.request({ method: "personal_sign", params: [message, address] });
+  return apiFetch("/auth/wallet/login", { method: "POST", body: JSON.stringify({ address, nonce, signature, claimed_role: claimedRole }) });
+}
+
+/** Auditor grants (or revokes with "none") a wallet's role on MST from BridgeKey, then asks the backend to mirror it. */
+export async function setRoleOnChain(wallet, role) {
+  const { provider, address, cfg } = await connectWallet();
+  if (!cfg.access_registry_address) throw new Error("AccessRegistry address is not configured on the server.");
+  const gasPrice = await rpc(cfg.rpc_url, "eth_gasPrice", []);
+  const txHash = await provider.request({
+    method: "eth_sendTransaction",
+    params: [{ from: address, to: cfg.access_registry_address, data: SELECTOR_SET_ROLE + hex32(wallet) + ROLE_IDS[role].toString(16).padStart(64, "0"), gasPrice }],
+  });
+  const receipt = await waitForReceipt(cfg.rpc_url, txHash);
+  if (receipt.status !== "0x1") throw new Error("Transaction reverted on MST (does this wallet hold the Auditor role?)");
+  await apiFetch("/chain/roles/sync", { method: "POST" });
+  return { tx_hash: txHash, explorer_url: `${cfg.explorer_url}/tx/${txHash}` };
 }

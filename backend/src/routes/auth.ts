@@ -1,12 +1,14 @@
 import { Hono } from "hono";
 import type { Context } from "hono";
+import { getAddress, isAddress, verifyMessage, type Hex } from "viem";
 import {
   clientIp, createSessionToken, ensureDemoUser, findUserByEmail, hashPassword, insertUser, isDemoMode,
   parseBearer, requireUser, timingSafeEqual, userResponse, verifyFirebaseToken, verifyPassword,
 } from "../auth";
-import { audit, nowIso, run } from "../db";
+import { audit, first, nowIso, run } from "../db";
 import { fail, jsonBody } from "../errors";
-import { ROLES, type AppEnv, type Role } from "../types";
+import { isRealChain, readRole } from "../services/chain";
+import { ROLES, type AppEnv, type Role, type User } from "../types";
 
 const auth = new Hono<AppEnv>();
 
@@ -132,6 +134,82 @@ auth.post("/login-password", async (c) => {
   const token = await createSessionToken(c.env, user!.id, user!.email);
   await audit(c.env.DB, { actorId: user!.id, action: "login", entity: "user", entityId: String(user!.id), detail: { role: user!.role, claimed_role: body.claimed_role ?? null, provider: "password" }, ip });
   return c.json({ ...userResponse(user!), token });
+});
+
+// Wallet sign-in: BridgeKey signs a single-use challenge; the role comes from AccessRegistry on MST.
+const CHALLENGE_TTL_MS = 5 * 60_000;
+
+export const walletSignInMessage = (site: string, address: string, chainId: number, nonce: string, expiresAt: string) =>
+  `CONSTRA sign-in on MST Blockchain\nSite: ${site}\nWallet: ${address}\nMST chain: ${chainId}\nNonce: ${nonce}\nExpires: ${expiresAt}`;
+
+function requireWalletAuth(env: AppEnv["Bindings"]) {
+  if (!isRealChain(env)) fail(400, "Wallet sign-in needs MST (CHAIN_MODE=mst).");
+  if (!env.ACCESS_REGISTRY_ADDRESS) fail(503, "Wallet sign-in is not configured (ACCESS_REGISTRY_ADDRESS).");
+}
+
+const walletAddress = (v: unknown) => (typeof v === "string" && isAddress(v) ? getAddress(v) : fail(422, "A valid wallet address is required"));
+
+auth.post("/wallet/challenge", async (c) => {
+  await rateLimit(c);
+  requireWalletAuth(c.env);
+  const address = walletAddress((await jsonBody<{ address?: string }>(c.req)).address);
+  const nonce = crypto.randomUUID();
+  const expiresAt = new Date(Date.now() + CHALLENGE_TTL_MS).toISOString();
+  const message = walletSignInMessage(new URL(c.req.url).host, address, Number(c.env.MST_CHAIN_ID), nonce, expiresAt);
+  await run(c.env.DB, "DELETE FROM auth_nonces WHERE expires_at < ?", nowIso());
+  await run(c.env.DB, "INSERT INTO auth_nonces (nonce, address, message, expires_at) VALUES (?, ?, ?, ?)", nonce, address, message, expiresAt);
+  return c.json({ nonce, message, expires_at: expiresAt });
+});
+
+auth.post("/wallet/login", async (c) => {
+  await rateLimit(c);
+  requireWalletAuth(c.env);
+  const body = await jsonBody<{ address?: string; nonce?: string; signature?: string; claimed_role?: string }>(c.req);
+  const address = walletAddress(body.address);
+  if (!body.nonce || !body.signature) fail(422, "nonce and signature are required");
+  const ip = clientIp(c);
+  const denied = (reason: string, actorId: number | null = null) =>
+    audit(c.env.DB, { actorId, action: "login_denied", entity: "user", entityId: actorId ? String(actorId) : null, detail: { wallet: address, reason, provider: "wallet" }, ip });
+
+  // Deleted on read: a challenge is single-use even when the signature is wrong.
+  const challenge = await first<{ address: string; message: string; expires_at: string }>(c.env.DB, "DELETE FROM auth_nonces WHERE nonce = ? RETURNING *", body.nonce);
+  if (!challenge || challenge.address !== address || challenge.expires_at < nowIso()) fail(401, "Sign-in request expired. Please try again.");
+  const valid = await verifyMessage({ address, message: challenge!.message, signature: body.signature as Hex }).catch(() => false);
+  if (!valid) {
+    await denied("Invalid wallet signature");
+    fail(401, "Wallet signature does not match the address");
+  }
+
+  let role: Role | null = null;
+  try {
+    role = await readRole(c.env, address);
+  } catch (err) {
+    console.warn("roleOf read failed:", err);
+    fail(502, "Could not read your role from MST. Please try again.");
+  }
+  const user = await first<User>(c.env.DB, "SELECT * FROM users WHERE lower(wallet_address) = ?", address.toLowerCase());
+  if (!role) {
+    await denied("No role on MST", user?.id ?? null);
+    fail(403, "This wallet has no CONSTRA role on MST. Ask your Project Auditor to grant one.");
+  }
+  if (!user) {
+    await denied("Wallet not linked to an account");
+    fail(403, "This wallet is not linked to a CONSTRA account. Ask your Project Auditor.");
+  }
+  if (!user!.is_active) {
+    await denied("Account disabled", user!.id);
+    fail(403, "Your account is not registered or is disabled.");
+  }
+  if (body.claimed_role && role !== body.claimed_role && role !== "auditor") {
+    await denied("Role mismatch", user!.id);
+    fail(403, `This wallet is authorized on MST as '${role}', not '${body.claimed_role}'. Please select your authorized role.`);
+  }
+
+  // MST is the source of truth: the D1 role is only a mirror of AccessRegistry.roleOf.
+  const updated = (await first<User>(c.env.DB, "UPDATE users SET role = ?, last_login_at = ?, updated_at = ? WHERE id = ? RETURNING *", role, nowIso(), nowIso(), user!.id))!;
+  const token = await createSessionToken(c.env, updated.id, updated.email);
+  await audit(c.env.DB, { actorId: updated.id, action: "login", entity: "user", entityId: String(updated.id), detail: { role, claimed_role: body.claimed_role ?? null, provider: "wallet", wallet: address }, ip });
+  return c.json({ ...userResponse(updated), token });
 });
 
 export default auth;

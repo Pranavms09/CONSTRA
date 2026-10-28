@@ -2,7 +2,7 @@ import { createPublicClient, createWalletClient, defineChain, http, parseEventLo
 import { privateKeyToAccount } from "viem/accounts";
 import { all, audit, first, nowIso, run } from "../db";
 import { normalizeSha256, sha256Hex } from "../lib/util";
-import type { Env } from "../types";
+import type { Env, Role } from "../types";
 
 // Evidence anchoring on MST Blockchain (EvidenceRegistry contract).
 // CHAIN_MODE=mst: hashes are queued in D1 and the relayer (cron + waitUntil) sends anchorMany txs.
@@ -23,6 +23,17 @@ export const REGISTRY_ABI = [
   { type: "event", name: "Anchored", inputs: [{ name: "hash", type: "bytes32", indexed: true }, { name: "kind", type: "uint8", indexed: false }, { name: "time", type: "uint256", indexed: false }, { name: "by", type: "address", indexed: true }] },
 ] as const;
 
+// AccessRegistry: portal roles per wallet (0 none, 1 supervisor, 2 store in-charge, 3 auditor).
+export const ROLE_TO_ID: Record<Role, number> = { supervisor: 1, store_incharge: 2, auditor: 3 };
+export const ID_TO_ROLE: Record<number, Role> = { 1: "supervisor", 2: "store_incharge", 3: "auditor" };
+const MAX_LOG_RANGE = 5000n;
+
+export const ACCESS_ABI = [
+  { type: "function", name: "roleOf", stateMutability: "view", inputs: [{ name: "", type: "address" }], outputs: [{ name: "", type: "uint8" }] },
+  { type: "function", name: "setRole", stateMutability: "nonpayable", inputs: [{ name: "account", type: "address" }, { name: "role", type: "uint8" }], outputs: [] },
+  { type: "event", name: "RoleSet", inputs: [{ name: "account", type: "address", indexed: true }, { name: "role", type: "uint8", indexed: false }, { name: "by", type: "address", indexed: true }] },
+] as const;
+
 export const isRealChain = (env: Env) => env.CHAIN_MODE === "mst";
 
 export function chainConfig(env: Env) {
@@ -33,6 +44,7 @@ export function chainConfig(env: Env) {
     rpc_url: env.MST_RPC_URL,
     explorer_url: env.MST_EXPLORER_URL,
     contract_address: env.CONTRACT_ADDRESS || null,
+    access_registry_address: env.ACCESS_REGISTRY_ADDRESS || null,
     currency_symbol: env.MST_NETWORK === "mainnet" ? "MSTC" : "tMSTC",
   };
 }
@@ -213,4 +225,40 @@ export async function recordWalletAnchor(env: Env, sha: string, txHash: Hex, wal
     "UPDATE chain_anchors SET status = 'anchored', tx_hash = ?, block_number = ?, anchored_at = ?, anchored_by = ?, simulated = 0, last_error = NULL WHERE sha256 = ?",
     txHash, Number(receipt.blockNumber), new Date(Number(block.timestamp) * 1000).toISOString(), receipt.from, sha);
   return { tx_hash: txHash, block_number: Number(receipt.blockNumber), anchored_by: receipt.from };
+}
+
+const accessRegistry = (env: Env) => {
+  if (!env.ACCESS_REGISTRY_ADDRESS) throw new Error("ACCESS_REGISTRY_ADDRESS is not configured");
+  return env.ACCESS_REGISTRY_ADDRESS as Address;
+};
+
+/** Reads a wallet's portal role from AccessRegistry on MST; null when it has none. */
+export async function readRole(env: Env, wallet: Address): Promise<Role | null> {
+  const id = await publicClient(env).readContract({ address: accessRegistry(env), abi: ACCESS_ABI, functionName: "roleOf", args: [wallet] });
+  return ID_TO_ROLE[Number(id)] ?? null;
+}
+
+/**
+ * Mirrors AccessRegistry RoleSet events into D1 so on-chain grants and revocations reach existing sessions.
+ * Each changed wallet's current roleOf is re-read, so overlapping runs cannot apply events out of order.
+ */
+export async function syncRoles(env: Env) {
+  if (!isRealChain(env) || !env.ACCESS_REGISTRY_ADDRESS) return { synced: 0 };
+  const pc = publicClient(env);
+  const last = await first<{ value: string }>(env.DB, "SELECT value FROM chain_sync WHERE key = 'roles_block'");
+  const fromBlock = last ? BigInt(last.value) + 1n : BigInt(env.ACCESS_REGISTRY_FROM_BLOCK || "0");
+  const latest = await pc.getBlockNumber();
+  if (fromBlock > latest) return { synced: 0 };
+  const toBlock = latest - fromBlock >= MAX_LOG_RANGE ? fromBlock + MAX_LOG_RANGE - 1n : latest;
+  const logs = await pc.getContractEvents({ address: accessRegistry(env), abi: ACCESS_ABI, eventName: "RoleSet", fromBlock, toBlock });
+
+  // shortcut: one roleOf read per changed wallet; batch with multicall if a range ever holds more than ~40 wallets (subrequest limit).
+  const wallets = [...new Set(logs.map((l) => l.args.account!.toLowerCase()))];
+  for (const wallet of wallets) {
+    const role = await readRole(env, wallet as Address);
+    if (role) await run(env.DB, "UPDATE users SET role = ?, is_active = 1, updated_at = ? WHERE lower(wallet_address) = ?", role, nowIso(), wallet);
+    else await run(env.DB, "UPDATE users SET is_active = 0, updated_at = ? WHERE lower(wallet_address) = ?", nowIso(), wallet);
+  }
+  await run(env.DB, "INSERT INTO chain_sync (key, value) VALUES ('roles_block', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value", toBlock.toString());
+  return { synced: wallets.length, to_block: Number(toBlock) };
 }

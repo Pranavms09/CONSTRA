@@ -43,13 +43,17 @@ Tools: `list_documents`, `read_document(filename)`, `search_documents(query)`. A
 
 Official non-custodial MST wallet (Chrome extension `bfjojdcfenehemjgjlepdjomkpginlkg`, Android `com.bridgekey`). No public dApp API docs; it behaves as a standard injected EVM wallet. CONSTRA discovers it via EIP-6963 (`info.name`/`rdns` containing "bridgekey"), falls back to `window.ethereum`, then uses `eth_requestAccounts`, `wallet_switchEthereumChain` / `wallet_addEthereumChain` (4902), `personal_sign`, `eth_sendTransaction`. Code: `frontend/src/lib/mst.js`.
 
+## Wallet sign-in (AccessRegistry)
+
+MST-only: no Ethereum network or SIWE library. The Worker issues a plain-text challenge (site, wallet, MST chain ID, nonce, expiry); BridgeKey signs it with `personal_sign`; the Worker checks the signature with viem and reads `AccessRegistry.roleOf` from the MST RPC. Deploy: `cd contracts && BOOTSTRAP_AUDITOR_WALLET=0x… npm run deploy:access:testnet`, then set `ACCESS_REGISTRY_ADDRESS` and `ACCESS_REGISTRY_FROM_BLOCK` (deploy block) in `backend/wrangler.json`. `eth_getLogs` over 5000 blocks works on the testnet RPC (probed 2026-10-28).
+
 ## Buildathon requirements → where satisfied
 
 | Requirement | CONSTRA |
 |---|---|
-| Meaningful MST usage | Every evidence photo, confirmed challan and clearance certificate hash is anchored in `EvidenceRegistry`; verification reads the chain; auditors sign certificates with their own wallet. |
+| Meaningful MST usage | Portal roles live in `AccessRegistry` on MST and gate wallet sign-in. Every evidence photo, confirmed challan and clearance certificate hash is anchored in `EvidenceRegistry`; verification reads the chain; auditors sign certificates with their own wallet. |
 | Testnet + mainnet deploy | `contracts/` `npm run deploy:testnet` / `deploy:mainnet`; addresses recorded in `contracts/deployments.json` and README. |
 | Testnet tx hash | Any relayer `anchorMany` tx or auditor certificate tx (MSTScan link shown in UI/API). |
 | Public repo + README | README "MST Blockchain Integration" section. |
-| BridgeKey | Auditor wallet link + certificate signing. |
+| BridgeKey | Wallet sign-in for all roles, auditor role grants (`AccessRegistry.setRole`), wallet link + certificate signing. |
 | No simulated txs | `CHAIN_MODE=mst` in production; `fake` only for keyless local dev. |

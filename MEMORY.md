@@ -5,7 +5,7 @@ CONSTRA: construction milestone verification (evidence photos, challan OCR, BOQ 
 
 ## Key decisions
 - Cloudflare: Hono Worker `constra-api` (`backend/`), D1 `constra-db`, R2 `constra-files`; frontend via Worker static assets (root `wrangler.json`).
-- Blockchain: **MST Blockchain** (not Sepolia). `EvidenceRegistry` anchors photo/challan/certificate SHA-256; relayer in the Worker (cron + waitUntil); auditors sign certificates with BridgeKey. Simulated txs are disqualifying, so production uses `CHAIN_MODE=mst`.
+- Blockchain: **MST Blockchain** (not Sepolia). `EvidenceRegistry` anchors photo/challan/certificate SHA-256; relayer in the Worker (cron + waitUntil); auditors sign certificates with BridgeKey. Portal roles: `AccessRegistry` on MST is the source of truth for wallet-linked users (BridgeKey sign-in); D1 only mirrors it. Simulated txs are disqualifying, so production uses `CHAIN_MODE=mst`.
 - Firebase only for Auth. OCR via Gemini.
 - Free plan: no base64/image decoding; viem for chain I/O.
 
@@ -16,7 +16,8 @@ CONSTRA: construction milestone verification (evidence photos, challan OCR, BOQ 
 - D1 rejects `undefined` binds; booleans are 0/1.
 - `DEMO_MODE` tokens bypass auth: `false` in `wrangler.json`, `true` only in `.dev.vars`. Demo auditor could otherwise authorize an on-chain anchorer wallet.
 - Never trust client-sent submitter, ids, AI or EXIF verdicts on claims; the server sets them.
-- `contracts/src/EvidenceRegistry.sol` is a symlink to `contracts/EvidenceRegistry.sol`.
+- `contracts/src/*.sol` are symlinks to `contracts/*.sol`.
+- Hackathon rule: only MST chain. Wallet sign-in uses a plain challenge, not SIWE/EIP-4361 naming.
 
 ## Docs
 [architecture.md](architecture.md), [docs/CHAIN_INTEGRATION.md](docs/CHAIN_INTEGRATION.md), [docs/README.md](docs/README.md), [README.md](README.md).

@@ -6,6 +6,7 @@ import {
 } from "firebase/auth";
 import { auth, googleProvider } from "./firebase";
 import { fetchMe, loginWithBackend, demoLoginApi, passwordLoginApi } from "../api/client";
+import { signInWithWallet } from "../lib/mst";
 
 const AuthContext = createContext(undefined);
 
@@ -186,6 +187,12 @@ export const AuthProvider = ({ children }) => {
     return userProfile;
   };
 
+  const loginWithWallet = async (claimedRole) => {
+    const userProfile = await signInWithWallet(claimedRole);
+    saveUser(userProfile);
+    return userProfile;
+  };
+
   const registerWithEmail = async () => {
     throw new Error("Accounts are created by your Project Auditor. Ask them to add your email, then sign in.");
   };
@@ -216,6 +223,7 @@ export const AuthProvider = ({ children }) => {
         loading,
         loginWithGoogle,
         loginWithEmail,
+        loginWithWallet,
         registerWithEmail,
         loginAsDemo,
         logout,

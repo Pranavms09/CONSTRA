@@ -5,5 +5,15 @@
     "deployTxHash": "0xb95b48bc3ee2756ab8d9d95b0456f5e5459cd07dc571ba5be2b8fa4c1f485a0d",
     "deployer": "0xf1854aE3a9f0BD34f90ec69b2FE7fEB958268d60",
     "deployedAt": "2026-10-27T16:17:16.901Z"
+  },
+  "mstTestnetAccessRegistry": {
+    "chainId": 91562037,
+    "address": "0xBCC31B88E689a077F41a5718C853267262ac3373",
+    "deployTxHash": "0x0d6d1267349da389fa8fb9a136460de8484837e584c06f6fde1ffacd44641c60",
+    "deployBlock": 6640378,
+    "deployer": "0xf1854aE3a9f0BD34f90ec69b2FE7fEB958268d60",
+    "bootstrapAuditor": "0xf1854aE3a9f0BD34f90ec69b2FE7fEB958268d60",
+    "grantTxHash": "0xcf8275c099308e8abb753160d39c5a5e59846ba79563e167f4cb11c8991fffae",
+    "deployedAt": "2026-10-28T11:25:25.253Z"
   }
 }

@@ -39,7 +39,7 @@ export const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
 
-  const { user, loginWithGoogle, loginWithEmail, registerWithEmail, loginAsDemo } = useAuth();
+  const { user, loginWithGoogle, loginWithEmail, loginWithWallet, registerWithEmail, loginAsDemo } = useAuth();
   const navigate = useNavigate();
 
   // If already logged in with valid token, redirect to user's assigned dashboard
@@ -63,6 +63,22 @@ export const LoginPage = () => {
     } catch (err) {
       console.error("Demo sign-in error:", err);
       setErrorMessage(err?.message || "Failed to sign in with demo credentials.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleWalletSignIn = async () => {
+    if (loading) return;
+    setLoading(true);
+    setErrorMessage(null);
+    try {
+      const loggedInUser = await loginWithWallet(selectedRole);
+      navigate(getRoleHomeRoute(loggedInUser.role), { replace: true });
+    } catch (err) {
+      console.error("Wallet sign-in error:", err);
+      // EIP-1193 code 4001: the user rejected the request in BridgeKey.
+      setErrorMessage(err?.code === 4001 ? "Signature request was rejected in BridgeKey." : err?.message || "Failed to sign in with BridgeKey.");
     } finally {
       setLoading(false);
     }
@@ -326,7 +342,30 @@ export const LoginPage = () => {
                   </span>
                 </div>
 
-                {/* 1. Primary Google Sign-In Button */}
+                {/* 1. Primary MST wallet sign-in: role is read from AccessRegistry on MST */}
+                <button
+                  onClick={handleWalletSignIn}
+                  disabled={loading}
+                  className="w-full min-h-12.5 py-3 px-6 bg-[#101010] hover:bg-[#FCBC18] text-[#FCBC18] hover:text-[#101010] border border-[#101010] font-headline-md text-headline-md font-bold uppercase tracking-wider flex items-center justify-center gap-3 transition-colors shadow-brutal-sm active:translate-x-px active:translate-y-px cursor-pointer disabled:opacity-50"
+                  type="button"
+                >
+                  <span className="material-symbols-outlined text-xl">account_balance_wallet</span>
+                  <span className="whitespace-nowrap">
+                    {loading ? "AUTHENTICATING..." : "SIGN IN WITH BRIDGEKEY"}
+                  </span>
+                </button>
+                <p className="px-1 font-label-code text-[11px] uppercase tracking-wider text-on-surface-variant">
+                  Role verified on MST Blockchain (AccessRegistry)
+                </p>
+
+                <div className="relative flex items-center justify-center my-3">
+                  <div className="w-full h-px bg-[#101010]/20" />
+                  <span className="absolute bg-[#E6E2DD] px-3 font-label-code text-[11px] uppercase tracking-widest text-on-surface-variant">
+                    OR GOOGLE
+                  </span>
+                </div>
+
+                {/* 2. Google Sign-In Button */}
                 <button
                   onClick={handleGoogleSignIn}
                   disabled={loading}
@@ -364,7 +403,7 @@ export const LoginPage = () => {
                   </span>
                 </div>
 
-                {/* 2. Email & Password Form */}
+                {/* 3. Email & Password Form */}
                 <form onSubmit={handleEmailPasswordSubmit} className="space-y-3">
                   <div className="flex items-center justify-between pb-1">
                     <span className="font-label-meta text-label-meta uppercase text-on-surface-variant tracking-wider">

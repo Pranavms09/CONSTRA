@@ -19,7 +19,9 @@
     "MST_CHAIN_ID": "91562037",
     "MST_RPC_URL": "https://testnetrpc.mstblockchain.com",
     "MST_EXPLORER_URL": "https://testnet.mstscan.com",
-    "CONTRACT_ADDRESS": "0x9945391814a414c3cbcc0DDCBe98919Ab75c3F54"
+    "CONTRACT_ADDRESS": "0x9945391814a414c3cbcc0DDCBe98919Ab75c3F54",
+    "ACCESS_REGISTRY_ADDRESS": "0xBCC31B88E689a077F41a5718C853267262ac3373",
+    "ACCESS_REGISTRY_FROM_BLOCK": "6640378"
   },
   "d1_databases": [
     {

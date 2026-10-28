@@ -9,7 +9,9 @@
     "deploy:testnet": "hardhat run scripts/deploy.js --network mstTestnet",
     "deploy:mainnet": "hardhat run scripts/deploy.js --network mstMainnet",
     "verify:testnet": "hardhat verify --network mstTestnet",
-    "verify:mainnet": "hardhat verify --network mstMainnet"
+    "verify:mainnet": "hardhat verify --network mstMainnet",
+    "deploy:access:testnet": "hardhat run scripts/deploy-access.js --network mstTestnet",
+    "deploy:access:mainnet": "hardhat run scripts/deploy-access.js --network mstMainnet"
   },
   "keywords": [],
   "author": "",

@@ -16,6 +16,8 @@ export interface Env {
   MST_RPC_URL: string;
   MST_EXPLORER_URL: string;
   CONTRACT_ADDRESS: string;
+  ACCESS_REGISTRY_ADDRESS?: string;
+  ACCESS_REGISTRY_FROM_BLOCK?: string;
   ANCHOR_PRIVATE_KEY?: string;
   SECRET_KEY?: string;
   GEMINI_API_KEY?: string;

@@ -6,7 +6,7 @@ import { all, audit, first, run } from "../db";
 import { fail, intParam, jsonBody } from "../errors";
 import { formFile, normalizeSha256, sha256Hex } from "../lib/util";
 import {
-  authorizeAnchorer, chainConfig, explorerTx, isRealChain, KIND_TO_ENTITY, processAnchors, readOnChain, recordWalletAnchor, relayerStatus,
+  authorizeAnchorer, chainConfig, explorerTx, isRealChain, KIND_TO_ENTITY, processAnchors, readOnChain, recordWalletAnchor, relayerStatus, syncRoles,
 } from "../services/chain";
 import type { AppEnv } from "../types";
 
@@ -101,6 +101,15 @@ chain.get("/status", requireRole("auditor"), async (c) => {
 // Auditor: run the relayer now instead of waiting for the next cron tick.
 chain.post("/process", requireRole("auditor"), async (c) => c.json(await processAnchors(c.env)));
 
+// Auditor: mirror AccessRegistry role changes now (e.g. right after a BridgeKey setRole tx) instead of waiting for cron.
+chain.post("/roles/sync", requireRole("auditor"), async (c) => {
+  try {
+    return c.json(await syncRoles(c.env));
+  } catch (err) {
+    return fail(502, `Role sync from MST failed: ${(err as Error).message}`);
+  }
+});
+
 chain.post("/anchors/:id/retry", requireRole("auditor"), async (c) => {
   const id = c.req.param("id");
   const res = await run(c.env.DB,
@@ -120,7 +129,11 @@ chain.post("/wallet", requireRole("auditor"), async (c) => {
   const valid = await verifyMessage({ address, message: walletLinkMessage(address, user, Number(c.env.MST_CHAIN_ID)), signature: body.signature as Hex }).catch(() => false);
   if (!valid) fail(401, "Wallet signature does not match the address");
 
-  await run(c.env.DB, "UPDATE users SET wallet_address = ? WHERE id = ?", address, user.id);
+  try {
+    await run(c.env.DB, "UPDATE users SET wallet_address = ? WHERE id = ?", address, user.id);
+  } catch {
+    fail(409, "This wallet is already linked to another account.");
+  }
   let authorizeTx: string | null = null;
   try {
     authorizeTx = await authorizeAnchorer(c.env, address);
