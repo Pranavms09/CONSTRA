@@ -9,7 +9,7 @@ MST Buildathon Round 2: CONSTRA on Cloudflare (Workers + D1 + R2) with real MST 
 - Worker relayer: D1 queue → `anchorMany` on MST (cron + `waitUntil`), receipts, retries, `setAnchorer`, auditor-signed certificates.
 - Blockchain role auth: `AccessRegistry` contract (+ tests, `deploy:access:*`), `/auth/wallet/challenge|login`, cron/`/chain/roles/sync` RoleSet mirror, migration `0004_wallet_auth.sql`, "Sign in with BridgeKey" on login, auditor roster grants/revokes roles via BridgeKey `setRole`.
 - Flutter supervisor app (`mobile/`, replaced the Kotlin app): live-GPS camera, tag burned into JPEG + on-device SHA-256, offline queue, evidence/anchor status, BridgeKey sign-in via WalletConnect or QR pairing (`/auth/wallet/pair*`, web `/wallet-pair`).
-- Mobile photos auto-join a claim per project + stage on the Claim Audit Desk.
+- Mobile photos auto-join a per-stage claim on the Claim Audit Desk.
 - Supervisor web "Account & App Login" tab: `POST /auth/password` sets/changes the D1 password the mobile app signs in with.
 - Frontend: BridgeKey (EIP-6963) wallet link + certificate signing in the certificate modal; public `/verify` page reading the contract directly.
 - Security audit fixes: verified email for Firebase, auditor-created accounts only, login on claims API with server-set ids/verdicts, approval re-checks EXIF geofence, auditor-only alert resolution, GPS allowance ≤50 m, image analysis login + 10/min, 24 h sessions, `DEMO_MODE=false` in production.
@@ -33,7 +33,7 @@ MST Buildathon Round 2: CONSTRA on Cloudflare (Workers + D1 + R2) with real MST 
 - Mainnet MSTC from organizers.
 
 ## Next actions
-0. `npm run db:migrate:remote` (applies 0004–0007); deploy; auditor links BridgeKey wallet; grant it Auditor on AccessRegistry if it is not the deployer.
+0. `npm run deploy` (migration 0008 backfills mobile photos into claims); auditor links BridgeKey wallet; grant it Auditor on AccessRegistry unless it is the deployer.
 1. Mainnet: `CONFIRM_MAINNET="yes, deploy to mainnet" npm run deploy:mainnet` once organizers fund MSTC.
 2. `wrangler secret put ANCHOR_PRIVATE_KEY` (same deployer key); deploy API + frontend.
 3. Test BridgeKey extension end-to-end; record 2–3 min demo video.
