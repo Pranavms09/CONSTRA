@@ -7,7 +7,8 @@ const defaultBaseUrl =
     ? "https://constra-api.pranavms09.workers.dev"
     : "http://localhost:8787";
 
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || defaultBaseUrl;
+// Trailing slash would produce "//auth/login", which the API does not route.
+export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || defaultBaseUrl).replace(/\/+$/, "");
 
 export async function getAuthToken() {
   let token = null;
