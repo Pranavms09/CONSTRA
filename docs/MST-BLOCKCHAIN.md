@@ -54,8 +54,8 @@ MST-only: no Ethereum network or SIWE library. The Worker issues a plain-text ch
 | Requirement | CONSTRA |
 |---|---|
 | Meaningful MST usage | Portal roles live in `AccessRegistry` on MST and gate wallet sign-in. Every evidence photo, confirmed challan and clearance certificate hash is anchored in `EvidenceRegistry`; verification reads the chain; auditors sign certificates with their own wallet. |
-| Testnet + mainnet deploy | `contracts/` `npm run deploy:testnet` / `deploy:mainnet`; addresses recorded in `contracts/deployments.json` and README. |
-| Testnet tx hash | Any relayer `anchorMany` tx or auditor certificate tx (MSTScan link shown in UI/API). |
-| Public repo + README | README "MST Blockchain Integration" section. |
+| Testnet + mainnet deploy | Done. Both contracts on testnet and mainnet, all source-verified (mainnet `EvidenceRegistry` `0x9945391814a414c3cbcc0DDCBe98919Ab75c3F54`, `AccessRegistry` `0x9b8d7e21f44DeCB92415F3644C0A0Ce831d63BF5`). Addresses in `contracts/deployments.json` and README. |
+| Testnet tx hash | `0xea286225008721f688860b74d7f418fa126599accd6da5ecf70c798167bb0f51` (relayer `anchorMany`); every new anchor shows its MSTScan link in UI/API. |
+| Public repo + README | README "Submission at a glance" and "How MST Blockchain is used". |
 | BridgeKey | Wallet sign-in for all roles (web; phone via QR pairing or WalletConnect), auditor role grants (`AccessRegistry.setRole`), wallet link + certificate signing. |
 | No simulated txs | `CHAIN_MODE=mst` in production; `fake` only for keyless local dev. |

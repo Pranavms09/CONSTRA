@@ -12,7 +12,10 @@
     "deploy:web": "npm run build && wrangler deploy -c wrangler.json",
     "deploy": "npm run deploy:api && npm run deploy:web",
     "deploy:testnet": "npm run deploy:testnet --prefix contracts",
-    "deploy:mainnet": "npm run deploy:mainnet --prefix contracts"
+    "deploy:mainnet": "npm run deploy:mainnet --prefix contracts",
+    "deploy:access:testnet": "npm run deploy:access:testnet --prefix contracts",
+    "deploy:access:mainnet": "npm run deploy:access:mainnet --prefix contracts",
+    "verify:mainnet": "npm run verify:mainnet --prefix contracts --"
   },
   "devDependencies": {
     "wrangler": "^4.153.0"

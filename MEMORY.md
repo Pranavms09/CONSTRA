@@ -12,6 +12,9 @@ CONSTRA: construction milestone verification (evidence photos, challan OCR, BOQ 
 
 ## Constraints / pitfalls
 - MST: legacy `gasPrice` txs only; chain IDs 91562037 (testnet) / 4646 (mainnet). Details: [docs/MST-BLOCKCHAIN.md](docs/MST-BLOCKCHAIN.md).
+- Deployments (both chains, all verified): `contracts/deployments.json`. `EvidenceRegistry` has the same address on testnet and mainnet (same deployer nonce). Live app uses testnet. Grant roles: `contracts/scripts/set-role.js`.
+- Run Hardhat commands inside `contracts/` (root `npx hardhat` pulls Hardhat 3, no config). Root `package.json` forwards `deploy:*`, `verify:mainnet`.
+- A self-linked wallet has no `AccessRegistry` role → wallet login 403 until an auditor grants it.
 - `mst-mcp` OAuth metadata is http/https-mismatched; use the bearer-token setup in docs/MST-BLOCKCHAIN.md. Its doc store is empty; read docs.mstblockchain.com (`/llms.txt`, `.md` pages).
 - Wrangler finds-up `wrangler.json` before a local `.jsonc`; keep `backend/wrangler.json`.
 - `GEMINI_MODEL=gemini-2.5-flash`: `gemini-flash-latest` (gemini-3.8-flash) took 187 s on a challan vs 4 s, beyond the ~30 s waitUntil budget.
@@ -24,4 +27,4 @@ CONSTRA: construction milestone verification (evidence photos, challan OCR, BOQ 
 - Hackathon rule: only MST chain. Wallet sign-in uses a plain challenge, not SIWE/EIP-4361 naming.
 
 ## Docs
-[architecture.md](architecture.md), [docs/CHAIN_INTEGRATION.md](docs/CHAIN_INTEGRATION.md), [docs/README.md](docs/README.md), [README.md](README.md).
+[architecture.md](architecture.md), [docs/README.md](docs/README.md) (index), [README.md](README.md). Check: `bash scripts/check-docs.sh`.

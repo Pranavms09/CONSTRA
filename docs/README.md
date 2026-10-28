@@ -2,12 +2,22 @@
 
 | Doc | Purpose |
 |---|---|
-| [../architecture.md](../architecture.md) | Current system architecture (Cloudflare + MST) |
-| [../progress.md](../progress.md) | Status, verification, next steps |
+| [../README.md](../README.md) | Project overview, submission links, setup, demo |
+| [../architecture.md](../architecture.md) | Components, flows, trust boundaries |
+| [../progress.md](../progress.md) | Status, verified results, next steps |
 | [../MEMORY.md](../MEMORY.md) | Durable decisions and pitfalls |
-| [CHAIN_INTEGRATION.md](CHAIN_INTEGRATION.md) | MST anchoring design, relayer, wallet flow, local E2E |
-| [MST-BLOCKCHAIN.md](MST-BLOCKCHAIN.md) | MST networks, gas model, SDK/Vibe Kit/MCP/BridgeKey notes, Buildathon checklist |
-| [../contracts/README.md](../contracts/README.md) | Contract API, deploy commands, addresses |
-| [1. PRD](1.%20PRD%20-%20Multi-Stage%20Construction%20Milestone%20Verifier.md) · [2. TRD](2.%20TRD%20-%20Multi-Stage%20Construction%20Milestone%20Verifier.md) · [3. UI/UX](3.%20UI%20UX%20Design%20Document.md) · [5. Security](5.%20Security%20Document.md) · [6. System Design](6.%20System%20Design%20Document.md) | Original design specs (pre-Cloudflare/MST; see notes at top) |
+| [PRD.md](PRD.md) | Product requirements and status |
+| [TRD.md](TRD.md) | Technical requirements, API, configuration, deployment |
+| [DESIGN.md](DESIGN.md) | Software design, algorithms, decisions |
+| [UI-UX.md](UI-UX.md) | Routes, journeys, design tokens |
+| [DB-SCHEMA.md](DB-SCHEMA.md) | D1 tables and migrations |
+| [SECURITY.md](SECURITY.md) | Threat model and controls |
+| [CHAIN_INTEGRATION.md](CHAIN_INTEGRATION.md) | MST relayer, wallet flows, verification |
+| [MST-BLOCKCHAIN.md](MST-BLOCKCHAIN.md) | MST networks, gas model, tooling, Buildathon checklist |
+| [../contracts/README.md](../contracts/README.md) | Contract API, deployments, scripts |
+| [../mobile/README.md](../mobile/README.md) | Flutter app run and sign-in |
+| [DOCUMENTATION-CHECKLIST.md](DOCUMENTATION-CHECKLIST.md) | Readiness checklist |
 
-Rule: after any code, config or technology change (or new findings from docs), update the affected docs above in the same change.
+Check: `bash scripts/check-docs.sh` (word limits, broken links).
+
+Rule: after any code, config, contract or deployment change, update the affected docs in the same change.

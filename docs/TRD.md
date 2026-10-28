@@ -50,7 +50,7 @@ On confirm: validate items → normalize units via `unit_conversions` → check 
 Claims are JSON documents in D1. `submit` (auditor): self-approval guard → reject needs ≥5-char reason → blockers (stale fields, verdict consistency, open high/critical alerts, no photo, EXIF geofence fail, processing challans) → 422 with `blockers[]` or stage `CLEARED` + certificate (SHA-256 over canonical JSON) → anchor (`awaiting_signature` for wallet-linked auditors).
 
 ### TR-9 MST relayer (`services/chain.ts`, `routes/chain.ts`)
-- Queue `chain_anchors` (`pending → submitted → confirmed | failed`), claim rows with `claimed_at` to avoid double send.
+- Queue `chain_anchors` (`pending → sending → sent → anchored`, or `failed`; `awaiting_signature` for auditor-signed certificates), claim rows with `claimed_at` to avoid double send.
 - `anchorMany` ≤ 50 per tx, legacy `gasPrice`, receipt wait, retries with `attempts` / `last_error`.
 - Triggers: cron `* * * * *` and `waitUntil` after each upload.
 - `syncRoles`: reads `AccessRegistry` `RoleSet` logs (≤ 5000 blocks/run, cursor in `chain_sync`), re-reads `roleOf`, updates D1 role / `is_active`.

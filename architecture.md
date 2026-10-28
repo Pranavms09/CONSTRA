@@ -26,7 +26,7 @@ Browser + BridgeKey ──── MST RPC (direct): auditor anchor() / setRole() 
 | Wallet UI | `frontend/src/lib/mst.js`, `components/MstCertificatePanel.jsx`, `pages/VerifyPage.jsx`, `pages/WalletPairPage.jsx` | BridgeKey discovery (EIP-6963), network switch, `personal_sign` link and sign-in, phone pairing approval, certificate `anchor` tx, auditor `setRole` tx, direct RPC `verify`. |
 | Mobile app | `mobile/lib/` (Flutter) | Supervisor-only. Sign-in: email, BridgeKey via WalletConnect (`wallet.dart`) or QR pairing. Camera with live GPS HUD (mock-location blocked, fresh fix required); GPS/time/site tag burned into the JPEG and SHA-256 computed on the stamped bytes (`capture.dart`), so the anchored hash covers the tag. Offline queue on disk (`uploads.dart`), evidence status/anchor polling. Token in `flutter_secure_storage`. |
 | Libraries | `backend/src/lib/` | `exif.ts` (exifr-based GPS/time/software checks), `gemini.ts`, `fuzzy.ts` (rapidfuzz port), `util.ts` (hashing, MIME sniffing). |
-| Schema | `backend/migrations/` | `0001_init.sql` schema, `0002_demo_seed.sql` demo users/project/BOQ, `0003_mst_chain.sql`, `0004_wallet_auth.sql` (`auth_nonces`, `chain_sync`, unique `wallet_address`), `0006_wallet_pairing.sql` (`wallet_pairings`). |
+| Schema | `backend/migrations/` | `0001_init.sql` schema, `0002_demo_seed.sql` demo users/project/BOQ, `0003_mst_chain.sql`, `0004_wallet_auth.sql` (`auth_nonces`, `chain_sync`, unique `wallet_address`), `0006_wallet_pairing.sql` (`wallet_pairings`), `0008` mobile-photo claim backfill. Details: [docs/DB-SCHEMA.md](docs/DB-SCHEMA.md). |
 | Contracts | `contracts/` | `EvidenceRegistry.sol` (evidence hashes), `AccessRegistry.sol` (portal role per wallet: 0 none, 1 supervisor, 2 store in-charge, 3 auditor; owner or Auditor wallets call `setRole`). |
 
 ## Key flows
@@ -49,7 +49,7 @@ Browser + BridgeKey ──── MST RPC (direct): auditor anchor() / setRole() 
 
 ## Trust boundaries
 
-- All mutating routes require auth except: claims create/commands/decisions, analyze-image, chain verify (rate limited) — same as the previous backend.
+- Public routes: health, login/challenge/pairing, chain config and verify (rate limited). Everything else requires auth: claims create (supervisor), commands/decisions/submit (auditor), analyze-image (any user, 10/min).
 - Login and chain-verify use Workers Rate Limiting bindings (10/min per IP).
 - Secrets only via `wrangler secret put` / `.dev.vars`: `SECRET_KEY`, `GEMINI_API_KEY`, `ANTHROPIC_API_KEY`, `BOOTSTRAP_ADMIN_EMAIL`, `BOOTSTRAP_ADMIN_PASSWORD`, `ANCHOR_PRIVATE_KEY` (MST relayer = contract owner).
 - Wallet sign-in: role authority is `AccessRegistry` on MST, never the client; challenges are bound to site, wallet, MST chain ID and expiry, and are single-use. Revocation reaches live sessions within one cron tick (sync sets `is_active = 0`).

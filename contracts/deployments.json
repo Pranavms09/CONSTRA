@@ -15,5 +15,22 @@
     "bootstrapAuditor": "0xf1854aE3a9f0BD34f90ec69b2FE7fEB958268d60",
     "grantTxHash": "0xcf8275c099308e8abb753160d39c5a5e59846ba79563e167f4cb11c8991fffae",
     "deployedAt": "2026-10-28T11:25:25.253Z"
+  },
+  "mstMainnet": {
+    "chainId": 4646,
+    "address": "0x9945391814a414c3cbcc0DDCBe98919Ab75c3F54",
+    "deployTxHash": "0x924a22ddaa8bd76ebf302cea86469fe57635506e09b51f96d7e59ed9f8f33273",
+    "deployer": "0xf1854aE3a9f0BD34f90ec69b2FE7fEB958268d60",
+    "deployedAt": "2026-10-28T18:23:38.322Z"
+  },
+  "mstMainnetAccessRegistry": {
+    "chainId": 4646,
+    "address": "0x9b8d7e21f44DeCB92415F3644C0A0Ce831d63BF5",
+    "deployTxHash": "0xde2d0ccb6779a9f4ed4dbae53c45e0b134c3e9fb2d4b1f05df6c7cde8cac803e",
+    "deployBlock": 21731226,
+    "deployer": "0xf1854aE3a9f0BD34f90ec69b2FE7fEB958268d60",
+    "bootstrapAuditor": null,
+    "grantTxHash": null,
+    "deployedAt": "2026-10-28T18:26:38.873Z"
   }
 }

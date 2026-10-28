@@ -6,7 +6,7 @@
 [![Backend](https://img.shields.io/badge/API-Cloudflare%20Workers%20%7C%20Hono-orange)](#technology-stack)
 [![Frontend](https://img.shields.io/badge/Web-React%2019%20%7C%20Vite-blue)](#technology-stack)
 [![Mobile](https://img.shields.io/badge/Mobile-Flutter-02569B)](mobile/README.md)
-[![Status](https://img.shields.io/badge/Status-Live%20on%20MST%20Testnet-success)](#submission-at-a-glance)
+[![Status](https://img.shields.io/badge/Status-Live%20on%20MST%20Testnet%20%2B%20Mainnet-success)](#submission-at-a-glance)
 
 Built for **MST Buildathon 2.0**.
 
@@ -25,7 +25,9 @@ Built for **MST Buildathon 2.0**.
 | First app transaction | [`0xea286225…0f51`](https://testnet.mstscan.com/tx/0xea286225008721f688860b74d7f418fa126599accd6da5ecf70c798167bb0f51): relayer `anchorMany` for a site photo hash (block 6639012) |
 | Wallet | BridgeKey (browser extension, EIP-6963); WalletConnect or QR pairing on the phone |
 | Mobile app | Flutter supervisor app in [`mobile/`](mobile/README.md) (Android APK build) |
-| MST mainnet | Pending: waiting for mainnet MSTC from organizers (`npm run deploy:mainnet` is ready) |
+| `EvidenceRegistry` (MST mainnet) | [`0x9945391814a414c3cbcc0DDCBe98919Ab75c3F54`](https://mstscan.com/address/0x9945391814a414c3cbcc0DDCBe98919Ab75c3F54#code) (source verified; deploy tx [`0x924a22dd…3273`](https://mstscan.com/tx/0x924a22ddaa8bd76ebf302cea86469fe57635506e09b51f96d7e59ed9f8f33273)) |
+| `AccessRegistry` (MST mainnet) | [`0x9b8d7e21f44DeCB92415F3644C0A0Ce831d63BF5`](https://mstscan.com/address/0x9b8d7e21f44DeCB92415F3644C0A0Ce831d63BF5#code) (source verified; Auditor grant tx [`0x4133a625…19fa6`](https://mstscan.com/tx/0x4133a625d66c8aac7fcdb1ecfab648e9455275e03349cf6f4e136741e2919fa6)) |
+| Live app network | MST testnet (contracts also live on mainnet) |
 
 ---
 
@@ -345,7 +347,7 @@ Not yet verified end to end: BridgeKey sign-in with a real wallet on web and pho
 
 ## Limitations
 
-- MST mainnet deployment waits for mainnet MSTC.
+- The live app runs against MST testnet; the same contracts are deployed and verified on mainnet. Switching means updating `backend/wrangler.json` and re-granting roles on the mainnet `AccessRegistry`.
 - AI vision results are advisory for the auditor; they do not raise alerts on their own.
 - Background AI and text extraction use `ctx.waitUntil` (about 30 s); stuck challans are retried by cron. Cloudflare Queues is the upgrade path.
 - The free plan allows about 10 ms CPU per request, so images are never decoded or resized in the Worker.

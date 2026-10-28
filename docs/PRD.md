@@ -25,7 +25,7 @@ Turn every milestone claim into a verified evidence trail with a hard gate befor
 | **Site Supervisor** | Prove a stage is done and get it cleared quickly | Flutter mobile app (camera), web dashboard |
 | **Store In-Charge** | Record deliveries and material issues accurately | Web (desktop/tablet) |
 | **Project Auditor** | Approve only genuine work; catch fraud | Web command centre, BridgeKey wallet |
-| **External verifier** (owner, bank, regulator) | Check a photo or certificate without trusting CONSTRA | Public `/verify` page |
+| **External verifier** | Check a file without trusting CONSTRA | Public `/verify` page |
 
 ## 4. Goals and non-goals
 
@@ -121,22 +121,14 @@ Status: ✅ shipped · ◐ partial · ⏳ pending.
 ### FR-9 MST Blockchain
 | ID | Requirement | Status |
 | --- | --- | --- |
-| FR-9.1 | Anchor photo, challan and certificate hashes in `EvidenceRegistry` | ✅ testnet |
+| FR-9.1 | Anchor photo, challan and certificate hashes in `EvidenceRegistry` | ✅ |
 | FR-9.2 | Auditor signs the certificate anchor with BridgeKey | ✅ (UI flow; real-wallet E2E pending) |
 | FR-9.3 | Public `/verify` reads the contract directly | ✅ |
 | FR-9.4 | D1 vs chain mismatch logged as tampering | ✅ |
 | FR-9.5 | Roles managed with `AccessRegistry.setRole` from BridgeKey | ✅ |
-| FR-9.6 | Mainnet deployment | ⏳ waiting for mainnet MSTC |
+| FR-9.6 | Mainnet deployment | ✅ contracts verified; live app on testnet |
 
-## 6. User stories
-
-- **US-1 Supervisor:** I take a stage photo in the app; I see its AI result and its MST anchor confirm, with an explorer link.
-- **US-2 Store In-Charge:** I upload a challan; fields appear for review; on confirm I see any BOQ or duplicate alerts.
-- **US-3 Auditor:** I open a claim and see photos, AI report, EXIF check, alerts and blockers on one screen.
-- **US-4 Auditor:** I cannot approve while a blocker exists; the system tells me which one.
-- **US-5 Verifier:** I drop a file on `/verify` and learn whether MST has its hash, when, and who anchored it.
-
-## 7. Business rules
+## 6. Business rules
 
 1. No clearance while any high or critical alert is open on the project.
 2. Approver ≠ submitter (id, email or name).
@@ -146,7 +138,7 @@ Status: ✅ shipped · ◐ partial · ⏳ pending.
 6. Overrides need written reasons and are logged.
 7. Client-sent ids, submitter, AI or EXIF verdicts are never trusted; the server sets them.
 
-## 8. Non-functional requirements
+## 7. Non-functional requirements
 
 | Area | Target |
 | --- | --- |
@@ -157,7 +149,7 @@ Status: ✅ shipped · ◐ partial · ⏳ pending.
 | Auditability | Every action logged; evidence provable on MST |
 | Explainability | Every alert and blocker states why |
 
-## 9. Success metrics
+## 8. Success metrics
 
 | Metric | Target |
 | --- | --- |
@@ -166,7 +158,7 @@ Status: ✅ shipped · ◐ partial · ⏳ pending.
 | Evidence hashes anchored and confirmed | ≥ 99% within 5 min |
 | Challan fields correct on clear scans | ≥ 85% |
 
-## 10. Assumptions and risks
+## 9. Assumptions and risks
 
 | Risk | Mitigation |
 | --- | --- |
@@ -176,11 +168,11 @@ Status: ✅ shipped · ◐ partial · ⏳ pending.
 | Relayer key exposure | Secret in Workers only; anchorer-gated contract; owner can revoke |
 | Background work timeout | Cron retries stuck challans and pending anchors |
 
-## 11. Release status
+## 10. Release status
 
 | Phase | Scope | Status |
 | --- | --- | --- |
 | MVP | Roles, photos, geofence, AI, alerts, clearance gate | Done |
 | Phase 2 | Challans, BOQ, consumption anomalies | Done |
-| Phase 3 | MST anchoring, BridgeKey, `AccessRegistry`, Flutter app | Done on testnet |
-| Next | Mainnet, real-device and real-wallet E2E, project/BOQ admin UI | Planned |
+| Phase 3 | MST anchoring, BridgeKey, `AccessRegistry`, Flutter app | Done (testnet + mainnet) |
+| Next | App on mainnet, real-device and real-wallet E2E, project/BOQ admin UI | Planned |
