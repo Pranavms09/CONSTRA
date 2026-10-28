@@ -126,8 +126,8 @@ claims.post("/claims/:id/commands", requireRole("auditor"), async (c) => {
     const ai = (claim.ai ??= {});
     if (command === "run_ocr" || command === "run_all") {
       // Claims carry site photos only; there is no document for OCR to read, so no value is invented.
-      if (command === "run_ocr") throw new Error("OCR needs a document file; this claim has only site photos.");
-      notes.push("OCR skipped: no document attached.");
+      if (command === "run_ocr") throw new Error("Text extraction needs a document file; this claim has only site photos.");
+      notes.push("Text extraction skipped: no document attached.");
     }
     if (command === "run_vlm" || command === "run_all") {
       const key = photoKey(claim);

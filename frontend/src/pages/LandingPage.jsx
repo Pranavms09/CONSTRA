@@ -45,7 +45,7 @@ const CHAPTERS = [
     id: 2,
     tag: "CHAPTER 02 // MATCH",
     ref: "BILL OF QUANTITIES // CROSS-CHECK",
-    coordinates: "OCR CHALLAN INTAKE // 0.00% VARIANCE",
+    coordinates: "CHALLAN TEXT EXTRACTION // 0.00% VARIANCE",
     title: "Match every delivery.",
     quote: null,
     description:
@@ -250,7 +250,7 @@ export const LandingPage = () => {
               playsInline
               className="w-full h-full object-cover object-center grayscale contrast-125 brightness-75"
             >
-              <source src="/gemini_generated_video_cc806917.mp4" type="video/mp4" />
+              <source src="/constra_hero.mp4" type="video/mp4" />
             </video>
             {/* Scrim gradient layers for text legibility & technical grading */}
             <div className="absolute inset-0 bg-linear-to-r from-[#101010] via-[#101010]/85 to-transparent w-full md:w-3/5" />
@@ -543,7 +543,7 @@ export const LandingPage = () => {
                     Delivery slips and dispatch notes that do not match the engineered plan or physical bills of quantities.
                   </div>
                   <div className="col-span-12 md:col-span-4 md:pl-4 md:border-l border-[#A39B8F]/30 font-label-code text-xs md:text-sm text-[#101010]">
-                    <span className="text-[#2F6F4E] font-bold">✓</span> Automated OCR challan delta against approved Bill of Quantities.
+                    <span className="text-[#2F6F4E] font-bold">✓</span> Automated challan text extraction checked against the approved Bill of Quantities.
                   </div>
                 </div>
 
@@ -640,10 +640,10 @@ export const LandingPage = () => {
                   READ
                 </h3>
                 <p className="font-body-md text-body-md text-[#A39B8F] leading-relaxed">
-                  OCR extracts item, grade and quantity from physical delivery challan paper slips.
+                  The text extractor reads item, grade and quantity from physical delivery challan paper slips.
                 </p>
                 <div className="mt-6 pt-3 border-t border-[#A39B8F]/20 font-label-meta text-label-meta text-[#8C8B91] uppercase">
-                  PARSER: TABULAR OCR
+                  PARSER: TEXT EXTRACTOR
                 </div>
               </div>
 

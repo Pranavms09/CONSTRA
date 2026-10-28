@@ -92,7 +92,7 @@ export async function apiFetch(endpoint, options = {}) {
           blockers = data.detail.blockers;
           errorDetail = `${data.detail.message || "Approval blocked"}: ${data.detail.blockers.join(" | ")}`;
         } else {
-          errorDetail = typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail);
+          errorDetail = typeof data.detail === "string" ? data.detail : data.detail.message || JSON.stringify(data.detail);
         }
       }
     } catch {
@@ -206,6 +206,13 @@ export async function loginWithBackend(claimedRole, idToken, isSignup = false, f
 
 export async function fetchMe() {
   return apiFetch("/auth/me");
+}
+
+export async function changePassword(currentPassword, newPassword) {
+  return apiFetch("/auth/password", {
+    method: "POST",
+    body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
+  });
 }
 
 export async function pingSupervisor() {

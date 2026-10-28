@@ -94,7 +94,7 @@ export const StoreAlerts = () => {
           >
             <option value="">ALL ALERT TYPES</option>
             <option value="drawdown_anomaly">DRAWDOWN ANOMALY</option>
-            <option value="ocr_flag">OCR MISMATCH</option>
+            <option value="ocr_flag">EXTRACTION MISMATCH</option>
             <option value="negative_stock">NEGATIVE STOCK</option>
             <option value="boq_exceeded">BOQ EXCEEDED</option>
           </select>

@@ -4,6 +4,7 @@ import { privateKeyToAccount } from "viem/accounts";
 import worker from "../src/index";
 import { readRole } from "../src/services/chain";
 import { toBase } from "../src/services/store";
+import { hashPassword } from "../src/auth";
 
 // Firebase token verification is stubbed: each test sets the claims the "verified" token carries.
 vi.mock("jose", () => ({ createRemoteJWKSet: () => ({}), jwtVerify: vi.fn() }));
@@ -62,6 +63,16 @@ describe("auth and authorization guards", () => {
     expect((await call(makeEnv(STORE_USER), "PATCH", "/users/7", "demo-store_incharge", { project_ids: [1] })).status).toBe(403);
   });
 
+  it("lets a signed-in user set a mobile app password, requiring the current one once set", async () => {
+    const sup = { ...STORE_USER, id: 2, email: "supervisor@siteverify.com", role: "supervisor" };
+    expect((await call(makeEnv(sup), "POST", "/auth/password", "demo-supervisor", { new_password: "short" })).status).toBe(422);
+    expect((await call(makeEnv(sup), "POST", "/auth/password", "demo-supervisor", { new_password: "site-pass-123" })).status).toBe(200);
+    const withHash = { ...sup, password_hash: await hashPassword("old-pass-123") };
+    expect((await call(makeEnv(withHash), "POST", "/auth/password", "demo-supervisor", { current_password: "wrong-pass", new_password: "site-pass-123" })).status).toBe(401);
+    expect((await call(makeEnv(withHash), "POST", "/auth/password", "demo-supervisor", { current_password: "old-pass-123", new_password: "site-pass-123" })).status).toBe(200);
+    expect((await call(makeEnv(null), "POST", "/auth/password", undefined, { new_password: "site-pass-123" })).status).toBe(401);
+  });
+
   it("rejects zero and negative quantities", async () => {
     for (const qty of [0, -500]) await expect(toBase(makeEnv(null).DB, 1, "kg", qty)).rejects.toMatchObject({ status: 422 });
   });
@@ -110,5 +121,40 @@ describe("wallet sign-in on MST", () => {
     const res = await login(mstEnv(row()), { claimed_role: "store_incharge" });
     expect(res.status).toBe(200);
     expect(((await res.json()) as any).token).toMatch(/^sv-7-/);
+  });
+
+  describe("phone sign-in by QR pairing", () => {
+    // makeEnv's run() reports 0 changed rows; approval needs the pairing UPDATE to hit one row.
+    const withChanges = (env: any) => {
+      const stmt = env.DB.prepare().bind();
+      return { ...env, DB: { prepare: () => ({ bind: () => ({ ...stmt, run: async () => ({ meta: { changes: 1 } }) }) }) } };
+    };
+    const approve = async (env: any, extra: object = {}) =>
+      call(env, "POST", "/auth/wallet/pair/p1/approve", undefined, { address: account.address, nonce: "n1", signature: await account.signMessage({ message }), ...extra });
+    const claim = (env: any) => call(env, "POST", "/auth/wallet/pair/p1/claim", undefined, { secret: "s" });
+
+    it("creates a pairing whose secret is returned once", async () => {
+      const res = await call(mstEnv(null), "POST", "/auth/wallet/pair");
+      const body: any = await res.json();
+      expect(res.status).toBe(201);
+      expect(body.secret).toHaveLength(72);
+    });
+
+    it("approves only with a valid wallet signature and an on-chain role", async () => {
+      vi.mocked(readRole).mockResolvedValue("supervisor");
+      const other = privateKeyToAccount("0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d");
+      expect((await approve(withChanges(mstEnv(row())), { signature: await other.signMessage({ message }) })).status).toBe(401);
+      expect((await approve(mstEnv(row()))).status).toBe(410);
+      expect((await approve(withChanges(mstEnv(row())))).status).toBe(200);
+    });
+
+    it("keeps the phone waiting until approval, then issues one session", async () => {
+      expect((await claim(mstEnv(row({ user_id: null })))).status).toBe(202);
+      expect((await claim(mstEnv(row({ user_id: 7, expires_at: new Date(0).toISOString() })))).status).toBe(410);
+      expect((await claim(mstEnv(null))).status).toBe(410);
+      const res = await claim(mstEnv(row({ user_id: 7 })));
+      expect(res.status).toBe(200);
+      expect(((await res.json()) as any).token).toMatch(/^sv-7-/);
+    });
   });
 });

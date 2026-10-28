@@ -4,7 +4,7 @@ CONSTRA runs on Cloudflare's free plan (two Workers, one D1 database, one R2 buc
 
 ```
 Browser (React SPA) ──┐                       ┌── Firebase Auth JWKS (token verify)
-Android app ──────────┼──> constra-api Worker ─┼── Gemini API (Files API + generateContent)
+Flutter app (mobile/) ┼──> constra-api Worker ─┼── Gemini API (Files API + generateContent)
                       │   (Hono + cron relayer) ├── D1 constra-db (all relational + JSON docs)
 constra Worker ───────┘                       ├── R2 constra-files (evidence, challans, uploads)
 (static assets)                               └── MST RPC → EvidenceRegistry (anchorMany, setAnchorer, verify)
@@ -23,14 +23,17 @@ Browser + BridgeKey ──── MST RPC (direct): auditor anchor() / setRole() 
 | Store domain | `backend/src/services/store.ts` | Unit conversion, stock/BOQ SQL aggregates, anomaly detection (progress ratio + z-score), challan reconciliation + alerts, OCR pipeline. |
 | Chain relayer | `backend/src/services/chain.ts`, `routes/chain.ts` | D1 `chain_anchors` queue → viem `anchorMany` (legacy gasPrice) on MST; receipt confirmation; wallet link + `setAnchorer`; verification of auditor-signed certificate txs; on-chain `verify`. Cron `* * * * *` + `waitUntil`. `CHAIN_MODE=fake` simulates for keyless dev. `recoverStuckChallans` retries OCR for challans stuck `processing` 2–15 min (waitUntil cut-off) and fails older ones. `syncRoles` mirrors `AccessRegistry` `RoleSet` logs (≤5000 blocks/run, cursor in `chain_sync`) by re-reading `roleOf`. |
 | Contract | `contracts/EvidenceRegistry.sol` | Owner/anchorer-gated hash registry: `anchor`, `anchorMany`, `verify → (time, kind, by)`, `setAnchorer`. |
-| Wallet UI | `frontend/src/lib/mst.js`, `components/MstCertificatePanel.jsx`, `pages/VerifyPage.jsx` | BridgeKey discovery (EIP-6963), network switch, `personal_sign` link and sign-in, certificate `anchor` tx, auditor `setRole` tx, direct RPC `verify`. |
+| Wallet UI | `frontend/src/lib/mst.js`, `components/MstCertificatePanel.jsx`, `pages/VerifyPage.jsx`, `pages/WalletPairPage.jsx` | BridgeKey discovery (EIP-6963), network switch, `personal_sign` link and sign-in, phone pairing approval, certificate `anchor` tx, auditor `setRole` tx, direct RPC `verify`. |
+| Mobile app | `mobile/lib/` (Flutter) | Supervisor-only. Sign-in: email, BridgeKey via WalletConnect (`wallet.dart`) or QR pairing. Camera with live GPS HUD (mock-location blocked, fresh fix required); GPS/time/site tag burned into the JPEG and SHA-256 computed on the stamped bytes (`capture.dart`), so the anchored hash covers the tag. Offline queue on disk (`uploads.dart`), evidence status/anchor polling. Token in `flutter_secure_storage`. |
 | Libraries | `backend/src/lib/` | `exif.ts` (exifr-based GPS/time/software checks), `gemini.ts`, `fuzzy.ts` (rapidfuzz port), `util.ts` (hashing, MIME sniffing). |
-| Schema | `backend/migrations/` | `0001_init.sql` schema, `0002_demo_seed.sql` demo users/project/BOQ, `0003_mst_chain.sql`, `0004_wallet_auth.sql` (`auth_nonces`, `chain_sync`, unique `wallet_address`). |
+| Schema | `backend/migrations/` | `0001_init.sql` schema, `0002_demo_seed.sql` demo users/project/BOQ, `0003_mst_chain.sql`, `0004_wallet_auth.sql` (`auth_nonces`, `chain_sync`, unique `wallet_address`), `0006_wallet_pairing.sql` (`wallet_pairings`). |
 | Contracts | `contracts/` | `EvidenceRegistry.sol` (evidence hashes), `AccessRegistry.sol` (portal role per wallet: 0 none, 1 supervisor, 2 store in-charge, 3 auditor; owner or Auditor wallets call `setRole`). |
 
 ## Key flows
 
-**Wallet sign-in** (`POST /auth/wallet/challenge` → `/auth/wallet/login`): server stores a single-use nonce + exact message (5 min) → BridgeKey `personal_sign` → nonce deleted on read → `verifyMessage` → `AccessRegistry.roleOf` on MST (none → 403) → D1 user by `wallet_address` must exist and be active → claimed role must match (auditors exempt) → D1 role updated to the chain role → `sv-` session. Role changes: auditor BridgeKey `setRole` tx → `POST /chain/roles/sync` (also cron) → D1 role / `is_active` mirrored. `PATCH /users/:id` refuses role changes for wallet-linked users. Site roles see only projects in `project_members`; auditors assign them via `project_ids` on `POST`/`PATCH /users` (additive).
+**Wallet sign-in** (`POST /auth/wallet/challenge` → `/auth/wallet/login`): server stores a single-use nonce + exact message (5 min) → BridgeKey `personal_sign` → nonce deleted on read → `verifyMessage` → `AccessRegistry.roleOf` on MST (none → 403) → D1 user by `wallet_address` must exist and be active → claimed role must match (auditors exempt) → D1 role updated to the chain role → `sv-` session. Role changes: auditor BridgeKey `setRole` tx → `POST /chain/roles/sync` (also cron) → D1 role / `is_active` mirrored. `PATCH /users/:id` refuses role changes for wallet-linked users.
+
+**Phone QR pairing** (`POST /auth/wallet/pair` → web `/wallet-pair?id=` → `/auth/wallet/pair/:id/approve` → phone polls `/claim`): phone gets `pair_id` + secret (only SHA-256 stored, 5 min TTL); the desktop BridgeKey runs the same signed-challenge check as wallet login and binds its user to the pairing (no token reaches the browser); the phone's claim with the secret deletes the row and gets the `sv-` session (single use). Both screens show the same 8-char code to stop approve-a-stranger's-QR phishing. Site roles see only projects in `project_members`; auditors assign them via `project_ids` on `POST`/`PATCH /users` (additive).
 
 **Evidence upload** (`POST /supervisor/evidence`): idempotent on `device_evidence_id` → membership check → magic-byte MIME check → server SHA-256 vs client hash → geofence (radius + GPS accuracy) → R2 `evidence/` (private) → D1 row → HASH_MISMATCH / GEOFENCE_VIOLATION alerts → audit log → hash queued for MST (`queued → submitted → confirmed` on the evidence row) → `ctx.waitUntil` relayer + Gemini construction analysis.
 

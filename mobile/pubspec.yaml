@@ -1,0 +1,32 @@
+name: constra
+description: "CONSTRA site supervisor app: GPS-tagged evidence anchored on MST Blockchain."
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.13.7
+
+dependencies:
+  camera: ^0.12.2
+  crypto: ^3.0.8
+  flutter:
+    sdk: flutter
+  flutter_secure_storage: ^10.3.4
+  geolocator: ^14.0.1
+  http: ^1.6.0
+  image: ^4.12.0
+  path_provider: ^2.1.6
+  qr_flutter: ^4.1.0
+  reown_core: ^1.5.1
+  reown_sign: ^1.4.1
+  url_launcher: ^6.3.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/constra_logo.png

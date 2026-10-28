@@ -76,6 +76,21 @@ auth.post("/login", async (c) => {
 
 auth.get("/me", requireUser, (c) => c.json(userResponse(c.get("user"))));
 
+// Sets or changes the D1 password used by /login-password, so web users (e.g. Firebase sign-in) can log into the mobile app.
+auth.post("/password", requireUser, async (c) => {
+  await rateLimit(c);
+  const user = c.get("user");
+  const body = await jsonBody<{ current_password?: string; new_password?: string }>(c.req);
+  const next = (body.new_password ?? "").trim();
+  if (next.length < 8) fail(422, "New password must be at least 8 characters.");
+  if (user.password_hash && !(await verifyPassword((body.current_password ?? "").trim(), user.password_hash))) {
+    fail(401, "Current password is incorrect.");
+  }
+  await run(c.env.DB, "UPDATE users SET password_hash = ?, updated_at = ? WHERE id = ?", await hashPassword(next), nowIso(), user.id);
+  await audit(c.env.DB, { actorId: user.id, action: "password_changed", entity: "user", entityId: String(user.id), detail: { first_set: !user.password_hash }, ip: clientIp(c) });
+  return c.json({ ok: true, has_password: true });
+});
+
 auth.post("/demo-login", async (c) => {
   if (!isDemoMode(c.env)) fail(404, "Not Found");
   const body = await jsonBody<{ role?: string }>(c.req);

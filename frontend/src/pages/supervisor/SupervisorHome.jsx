@@ -12,6 +12,7 @@ import {
   fetchAllClaims,
 } from "../../services/firebaseDataService";
 import ConstraLogo from "../../components/common/ConstraLogo";
+import AccountPasswordPanel from "../../components/AccountPasswordPanel";
 
 // Helper to compute SHA-256 hash of file in browser
 async function computeFileSha256(file) {
@@ -29,7 +30,7 @@ export const SupervisorHome = () => {
   const { user, logout } = useAuth();
 
   // Tab navigation
-  const [activeTab, setActiveTab] = useState("verification"); // 'verification' | 'stream' | 'telemetry'
+  const [activeTab, setActiveTab] = useState("verification"); // 'verification' | 'stream' | 'telemetry' | 'account'
 
   // Image Upload & Inspection State
   const [selectedFile, setSelectedFile] = useState(null);
@@ -124,7 +125,7 @@ export const SupervisorHome = () => {
       id: `EVD-${Date.now().toString().slice(-4)}`,
       filename: file.name,
       fileSize: (file.size / (1024 * 1024)).toFixed(2) + " MB",
-      model: "GEMINI 1.5 PRO & 2.5 FLASH",
+      model: "CONSTRA VISION ENGINE",
       fileHash: computedHash,
       fileUrl: null,
       isDuplicate: false,
@@ -182,7 +183,7 @@ export const SupervisorHome = () => {
         setAnalysisMeta((prev) => ({
           ...prev,
           id: `EVD-90${(response.id % 90) + 10}`,
-          model: response.model || "gemini-2.5-flash",
+          model: "CONSTRA VISION ENGINE",
           source: response.source || "backend_gemini_vision",
           fileHash: response.file_hash || prev?.fileHash,
           fileUrl: fileUrl,
@@ -197,7 +198,7 @@ export const SupervisorHome = () => {
         if (isDup) {
           showToast("⚠️ Warning: Photo SHA-256 fingerprint matches an existing database submission.");
         } else {
-          showToast("Gemini Vision analysis synchronized. Cryptographic description generated.");
+          showToast("AI vision analysis synchronized. Cryptographic description generated.");
         }
       } else {
         throw new Error("No description returned by the AI vision model.");
@@ -300,7 +301,7 @@ export const SupervisorHome = () => {
             fieldKey: "damage_severity",
             value: analysisMeta.isDuplicate ? "FLAGGED_DUPLICATE_ASSET" : "ZERO_SPALLING_PITCH_OK",
             confidence: 0.98,
-            source: "Gemini Vision Structural VLM",
+            source: "CONSTRA Vision Structural VLM",
           },
           vlm_description: aiDescription,
           sha256: analysisMeta.fileHash,
@@ -451,6 +452,16 @@ export const SupervisorHome = () => {
               >
                 03 // STAGE TELEMETRY &amp; DIAGNOSTIC
               </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("account")}
+                className={`h-full px-3 sm:px-4 flex items-center font-label-code text-label-code tracking-wider uppercase transition-colors cursor-pointer ${activeTab === "account"
+                    ? "border-b-2 border-[#fcbc18] text-[#fcbc18] font-bold bg-[#e4e1e8]/10"
+                    : "text-[#f2f0f6]/70 hover:text-[#f2f0f6] border-b-2 border-transparent"
+                  }`}
+              >
+                04 // ACCOUNT &amp; APP LOGIN
+              </button>
             </nav>
             <div className="hidden xl:flex items-center gap-4 font-label-meta text-label-meta text-[#f2f0f6]/60">
               <span className="uppercase tracking-widest">FIREBASE: CONSTRA-B561B</span>
@@ -483,8 +494,8 @@ export const SupervisorHome = () => {
                   <span className="w-1.5 h-1.5 bg-[#296a49] inline-block animate-pulse"></span>
                   <span className="font-bold tracking-wider">
                     {backendStatus?.gemini_configured
-                      ? "GEMINI VISION READY"
-                      : "GEMINI VISION READY (ACTIVE)"}
+                      ? "AI VISION READY"
+                      : "AI VISION READY (ACTIVE)"}
                   </span>
                 </div>
                 <div className="hidden lg:flex items-center gap-1 px-1.5 py-0.5 bg-[#efedf3] border border-[#d4c5ac]/50 text-[#5f5e5e]">
@@ -513,8 +524,7 @@ export const SupervisorHome = () => {
                     <span className="text-[#fcbc18]">//</span> STRUCTURAL TAMPER-PROOF TELEMETRY
                   </h1>
                   <p className="font-body-md text-body-md text-[#504533] mt-0.5 max-w-4xl">
-                    Upload real on-site milestone photos below to run AI vision analysis (Gemini Vision /
-                    CONSTRA-VLM) and transmit tamper-proof milestone claims to Firebase for auditor clearance.
+                    Upload real on-site milestone photos below to run AI vision analysis (CONSTRA-VLM) and transmit tamper-proof milestone claims to Firebase for auditor clearance.
                   </p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0 self-start lg:self-center font-label-code text-label-code">
@@ -793,7 +803,7 @@ export const SupervisorHome = () => {
                             <span className="material-symbols-outlined animate-spin text-[20px]">
                               sync
                             </span>
-                            <span>ANALYZING WITH GEMINI VISION...</span>
+                            <span>ANALYZING WITH AI VISION...</span>
                           </>
                         ) : (
                           <>
@@ -853,7 +863,7 @@ export const SupervisorHome = () => {
                           </span>
                           <div className="flex flex-col font-label-code text-label-code text-[#504533]">
                             <span>RESNET-101</span>
-                            <span>{analysisMeta?.model || "GEMINI 1.5 PRO"}</span>
+                            <span>{analysisMeta?.model || "CONSTRA VISION ENGINE"}</span>
                           </div>
                         </div>
                         {/* Confidence Bar */}
@@ -1123,7 +1133,7 @@ export const SupervisorHome = () => {
                       NO SPECIMEN CAPTURES RECORDED
                     </h4>
                     <p className="font-body-md text-body-md text-[#504533] mt-1">
-                      Uploaded photos and Gemini Vision analysis records will appear here as they are transmitted.
+                      Uploaded photos and AI vision analysis records will appear here as they are transmitted.
                     </p>
                   </div>
                 ) : (
@@ -1139,7 +1149,7 @@ export const SupervisorHome = () => {
                             {claim.type}
                           </h4>
                           <p className="font-body-md text-body-md text-[#504533] mt-2 line-clamp-3">
-                            {claim.ai?.vlm_description || "Gemini Vision analysis verified."}
+                            {claim.ai?.vlm_description || "AI vision analysis verified."}
                           </p>
                         </div>
                         <div className="mt-4 pt-2 border-t border-[#d4c5ac]/40 font-label-code text-label-code text-[#5f5e5e] flex items-center justify-between">
@@ -1152,6 +1162,9 @@ export const SupervisorHome = () => {
                 )}
               </div>
             )}
+
+            {/* TAB 04: ACCOUNT & MOBILE APP PASSWORD */}
+            {activeTab === "account" && <AccountPasswordPanel email={user?.email} />}
 
             {/* TAB 03: STAGE TELEMETRY & API DIAGNOSTIC */}
             {activeTab === "telemetry" && (
@@ -1178,7 +1191,7 @@ export const SupervisorHome = () => {
                       </li>
                       <li className="flex justify-between border-b border-[#d4c5ac]/30 pb-1">
                         <span>MODEL INFERENCE:</span>
-                        <strong>GEMINI 2.5 FLASH / 1.5 PRO</strong>
+                        <strong>CONSTRA VISION ENGINE</strong>
                       </li>
                       <li className="flex justify-between border-b border-[#d4c5ac]/30 pb-1">
                         <span>DATABASE ENGINE:</span>

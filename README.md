@@ -75,7 +75,7 @@ General contractors and infrastructure developers routinely lose up to 10–15% 
 flowchart TD
     subgraph Clients["Clients"]
         WEB["React + Vite portal (Workers static assets)"]
-        APP["Android app (Kotlin)"]
+        APP["Flutter supervisor app (mobile/)"]
     end
 
     subgraph API["constra-api Worker (Hono)"]
@@ -213,7 +213,7 @@ Details: [docs/CHAIN_INTEGRATION.md](docs/CHAIN_INTEGRATION.md), [docs/MST-BLOCK
 | Layer | Choice | Notes |
 | :--- | :--- | :--- |
 | **Web Portal** | React 19 + Vite + Tailwind CSS + GSAP + Lenis | Deployed as Cloudflare Workers static assets (SPA fallback) |
-| **Mobile App** | Kotlin + Jetpack Compose + CameraX | On-site capture with EXIF GPS and offline queueing |
+| **Mobile App** | Flutter (Dart) + camera + geolocator + WalletConnect (`reown_sign`) | Live GPS-stamped capture, on-device SHA-256, offline queue, BridgeKey sign-in (WalletConnect or QR pairing) |
 | **Backend API** | Cloudflare Workers + Hono (TypeScript) | No cold starts; ~10 ms CPU per request on the free plan |
 | **Database** | Cloudflare D1 (SQLite) | Schema + demo seed in `backend/migrations/` |
 | **File Storage** | Cloudflare R2 | Private evidence/challan files with stored SHA-256 checksums |
@@ -239,7 +239,7 @@ CONSTRA/
 │   └── wrangler.json        # Worker config + D1/R2/rate-limit bindings
 ├── frontend/                # React 19 + Vite portal
 ├── wrangler.json            # Frontend Worker (static assets from frontend/dist)
-├── Mobile App/              # Android field capture app
+├── mobile/                  # Flutter site-supervisor app (see mobile/README.md)
 ├── contracts/               # EvidenceRegistry (Solidity, Hardhat) deployed on MST testnet/mainnet
 └── docs/
 ```
@@ -255,6 +255,7 @@ Errors use FastAPI-compatible bodies: `{"detail": ...}`.
 | `GET` | `/health`, `/api/health` | Public | Health + whether Gemini is configured |
 | `POST` | `/auth/login` | Firebase token | Sign in with a Firebase ID token (rate limited) |
 | `POST` | `/auth/login-password` | Public | Email/password sign-in; returns `sv-` session token (rate limited) |
+| `POST` | `/auth/password` | Any user | Set/change own app password (current one required once set; min 8; rate limited) |
 | `POST` | `/auth/demo-login` | Public (`DEMO_MODE`) | Demo sign-in per role |
 | `GET` | `/auth/me` | Any | Current user |
 | `GET/POST/PATCH/DELETE` | `/users`, `/users/{id}` | Auditor | Allowlist management |

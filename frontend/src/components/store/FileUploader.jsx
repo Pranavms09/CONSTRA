@@ -100,7 +100,7 @@ export const FileUploader = ({ onFileSelected, isUploading, error }) => {
           <div>
             <p className="font-['Space_Grotesk'] text-sm font-bold uppercase tracking-wider text-[#101010]">
               {isUploading
-                ? "INGESTING & PARSING OCR TOKENS..."
+                ? "EXTRACTING TEXT FROM DOCUMENT..."
                 : selectedFile
                 ? selectedFile.name
                 : "DROP VENDOR CHALLAN OR CLICK TO SELECT FILE"}

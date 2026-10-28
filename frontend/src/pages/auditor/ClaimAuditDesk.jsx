@@ -405,7 +405,7 @@ export const ClaimAuditDesk = () => {
                     className="px-3 py-1.5 bg-[#F2ECE6] hover:bg-[#101010] hover:text-[#FCBC18] text-[#101010] border border-[#101010] uppercase font-bold transition-colors cursor-pointer"
                     type="button"
                   >
-                    ⚡ RUN OCR
+                    ⚡ RUN TEXT EXTRACTOR
                   </button>
                   <button
                     onClick={() => handleRunCommand("run_vlm")}
@@ -443,11 +443,11 @@ export const ClaimAuditDesk = () => {
                 </span>
               </div>
 
-              {/* Observed Structural Context from Gemini Vision */}
+              {/* Observed Structural Context from AI vision */}
               {claim.ai?.vlm_description && (
                 <div className="p-4 bg-white border border-[#101010] space-y-1">
                   <span className="font-label-meta text-label-meta uppercase tracking-widest text-[#5F5E5E]">
-                    GEMINI VISION OBSERVATION LOG
+                    AI VISION OBSERVATION LOG
                   </span>
                   <p className="font-body-md text-body-md text-[#101010] leading-relaxed">
                     {claim.ai.vlm_description}

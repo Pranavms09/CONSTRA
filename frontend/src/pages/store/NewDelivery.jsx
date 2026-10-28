@@ -61,7 +61,7 @@ export const NewDelivery = () => {
           <strong className="text-[#101010] font-mono font-bold">
             [{selectedProject?.code || "PRJ"} // {selectedProject?.name}]
           </strong>
-          . The OCR neural parser extracts line items, quantities, and vendor signatures for audit reconciliation.
+          . The text extractor reads line items, quantities, and vendor signatures for audit reconciliation.
         </p>
       </div>
 
@@ -97,7 +97,7 @@ export const NewDelivery = () => {
             <span>{manualLoading ? "INITIALIZING DRAFT..." : "CREATE MANUAL ENTRY DRAFT (NO SCAN)"}</span>
           </button>
           <p className="font-['Archivo_Narrow'] text-[11px] text-[#6E675F] mt-2 font-mono">
-            AUTHORIZATION: Use only when physical paper slip is severely degraded or unreadable by OCR engine.
+            AUTHORIZATION: Use only when physical paper slip is severely degraded or unreadable by the text extractor.
           </p>
         </div>
       </div>
@@ -106,7 +106,7 @@ export const NewDelivery = () => {
       <div className="border-l-4 border-[#FCBC18] border-2 border-[#101010] bg-[#E6E2DD] p-4 text-xs shadow-[2px_2px_0px_#101010]">
         <div className="flex items-center gap-2 font-['Space_Grotesk'] font-bold uppercase tracking-wider text-[#101010] mb-2 text-xs">
           <span className="material-symbols-outlined text-sm text-[#FCBC18]">info</span>
-          <span>OCR ACCURACY SPECIFICATION GUIDELINES</span>
+          <span>TEXT EXTRACTION ACCURACY GUIDELINES</span>
         </div>
         <ul className="list-disc list-inside space-y-1 font-['Archivo_Narrow'] text-xs text-[#101010]">
           <li>Ensure document is well-lit, orthogonal, and captured at minimum 300 DPI resolution.</li>

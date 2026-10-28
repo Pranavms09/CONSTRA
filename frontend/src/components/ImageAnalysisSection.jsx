@@ -13,7 +13,7 @@ export const ImageAnalysisSection = () => {
   const [aiDescription, setAiDescription] = useState(DEFAULT_DESCRIPTION);
   const [analysisMeta, setAnalysisMeta] = useState({
     id: "EVD-9021-02",
-    model: "GEMINI 1.5 PRO",
+    model: "CONSTRA VISION ENGINE",
     fileHash: "8f4a9b2c7e1104398bc3a4e98f72361092a34bc98124ef1294812d8471029e81",
     confidence: "96.4%",
     stage: "STAGE #02: STRUCTURAL SLAB CONCRETE CASTING & REBAR BINDING",
@@ -93,7 +93,7 @@ export const ImageAnalysisSection = () => {
           setAiDescription(response.description);
           setAnalysisMeta({
             id: `EVD-${response.id || "9022"}`,
-            model: response.model || "gemini-2.5-flash",
+            model: "CONSTRA VISION ENGINE",
             fileHash: response.file_hash,
             // Stored name (uploads/evd_….ext) for the auditor's EXIF & GPS audit.
             storedName: response.file_url?.split("/").pop() || null,
@@ -111,7 +111,7 @@ export const ImageAnalysisSection = () => {
       }
     } catch (err) {
       setErrorMessage(
-        err?.message || "Image analysis failed. Please verify your GEMINI_API_KEY configuration."
+        err?.message || "Image analysis failed. Please try again."
       );
     } finally {
       setIsAnalyzing(false);
@@ -293,7 +293,7 @@ export const ImageAnalysisSection = () => {
               {isAnalyzing ? (
                 <>
                   <span className="material-symbols-outlined animate-spin text-[20px]">sync</span>
-                  <span>ANALYZING WITH GEMINI VISION...</span>
+                  <span>ANALYZING WITH AI VISION...</span>
                 </>
               ) : (
                 <>
@@ -347,7 +347,7 @@ export const ImageAnalysisSection = () => {
                 </span>
                 <div className="flex flex-col font-label-code text-label-code text-[#504533]">
                   <span>RESNET-101</span>
-                  <span>{analysisMeta?.model || "GEMINI 1.5 PRO"}</span>
+                  <span>{analysisMeta?.model || "CONSTRA VISION ENGINE"}</span>
                 </div>
               </div>
               <div className="w-full h-2 bg-[#e4e1e8] mt-1">

@@ -43,6 +43,8 @@ Tools: `list_documents`, `read_document(filename)`, `search_documents(query)`. A
 
 Official non-custodial MST wallet (Chrome extension `bfjojdcfenehemjgjlepdjomkpginlkg`, Android `com.bridgekey`). No public dApp API docs; it behaves as a standard injected EVM wallet. CONSTRA discovers it via EIP-6963 (`info.name`/`rdns` containing "bridgekey"), falls back to `window.ethereum`, then uses `eth_requestAccounts`, `wallet_switchEthereumChain` / `wallet_addEthereumChain` (4902), `personal_sign`, `eth_sendTransaction`. Code: `frontend/src/lib/mst.js`.
 
+Mobile (Flutter, `mobile/lib/wallet.dart`): the Android app's Play listing (checked 2026-10-28) mentions no WalletConnect or dApp browser, so the phone offers two paths: WalletConnect v2 (`reown_sign`, `personal_sign`; works with any WC wallet, BridgeKey mobile unverified; needs `WC_PROJECT_ID`) and QR pairing, where the BridgeKey extension on a computer approves the phone at `/wallet-pair`.
+
 ## Wallet sign-in (AccessRegistry)
 
 MST-only: no Ethereum network or SIWE library. The Worker issues a plain-text challenge (site, wallet, MST chain ID, nonce, expiry); BridgeKey signs it with `personal_sign`; the Worker checks the signature with viem and reads `AccessRegistry.roleOf` from the MST RPC. Deploy: `cd contracts && BOOTSTRAP_AUDITOR_WALLET=0x… npm run deploy:access:testnet`, then set `ACCESS_REGISTRY_ADDRESS` and `ACCESS_REGISTRY_FROM_BLOCK` (deploy block) in `backend/wrangler.json`. `eth_getLogs` over 5000 blocks works on the testnet RPC (probed 2026-10-28).
@@ -55,5 +57,5 @@ MST-only: no Ethereum network or SIWE library. The Worker issues a plain-text ch
 | Testnet + mainnet deploy | `contracts/` `npm run deploy:testnet` / `deploy:mainnet`; addresses recorded in `contracts/deployments.json` and README. |
 | Testnet tx hash | Any relayer `anchorMany` tx or auditor certificate tx (MSTScan link shown in UI/API). |
 | Public repo + README | README "MST Blockchain Integration" section. |
-| BridgeKey | Wallet sign-in for all roles, auditor role grants (`AccessRegistry.setRole`), wallet link + certificate signing. |
+| BridgeKey | Wallet sign-in for all roles (web; phone via QR pairing or WalletConnect), auditor role grants (`AccessRegistry.setRole`), wallet link + certificate signing. |
 | No simulated txs | `CHAIN_MODE=mst` in production; `fake` only for keyless local dev. |

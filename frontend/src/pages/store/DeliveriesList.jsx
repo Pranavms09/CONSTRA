@@ -57,7 +57,7 @@ export const DeliveriesList = () => {
               Vendor Delivery Challans
             </h2>
             <p className="font-label-meta text-label-meta text-[#5F5E5E] uppercase mt-1">
-              SCANNED DELIVERY PAPERWORK, OCR EXTRACTION REVIEW, AND BOQ RECONCILIATION
+              SCANNED DELIVERY PAPERWORK, TEXT EXTRACTION REVIEW, AND BOQ RECONCILIATION
             </p>
           </div>
 
@@ -118,7 +118,7 @@ export const DeliveriesList = () => {
             NO DELIVERY CHALLANS FOUND
           </h3>
           <p className="font-body-md text-body-md text-[#5F5E5E] mt-1">
-            Upload physical slip photos or scanned PDF dispatches to initiate OCR processing.
+            Upload physical slip photos or scanned PDF dispatches to start text extraction.
           </p>
         </div>
       ) : (

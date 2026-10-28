@@ -87,7 +87,7 @@ export const ChallanReview = () => {
     loadData();
   }, [id, selectedProjectId]);
 
-  // Polling if still processing OCR
+  // Polling while text extraction is running
   useEffect(() => {
     if (!challan || challan.status !== "processing") return;
 
@@ -278,7 +278,7 @@ export const ChallanReview = () => {
         <div className="p-4 bg-[#FCBC18]/20 border-2 border-[#101010] shadow-[2px_2px_0px_#101010] text-[#101010] text-xs font-mono flex items-center gap-3">
           <span className="material-symbols-outlined text-xl animate-spin text-[#101010]">refresh</span>
           <div>
-            <strong>OCR NEURAL PARSER EXECUTING:</strong> Extracting line item matrices and vendor identification from uploaded slip. Live polling active.
+            <strong>TEXT EXTRACTOR RUNNING:</strong> Reading line items and vendor details from the uploaded slip. Live polling active.
           </div>
         </div>
       )}
@@ -287,7 +287,7 @@ export const ChallanReview = () => {
         <div className="p-4 bg-[#B3261E]/15 border-2 border-[#B3261E] text-[#B3261E] text-xs font-mono flex items-center gap-3">
           <span className="font-bold text-base">⚠</span>
           <div>
-            <strong>OCR PARSING FAILED:</strong> {challan.failure_reason || "Document illegible or format unsupported."} Enter field telemetry manually below.
+            <strong>TEXT EXTRACTION FAILED:</strong> {challan.failure_reason || "Document illegible or format unsupported."} Enter field telemetry manually below.
           </div>
         </div>
       )}
@@ -391,7 +391,7 @@ export const ChallanReview = () => {
             {/* Raw extracted vendor string */}
             {vendorNameRaw && (
               <p className="text-[11px] text-[#6E675F] font-mono">
-                OCR PARSED STRING: <span className="text-[#101010] font-bold">"{vendorNameRaw}"</span>
+                EXTRACTED TEXT: <span className="text-[#101010] font-bold">"{vendorNameRaw}"</span>
               </p>
             )}
 
@@ -475,7 +475,7 @@ export const ChallanReview = () => {
                       </select>
                       {it.material_name_raw && (
                         <p className="text-[10px] text-[#6E675F] font-mono mt-1 truncate" title={it.material_name_raw}>
-                          OCR: <span className="text-[#101010] font-bold">"{it.material_name_raw}"</span>
+                          EXTRACTED: <span className="text-[#101010] font-bold">"{it.material_name_raw}"</span>
                         </p>
                       )}
                     </div>

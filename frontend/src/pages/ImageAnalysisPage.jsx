@@ -58,7 +58,7 @@ export const ImageAnalysisPage = () => {
           </div>
           <div className="flex items-center gap-1 text-[#296a49]">
             <span className="w-1.5 h-1.5 bg-[#296a49] inline-block animate-pulse"></span>
-            <span>GEMINI VISION ENGINE NOMINAL</span>
+            <span>AI VISION ENGINE NOMINAL</span>
           </div>
         </div>
       </div>
@@ -76,7 +76,7 @@ export const ImageAnalysisPage = () => {
             AI SITE IMAGE VERIFICATION // STANDALONE SUITE
           </h1>
           <p className="font-body-md text-body-md text-[#504533] mt-1 max-w-3xl">
-            Automated image analysis using Google Gemini vision model and CONSTRA-VLM. Verified
+            Automated image analysis using the CONSTRA AI vision engine. Verified
             descriptions are immutable, cryptographically pinned, and synced with the field audit queue.
           </p>
         </div>
@@ -86,7 +86,7 @@ export const ImageAnalysisPage = () => {
 
       {/* Footer */}
       <footer className="w-full bg-[#e9e7ee] border-t border-[#d4c5ac]/40 py-3 px-6 text-center font-label-code text-label-code text-[#504533]">
-        CONSTRA &copy; 2026 // AI VISION ANALYSIS ENGINE // POWERED BY GEMINI 1.5 PRO &amp; 2.5 FLASH
+        CONSTRA &copy; 2026 // AI VISION ANALYSIS ENGINE
       </footer>
     </div>
   );

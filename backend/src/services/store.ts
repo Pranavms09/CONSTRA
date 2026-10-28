@@ -379,7 +379,8 @@ async function runOcrEngines(env: Env, bytes: ArrayBuffer, mimeType: string) {
     return { raw_text: JSON.stringify(claude), fields: claude, confidence_per_field: { vendor: 90, challan_no: 92, date: 85, items: 88 } };
   }
   // Tesseract/OpenCV cannot run on Workers; vision models are the only OCR engines.
-  throw new Error("No OCR engine available. Configure GEMINI_API_KEY (or ANTHROPIC_API_KEY for images).");
+  console.error("No text extractor configured: set GEMINI_API_KEY (or ANTHROPIC_API_KEY for images).");
+  throw new Error("No text extractor is configured on the server.");
 }
 
 const normalizeMaterialName = (name: string) =>
@@ -443,7 +444,7 @@ export async function processChallanOcr(env: Env, challanId: number) {
     ]);
   } catch (err) {
     await run(db, "UPDATE challans SET status = 'failed', failure_reason = ?, version = version + 1 WHERE id = ?",
-      `OCR engine could not read document: ${(err as Error).message}`, challanId);
+      `Text extractor could not read the document: ${(err as Error).message}`, challanId);
   }
 }
 
@@ -459,7 +460,7 @@ export async function recoverStuckChallans(env: Env) {
   const retryBefore = new Date(now - OCR_RETRY_AFTER_MS).toISOString();
   const giveUpBefore = new Date(now - OCR_GIVE_UP_AFTER_MS).toISOString();
   const expired = await run(env.DB,
-    "UPDATE challans SET status = 'failed', failure_reason = 'OCR timed out. Please upload the challan again or enter it manually.', version = version + 1 WHERE status = 'processing' AND uploaded_at < ?",
+    "UPDATE challans SET status = 'failed', failure_reason = 'Text extraction timed out. Please upload the challan again or enter it manually.', version = version + 1 WHERE status = 'processing' AND uploaded_at < ?",
     giveUpBefore);
   const stuck = await all<{ id: number }>(env.DB,
     "SELECT id FROM challans WHERE status = 'processing' AND uploaded_at < ? ORDER BY uploaded_at LIMIT 3", retryBefore);

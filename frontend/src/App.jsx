@@ -18,6 +18,7 @@ import { AuditorHome } from "./pages/auditor/AuditorHome";
 import { ImageAnalysisPage } from "./pages/ImageAnalysisPage";
 import { NotFound } from "./pages/NotFound";
 import { VerifyPage } from "./pages/VerifyPage";
+import { WalletPairPage } from "./pages/WalletPairPage";
 
 export const App = () => {
   return (
@@ -65,6 +66,7 @@ export const App = () => {
           />
 
           <Route path="/verify" element={<VerifyPage />} />
+          <Route path="/wallet-pair" element={<WalletPairPage />} />
           <Route path="/analyze" element={<ImageAnalysisPage />} />
           <Route path="/image-analysis" element={<ImageAnalysisPage />} />
 

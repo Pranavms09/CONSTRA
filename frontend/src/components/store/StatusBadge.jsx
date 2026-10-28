@@ -17,7 +17,7 @@ export const StatusBadge = ({ status }) => {
     processing: {
       bg: "bg-[#E6E2DD] text-[#101010] border-[#101010]",
       dot: "bg-[#FCBC18] animate-pulse",
-      label: "PROCESSING OCR",
+      label: "EXTRACTING TEXT",
     },
     failed: {
       bg: "bg-[#B3261E] text-[#F2ECE6] border-[#101010]",

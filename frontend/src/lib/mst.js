@@ -147,3 +147,14 @@ export async function setRoleOnChain(wallet, role) {
   await apiFetch("/chain/roles/sync", { method: "POST" });
   return { tx_hash: txHash, explorer_url: `${cfg.explorer_url}/tx/${txHash}` };
 }
+
+/** Short code shown on both the phone and this page so the user can check they approve their own phone. */
+export const pairingCode = (pairId) => pairId.replace(/-/g, "").slice(0, 8).toUpperCase();
+
+/** Desktop BridgeKey approves a phone sign-in (QR pairing); the phone then claims its own session. */
+export async function approvePhonePairing(pairId) {
+  const { provider, address } = await connectWallet();
+  const { nonce, message } = await apiFetch("/auth/wallet/challenge", { method: "POST", body: JSON.stringify({ address }) });
+  const signature = await provider.request({ method: "personal_sign", params: [message, address] });
+  return apiFetch(`/auth/wallet/pair/${encodeURIComponent(pairId)}/approve`, { method: "POST", body: JSON.stringify({ address, nonce, signature }) });
+}

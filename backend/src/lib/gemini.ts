@@ -11,7 +11,7 @@ export class GeminiError extends Error {
 
 const apiKey = (env: Env) => {
   const key = env.GEMINI_API_KEY?.trim();
-  if (!key) throw new GeminiError("Gemini API key is not configured. Set GEMINI_API_KEY with `wrangler secret put`.", "API_KEY_MISSING", 500);
+  if (!key) throw new GeminiError("AI vision service is not configured on the server (set GEMINI_API_KEY with `wrangler secret put`).", "API_KEY_MISSING", 500);
   return key;
 };
 
@@ -49,21 +49,21 @@ async function uploadFile(env: Env, bytes: ArrayBuffer, mimeType: string): Promi
     await new Promise((r) => setTimeout(r, 1000));
     file = await (await fetch(`${API}/v1beta/${file.name}`, { headers: { "x-goog-api-key": key } })).json();
   }
-  if (!file?.uri || file.state === "FAILED") throw new GeminiError("Gemini could not process the uploaded file.", "UPLOAD_FAILED");
+  if (!file?.uri || file.state === "FAILED") throw new GeminiError("The AI vision service could not process the uploaded file.", "UPLOAD_FAILED");
   return file.uri;
 }
 
 async function apiError(res: Response) {
   const text = await res.text();
-  if (text.includes("API_KEY_INVALID") || text.includes("API key not valid")) return new GeminiError("Invalid Google Gemini API key.", "API_KEY_INVALID", 400);
-  if (res.status === 429 || text.includes("RESOURCE_EXHAUSTED")) return new GeminiError("Gemini API rate limit or quota exceeded.", "RATE_LIMIT");
+  if (text.includes("API_KEY_INVALID") || text.includes("API key not valid")) return new GeminiError("AI vision service credentials are invalid.", "API_KEY_INVALID", 400);
+  if (res.status === 429 || text.includes("RESOURCE_EXHAUSTED")) return new GeminiError("AI vision service is busy (rate limit or quota). Please try again shortly.", "RATE_LIMIT");
   let message = text.slice(0, 300);
   try {
     message = JSON.parse(text).error?.message ?? message;
   } catch {
     // keep raw text
   }
-  return new GeminiError(`Gemini API error: ${message}`, res.status === 404 ? "MODEL_NOT_FOUND" : "API_ERROR");
+  return new GeminiError(`AI vision service error: ${message}`, res.status === 404 ? "MODEL_NOT_FOUND" : "API_ERROR");
 }
 
 async function generate(env: Env, model: string, fileUri: string, mimeType: string, prompt: string, generationConfig?: object): Promise<string> {
@@ -78,7 +78,7 @@ async function generate(env: Env, model: string, fileUri: string, mimeType: stri
   if (!res.ok) throw await apiError(res);
   const data: any = await res.json();
   const text = data.candidates?.[0]?.content?.parts?.map((p: any) => p.text ?? "").join("").trim();
-  if (!text) throw new GeminiError(`Gemini model ${model} returned an empty response.`, "EMPTY_RESPONSE");
+  if (!text) throw new GeminiError("AI vision service returned an empty response.", "EMPTY_RESPONSE");
   return text;
 }
 
@@ -178,7 +178,7 @@ export async function analyzeConstruction(env: Env, bytes: ArrayBuffer, mimeType
   });
   const parsed = JSON.parse(text);
   if (typeof parsed?.summary !== "string" || typeof parsed?.report !== "string") {
-    throw new GeminiError("Gemini response did not match the analysis schema.", "SCHEMA_MISMATCH");
+    throw new GeminiError("AI vision response did not match the analysis schema.", "SCHEMA_MISMATCH");
   }
   const lists = ["observed_activities", "materials_visible", "equipment_visible", "progress_indicators", "quality_observations", "potential_issues", "limitations"];
   for (const k of lists) parsed[k] ??= [];
