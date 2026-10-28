@@ -386,7 +386,8 @@ npm install && npm run deploy:testnet              # put the printed address in 
 cd ..
 npm run deploy                              # applies D1 migrations, deploys the API, builds + deploys the frontend
 ```
-- The frontend calls `https://constra-api.pranavms09.workers.dev` by default in production; override with `VITE_API_BASE_URL` at build time.
+- The frontend calls `https://constra-api.pranavms09.workers.dev` by default in production; override with `VITE_API_BASE_URL` at build time. Vite also reads `frontend/.env` during builds, so put the production Worker URL in `frontend/.env.production` or the build will call localhost.
+- Add the frontend domain to Firebase → Authentication → Settings → Authorized domains, or Google sign-in fails.
 - Add any custom frontend domain to `FRONTEND_ORIGINS` in `backend/wrangler.json` (exact origins only; CORS has no wildcard).
 - Set `DEMO_MODE` to `"false"` in `backend/wrangler.json` before using real data: demo tokens bypass authentication.
 - Mainnet: `CONFIRM_MAINNET="yes, deploy to mainnet" npm run deploy:mainnet` in `contracts/`, then set `MST_NETWORK=mainnet`, `MST_CHAIN_ID=4646`, `MST_RPC_URL=https://mariorpc.mstblockchain.com`, `MST_EXPLORER_URL=https://mstscan.com`, `CONTRACT_ADDRESS` in `backend/wrangler.json`.

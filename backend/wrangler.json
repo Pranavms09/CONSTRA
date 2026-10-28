@@ -25,7 +25,7 @@
     {
       "binding": "DB",
       "database_name": "constra-db",
-      "database_id": "REPLACE_WITH_D1_DATABASE_ID",
+      "database_id": "3f34d73b-18ef-4bd0-abc1-006a247ef568",
       "migrations_dir": "migrations"
     }
   ],
