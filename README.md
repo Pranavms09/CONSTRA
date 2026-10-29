@@ -24,6 +24,7 @@ Built for **MST Buildathon 2.0**.
 | Live API (health) | https://constra-api.pranavms09.workers.dev/health |
 | Public proof checker | https://constra.pranavms09.workers.dev/verify (no login) |
 | Try it without a wallet | Login page → choose a role → **Enter demo mode** |
+| Gasless relayer | Field users never hold a wallet or gas: the CONSTRA relayer [`0xf1854aE3…8d60`](https://mstscan.com/address/0xf1854aE3a9f0BD34f90ec69b2FE7fEB958268d60) sponsors their transactions. See [Gasless by design](#gasless-by-design-the-constra-relayer) |
 | Source | https://github.com/Pranavms09/CONSTRA |
 | Live app network | **MST mainnet** (chain `4646`); the earlier testnet deployment is kept for history |
 | Wallet | BridgeKey (browser extension, EIP-6963); WalletConnect or QR pairing on the phone |
@@ -102,6 +103,41 @@ flowchart LR
 - **Tamper detection:** `/chain/verify` compares D1 against the contract; a mismatch is logged as tampering. The `/verify` page reads the contract straight from the browser, so it does not trust our API.
 
 Networks: testnet chain `91562037` (`https://testnetrpc.mstblockchain.com`, explorer https://testnet.mstscan.com); mainnet chain `4646` (`https://mariorpc.mstblockchain.com`, explorer https://mstscan.com). Details: [docs/CHAIN_INTEGRATION.md](docs/CHAIN_INTEGRATION.md), [docs/MST-BLOCKCHAIN.md](docs/MST-BLOCKCHAIN.md), [contracts/README.md](contracts/README.md).
+
+---
+
+## Gasless by design: the CONSTRA relayer
+
+Site supervisors and store staff are not crypto users. They should never install a wallet, buy MSTC or approve a gas fee. CONSTRA therefore ships its own **relayer** inside the API Worker: users act normally in the app, and the relayer turns their actions into MST transactions and pays the gas.
+
+**Who pays gas:**
+
+| User action | On-chain transaction | Who pays |
+| --- | --- | --- |
+| Supervisor uploads a stage photo (app or web) | `EvidenceRegistry.anchorMany` (kind 1) | Relayer |
+| Store in-charge confirms a delivery challan | `EvidenceRegistry.anchorMany` (kind 2) | Relayer |
+| Auditor approves a stage (no wallet linked, or demo mode) | `EvidenceRegistry.anchorMany` (kind 3) | Relayer |
+| Auditor links a BridgeKey wallet | `EvidenceRegistry.setAnchorer` (authorize auditor) | Relayer |
+| Anyone verifies a file on `/verify` | `verify()` view call | Free, no wallet |
+| Auditor with a linked BridgeKey wallet approves a stage | `EvidenceRegistry.anchor` (kind 3) | Auditor (deliberate: the approval is on-chain under the auditor's own key) |
+| Auditor grants or revokes a role | `AccessRegistry.setRole` | Auditor |
+
+**How it works:**
+
+1. The user's action writes the evidence SHA-256 into a D1 queue (`chain_anchors`, status `pending`). The request returns immediately, so the UI never waits on the chain.
+2. The relayer runs right after each upload (`ctx.waitUntil`) and every minute (Cron Trigger). It claims up to 50 pending hashes atomically, so overlapping runs never double-send.
+3. It sends one `anchorMany` transaction from the relayer wallet. MST has no EIP-1559, so this is a legacy transaction with `gasPrice` read from the network.
+4. It reads the receipt and marks each hash `anchored` with its block number and time. The app shows "Confirmed on MST" with an MSTScan link.
+5. Failed or unmined transactions go back to the queue and are retried, up to a limit. Stuck rows are recovered after 5 minutes.
+
+**Cost:** batching keeps gas low. Mainnet tx [`0xcd8de467…60e8`](https://mstscan.com/tx/0xcd8de46780d14f11cdb6bf5471fe14acd9f6dbb0f58776b9aea1cc28e33460e8) anchored 3 hashes for 0.000235 MSTC (234,983 gas at 1 gwei). A full batch of 50 shares one transaction overhead, so the cost per hash drops further.
+
+**Health:** `GET /chain/status` (auditor) shows the relayer wallet, its MSTC balance, a low-funds flag and the queue counts (`pending`, `sending`, `sent`, `anchored`, `failed`).
+
+**Safety:**
+- The relayer key lives only in a Cloudflare Worker secret (`ANCHOR_PRIVATE_KEY`).
+- The contract accepts writes only from its owner (the relayer) and auditor wallets the owner has authorized.
+- The relayer can add new hashes but can never change or delete an existing one.
 
 ---
 
@@ -353,7 +389,7 @@ Then set `MST_NETWORK=mainnet`, `MST_CHAIN_ID=4646`, `MST_RPC_URL=https://marior
 ## Demo walkthrough (about 3 minutes)
 
 1. **Supervisor (phone):** sign in, pick the Nashik project and a stage, take a photo. The tag is stamped and hashed on the phone.
-2. **Upload:** the photo shows AI status and anchor status; open the MSTScan link once it is `confirmed`.
+2. **Gasless anchoring:** the supervisor has no wallet and pays nothing. The photo shows anchor status `queued → submitted → confirmed`; open the MSTScan link and note the tx is sent by the relayer wallet, not the user.
 3. **Off-site photo:** a photo outside the geofence raises `GEOFENCE_VIOLATION`.
 4. **Store In-Charge:** upload a challan; review extracted fields; confirm. A quantity above the BOQ raises `boq_over_delivery`.
 5. **Material issue:** issue more cement than verified progress allows; the preview warns and `consumption_anomaly` is raised.
